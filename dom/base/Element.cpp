@@ -3882,6 +3882,30 @@ Element::UpdateIntersectionObservation(DOMIntersectionObserver* aObserver, int32
   return false;
 }
 
+uint32_t
+Element::AddRenderCallback(RenderCallback& aCallback,
+                           ErrorResult& aError)
+{
+  nsIDocument* doc = GetComposedDoc();
+  if (!doc) {
+    aError = NS_ERROR_FAILURE;
+    return 0;
+  }
+
+  uint32_t handle;
+  aError = doc->RegisterRenderCallback(*this, aCallback, &handle);
+  return handle;
+}
+
+void
+Element::RemoveRenderCallback(uint32_t aHandle)
+{
+  nsIDocument* doc = GetComposedDoc();
+  if (doc) {
+    doc->UnregisterRenderCallback(aHandle);
+  }
+}
+
 void
 Element::ClearServoData() {
 #ifdef MOZ_STYLO

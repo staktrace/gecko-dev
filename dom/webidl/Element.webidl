@@ -261,3 +261,10 @@ partial interface Element {
   [UnsafeInPrerendering, NeedsCallerType]
   void requestPointerLock();
 };
+
+// WIP - make this ChromeOnly?
+partial interface Element {
+  [Throws] unsigned long addRenderCallback(RenderCallback callback);
+  void removeRenderCallback(unsigned long handle);
+};
+callback RenderCallback = void (DOMRectReadOnly renderPort);

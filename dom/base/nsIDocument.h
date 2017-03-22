@@ -154,6 +154,7 @@ class NodeIterator;
 enum class OrientationType : uint8_t;
 class ProcessingInstruction;
 class Promise;
+class RenderCallback;
 class StyleSheetList;
 class SVGDocument;
 class SVGSVGElement;
@@ -2423,6 +2424,10 @@ public:
   nsresult ScheduleFrameRequestCallback(mozilla::dom::FrameRequestCallback& aCallback,
                                         int32_t *aHandle);
   void CancelFrameRequestCallback(int32_t aHandle);
+  nsresult RegisterRenderCallback(mozilla::dom::Element& aElement,
+                                  mozilla::dom::RenderCallback& aCallback,
+                                  uint32_t* aOutHandle);
+  void UnregisterRenderCallback(uint32_t aHandle);
 
   typedef nsTArray<RefPtr<mozilla::dom::FrameRequestCallback>> FrameRequestCallbackList;
   /**
@@ -3332,6 +3337,14 @@ protected:
   struct FrameRequest;
 
   nsTArray<FrameRequest> mFrameRequestCallbacks;
+
+  struct RenderCallbackData
+  {
+    RefPtr<mozilla::dom::Element> mElement;
+    RefPtr<mozilla::dom::RenderCallback> mCallback;
+  };
+  uint32_t mRenderCallbackCounter;
+  nsDataHashtable<nsUint32HashKey, RenderCallbackData> mRenderCallbacks;
 
   // This object allows us to evict ourself from the back/forward cache.  The
   // pointer is non-null iff we're currently in the bfcache.

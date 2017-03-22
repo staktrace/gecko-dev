@@ -1297,6 +1297,10 @@ public:
   void UnregisterIntersectionObserver(DOMIntersectionObserver* aObserver);
   bool UpdateIntersectionObservation(DOMIntersectionObserver* aObserver, int32_t threshold);
 
+  uint32_t AddRenderCallback(RenderCallback& aCallback,
+                             ErrorResult& aError);
+  void RemoveRenderCallback(uint32_t aHandle);
+
 protected:
   /*
    * Named-bools for use with SetAttrAndNotify to make call sites easier to

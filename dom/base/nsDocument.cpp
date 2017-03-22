@@ -1354,6 +1354,7 @@ nsIDocument::nsIDocument()
     mFrameRequestCallbackCounter(0),
     mStaticCloneCount(0),
     mWindow(nullptr),
+    mRenderCallbackCounter(0),
     mBFCacheEntry(nullptr),
     mInSyncOperationCount(0),
     mBlockDOMContentLoaded(0),
@@ -1826,6 +1827,12 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(nsDocument)
     cb.NoteXPCOMChild(tmp->mFrameRequestCallbacks[i].mCallback);
   }
 
+  for (auto it = tmp->mRenderCallbacks.ConstIter(); !it.Done(); it.Next()) {
+    RenderCallbackData& data = it.Data();
+    cb.NoteXPCOMChild(data.mElement);
+    cb.NoteXPCOMChild(data.mCallback);
+  }
+
   // Traverse animation components
   if (tmp->mAnimationController) {
     tmp->mAnimationController->Traverse(&cb);
@@ -1926,6 +1933,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsDocument)
   tmp->mSubDocuments = nullptr;
 
   tmp->mFrameRequestCallbacks.Clear();
+  tmp->mRenderCallbacks.Clear();
 
   tmp->mRadioGroups.Clear();
 
@@ -10092,6 +10100,30 @@ nsIDocument::CancelFrameRequestCallback(int32_t aHandle)
     mPresShell->GetPresContext()->RefreshDriver()->
       RevokeFrameRequestCallbacks(this);
   }
+}
+
+nsresult
+nsIDocument::RegisterRenderCallback(Element& aElement,
+                                    RenderCallback& aCallback,
+                                    uint32_t *aHandle)
+{
+  if (mRenderCallbackCounter == UINT32_MAX) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  uint32_t newHandle = ++mRenderCallbackCounter;
+  RenderCallbackData data { &aElement, &aCallback };
+  // XXX we should remove this entry if the element is detached from the
+  // document or destroyed or whatever. Or make it a weakreference
+  mRenderCallbacks.Put(newHandle, data);
+  *aHandle = newHandle;
+  return NS_OK;
+}
+
+void
+nsIDocument::UnregisterRenderCallback(uint32_t aHandle)
+{
+  mRenderCallbacks.Remove(aHandle);
 }
 
 nsresult
