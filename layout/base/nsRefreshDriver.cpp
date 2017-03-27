@@ -1739,6 +1739,22 @@ nsRefreshDriver::RunFrameRequestCallbacks(TimeStamp aNowTime)
 }
 
 void
+nsRefreshDriver::RunRenderCallbacks()
+{
+  if (!mPresContext) {
+    return;
+  }
+
+  AutoTArray<nsCOMPtr<nsIDocument>, 32> documents;
+  CollectDocuments(mPresContext->Document(), &documents);
+
+  for (uint32_t i = 0; i < documents.Length(); ++i) {
+    nsIDocument* doc = documents[i];
+    doc->DispatchRenderCallbacks();
+  }
+}
+
+void
 nsRefreshDriver::Tick(int64_t aNowEpoch, TimeStamp aNowTime)
 {
   NS_PRECONDITION(!nsContentUtils::GetCurrentJSContext(),
@@ -1842,6 +1858,9 @@ nsRefreshDriver::Tick(int64_t aNowEpoch, TimeStamp aNowTime)
 
       DispatchAnimationEvents();
       DispatchPendingEvents();
+      // Run the render callbacks before the RAF callbacks so the RAF code may
+      // have access to a more a recent render area.
+      RunRenderCallbacks();
       RunFrameRequestCallbacks(aNowTime);
 
       if (mPresContext && mPresContext->GetPresShell()) {

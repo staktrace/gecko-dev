@@ -1531,8 +1531,10 @@ private:
    */
   nsRect GetClientAreaRect();
 
+public:
   nsIScrollableFrame* GetScrollFrame(nsIFrame **aStyledFrame = nullptr,
                                      bool aFlushLayout = true);
+private:
 
   // Data members
   EventStates mState;

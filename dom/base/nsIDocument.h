@@ -2428,6 +2428,7 @@ public:
                                   mozilla::dom::RenderCallback& aCallback,
                                   uint32_t* aOutHandle);
   void UnregisterRenderCallback(uint32_t aHandle);
+  void DispatchRenderCallbacks();
 
   typedef nsTArray<RefPtr<mozilla::dom::FrameRequestCallback>> FrameRequestCallbackList;
   /**

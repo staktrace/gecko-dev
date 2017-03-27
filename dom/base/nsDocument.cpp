@@ -10126,6 +10126,30 @@ nsIDocument::UnregisterRenderCallback(uint32_t aHandle)
   mRenderCallbacks.Remove(aHandle);
 }
 
+void
+nsIDocument::DispatchRenderCallbacks()
+{
+  for (auto it = mRenderCallbacks.ConstIter(); !it.Done(); it.Next()) {
+    RenderCallbackData& data = it.Data();
+    Element* elem = data.mElement.get();
+    RenderCallback* callback = data.mCallback.get();
+    nsRect displayport;
+    if (nsLayoutUtils::GetHighResolutionDisplayPort(elem, &displayport)) {
+      if (nsIScrollableFrame* scrollFrame = elem->GetScrollFrame(nullptr, false)) {
+        displayport += scrollFrame->GetScrollPosition();
+      } else {
+        // Reset to an empty rect if we can't find the scrollframe for whatever
+        // reason.
+        displayport = nsRect();
+      }
+    }
+    RefPtr<DOMRect> rect = new DOMRect(this);
+    rect->SetLayoutRect(displayport);
+    ErrorResult rv;
+    callback->Call(*rect.get(), rv);
+  }
+}
+
 nsresult
 nsDocument::GetStateObject(nsIVariant** aState)
 {
