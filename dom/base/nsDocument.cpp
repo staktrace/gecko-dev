@@ -10145,6 +10145,7 @@ nsIDocument::DispatchRenderCallbacks()
     }
     RefPtr<DOMRect> rect = new DOMRect(this);
     rect->SetLayoutRect(displayport);
+    printf_stderr("Running render callback: %f %f %fx%f\n", rect->X(), rect->Y(), rect->Width(), rect->Height());
     ErrorResult rv;
     callback->Call(*rect.get(), rv);
   }
