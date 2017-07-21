@@ -379,3 +379,21 @@ nsDisplayRemote::BuildLayer(nsDisplayListBuilder* aBuilder,
   }
   return layer.forget();
 }
+
+bool
+nsDisplayRemote::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
+                                         const StackingContextHelper& aSc,
+                                         nsTArray<WebRenderParentCommand>& aParentCommands,
+                                         mozilla::layers::WebRenderLayerManager* aManager,
+                                         nsDisplayListBuilder* aDisplayListBuilder)
+{
+  MOZ_ASSERT(aManager->IsLayersFreeTransaction());
+
+  int32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
+  nsIntRect visibleRect = GetVisibleRect().ToNearestPixels(appUnitsPerDevPixel);
+
+  wr::LayoutRect r = aSc.ToRelativeLayoutRect(ViewAs<LayoutDeviceRect>(visibleRect));
+  aBuilder.PushIFrame(r, wr::AsPipelineId(mLayersId));
+
+  return true;
+}
