@@ -1678,7 +1678,7 @@ PWebRenderBridgeParent*
 CompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::PipelineId& aPipelineId,
                                                     const LayoutDeviceIntSize& aSize,
                                                     TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                                                    uint32_t* aIdNamespace)
+                                                    wr::IdNamespace* aIdNamespace)
 {
 #ifndef MOZ_BUILD_WEBRENDER
   // Extra guard since this in the parent process and we don't want a malicious
@@ -1697,16 +1697,16 @@ CompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::PipelineId& aPipel
     gfxPrefs::WebRenderProfilerEnabled(), this, Move(widget), aSize);
   if (!api) {
     mWrBridge = WebRenderBridgeParent::CreateDestroyed();
-    *aIdNamespace = mWrBridge->GetIdNameSpace();
+    *aIdNamespace = mWrBridge->GetIdNamespace();
     *aTextureFactoryIdentifier = TextureFactoryIdentifier(LayersBackend::LAYERS_NONE);
     return mWrBridge;
   }
   RefPtr<AsyncImagePipelineManager> asyncMgr =
-    new AsyncImagePipelineManager(api->GetNamespace().mHandle);
+    new AsyncImagePipelineManager(api->GetNamespace());
   api->SetRootPipeline(aPipelineId);
   RefPtr<CompositorAnimationStorage> animStorage = GetAnimationStorage();
   mWrBridge = new WebRenderBridgeParent(this, aPipelineId, mWidget, nullptr, Move(api), Move(asyncMgr), Move(animStorage));
-  *aIdNamespace = mWrBridge->GetIdNameSpace();
+  *aIdNamespace = mWrBridge->GetIdNamespace();
 
   mCompositorScheduler = mWrBridge->CompositorScheduler();
   MOZ_ASSERT(mCompositorScheduler);
