@@ -186,10 +186,6 @@ public:
   void UpdateAPZ();
   const WebRenderScrollData& GetScrollData() const;
 
-  static uint32_t AllocIdNameSpace() {
-    return ++sIdNameSpace;
-  }
-
   void FlushRendering(bool aIsSync);
 
   void ScheduleComposition();
@@ -287,6 +283,7 @@ private:
 
   std::queue<PendingTransactionId> mPendingTransactionIds;
   uint32_t mWrEpoch;
+  // TODO: turn this into a wr::WrIdNamespace.
   uint32_t mIdNameSpace;
 
   bool mPaused;
@@ -295,8 +292,6 @@ private:
 
   // Can only be accessed on the compositor thread.
   WebRenderScrollData mScrollData;
-
-  static uint32_t sIdNameSpace;
 };
 
 } // namespace layers

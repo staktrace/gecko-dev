@@ -111,8 +111,6 @@ private:
   InfallibleTArray<OpDestroy>* mActorsToDestroy;
 };
 
-/* static */ uint32_t WebRenderBridgeParent::sIdNameSpace = 0;
-
 WebRenderBridgeParent::WebRenderBridgeParent(CompositorBridgeParentBase* aCompositorBridge,
                                              const wr::PipelineId& aPipelineId,
                                              widget::CompositorWidget* aWidget,
@@ -130,7 +128,7 @@ WebRenderBridgeParent::WebRenderBridgeParent(CompositorBridgeParentBase* aCompos
   , mChildLayerObserverEpoch(0)
   , mParentLayerObserverEpoch(0)
   , mWrEpoch(0)
-  , mIdNameSpace(AllocIdNameSpace())
+  , mIdNameSpace(aApi->GetNamespace().mHandle)
   , mPaused(false)
   , mDestroyed(false)
   , mForceRendering(false)
@@ -149,7 +147,7 @@ WebRenderBridgeParent::WebRenderBridgeParent()
   , mChildLayerObserverEpoch(0)
   , mParentLayerObserverEpoch(0)
   , mWrEpoch(0)
-  , mIdNameSpace(AllocIdNameSpace())
+  , mIdNameSpace(0)
   , mPaused(false)
   , mDestroyed(true)
   , mForceRendering(false)
@@ -880,7 +878,7 @@ WebRenderBridgeParent::UpdateWebRender(CompositorVsyncScheduler* aScheduler,
 
   // Update id name space to identify obsoleted keys.
   // Since usage of invalid keys could cause crash in webrender.
-  mIdNameSpace = AllocIdNameSpace();
+  mIdNameSpace = aApi->GetNamespace().mHandle;
   // XXX Remove it when webrender supports sharing/moving Keys between different webrender instances.
   // XXX It requests client to update/reallocate webrender related resources,
   // but parent side does not wait end of the update.

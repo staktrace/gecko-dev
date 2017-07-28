@@ -1695,15 +1695,14 @@ CompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::PipelineId& aPipel
   RefPtr<widget::CompositorWidget> widget = mWidget;
   RefPtr<wr::WebRenderAPI> api = wr::WebRenderAPI::Create(
     gfxPrefs::WebRenderProfilerEnabled(), this, Move(widget), aSize);
-  RefPtr<AsyncImagePipelineManager> asyncMgr =
-    new AsyncImagePipelineManager(WebRenderBridgeParent::AllocIdNameSpace());
   if (!api) {
     mWrBridge = WebRenderBridgeParent::CreateDestroyed();
     *aIdNamespace = mWrBridge->GetIdNameSpace();
     *aTextureFactoryIdentifier = TextureFactoryIdentifier(LayersBackend::LAYERS_NONE);
     return mWrBridge;
   }
-  MOZ_ASSERT(api); // TODO have a fallback
+  RefPtr<AsyncImagePipelineManager> asyncMgr =
+    new AsyncImagePipelineManager(api->GetNamespace().mHandle);
   api->SetRootPipeline(aPipelineId);
   RefPtr<CompositorAnimationStorage> animStorage = GetAnimationStorage();
   mWrBridge = new WebRenderBridgeParent(this, aPipelineId, mWidget, nullptr, Move(api), Move(asyncMgr), Move(animStorage));

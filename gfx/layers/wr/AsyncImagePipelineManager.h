@@ -141,6 +141,7 @@ private:
                        nsTArray<wr::ImageKey>& aKeys,
                        nsTArray<wr::ImageKey>& aKeysToDelete);
 
+  // TODO: turn this into a wr::WrIdNamespace
   uint32_t mIdNamespace;
   uint32_t mResourceId;
 
