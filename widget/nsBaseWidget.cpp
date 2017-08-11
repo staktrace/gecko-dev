@@ -919,6 +919,7 @@ void nsBaseWidget::ConfigureAPZCTreeManager()
 
   ConfigureAPZControllerThread();
 
+printf("Setting DPI %f on APZCTreeManager\n", GetDPI());
   mAPZC->SetDPI(GetDPI());
 
   if (gfxPrefs::APZKeyboardEnabled()) {

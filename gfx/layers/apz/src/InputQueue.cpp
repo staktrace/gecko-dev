@@ -14,8 +14,9 @@
 #include "OverscrollHandoffState.h"
 #include "QueuedInput.h"
 
-#define INPQ_LOG(...)
-// #define INPQ_LOG(...) printf_stderr("INPQ: " __VA_ARGS__)
+extern double timedelta();
+// #define INPQ_LOG(...)
+#define INPQ_LOG(...) { printf("%f ", timedelta()); printf("INPQ: " __VA_ARGS__); }
 
 namespace mozilla {
 namespace layers {
@@ -135,6 +136,10 @@ InputQueue::ReceiveTouchInput(const RefPtr<AsyncPanZoomController>& aTarget,
   if (aOutInputBlockId) {
     *aOutInputBlockId = block->GetBlockId();
   }
+
+if (aEvent.mTouches.Length() == 1) {
+  INPQ_LOG("touch at %s\n", Stringify(aEvent.mTouches[0].mScreenPoint).c_str());
+}
 
   // Note that the |aTarget| the APZCTM sent us may contradict the confirmed
   // target set on the block. In this case the confirmed target (which may be

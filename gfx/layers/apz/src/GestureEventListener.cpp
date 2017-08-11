@@ -15,8 +15,9 @@
 #include "nsDebug.h"                    // for NS_WARNING
 #include "nsMathUtils.h"                // for NS_hypot
 
-#define GEL_LOG(...)
-// #define GEL_LOG(...) printf_stderr("GEL: " __VA_ARGS__)
+extern double timedelta();
+// #define GEL_LOG(...)
+#define GEL_LOG(...) { printf("%f ", timedelta()); printf("GEL: " __VA_ARGS__); }
 
 namespace mozilla {
 namespace layers {

@@ -537,6 +537,8 @@
             this.scrollByPixels(delta, true);
             this._touchStart = touchPoint;
           }
+if (dump) dump("touchmove triggering preventDefault in scrollbox");
+if (console) console.log("touchmove triggering preventDefault in scrollbox");
           event.preventDefault();
         }
       ]]></handler>

@@ -557,8 +557,7 @@ APZCCallbackHelper::FireSingleTapEvent(const LayoutDevicePoint& aPoint,
   if (aWidget->Destroyed()) {
     return;
   }
-  APZCCH_LOG("Dispatching single-tap component events to %s\n",
-    Stringify(aPoint).c_str());
+printf("APZCCH dispatching single-tap component events to %s\n", Stringify(aPoint).c_str());
   int time = 0;
   DispatchSynthesizedMouseEvent(eMouseMove, time, aPoint, aModifiers, aClickCount, aWidget);
   DispatchSynthesizedMouseEvent(eMouseDown, time, aPoint, aModifiers, aClickCount, aWidget);

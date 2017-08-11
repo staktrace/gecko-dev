@@ -239,11 +239,18 @@ APZCTreeManager::~APZCTreeManager()
 {
 }
 
+static TimeStamp sStart;
+
+double timedelta() {
+  return (TimeStamp::Now() - sStart).ToMilliseconds();
+}
+
 /*static*/ void
 APZCTreeManager::InitializeGlobalState()
 {
   MOZ_ASSERT(NS_IsMainThread());
   AsyncPanZoomController::InitializeGlobalState();
+  sStart = TimeStamp::Now();
 }
 
 AsyncPanZoomController*
