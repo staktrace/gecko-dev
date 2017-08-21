@@ -174,6 +174,9 @@ InputQueue::ReceiveMouseInput(const RefPtr<AsyncPanZoomController>& aTarget,
   // On a new mouse down we can have a new target so we must force a new block
   // with a new target.
   bool newBlock = DragTracker::StartsDrag(aEvent);
+if (newBlock) {
+    MOZ_CRASH_UNSAFE_PRINTF("mousedown %d\n", newBlock);
+}
 
   DragBlockState* block = newBlock ? nullptr : mActiveDragBlock.get();
   if (block && block->HasReceivedMouseUp()) {
