@@ -751,7 +751,7 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
 }
 
 EXPORT_XPCOM_API(nsresult)
-NS_InitMinimalXPCOM()
+NS_InitMinimalXPCOM(nsIDirectoryServiceProvider* aAppFileLocationProvider)
 {
   mozPoisonValueInit();
   NS_SetMainThread();
@@ -772,6 +772,11 @@ NS_InitMinimalXPCOM()
   rv = nsTimerImpl::Startup();
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
+  }
+
+  nsDirectoryService::RealInit();
+  if (aAppFileLocationProvider) {
+    nsDirectoryService::gService->RegisterProvider(aAppFileLocationProvider);
   }
 
   // Create the Component/Service Manager

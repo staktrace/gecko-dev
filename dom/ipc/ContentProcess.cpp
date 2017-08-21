@@ -74,14 +74,15 @@ SetTmpEnvironmentVariable(nsIFile* aValue)
 #endif
 
 #if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
-static void
-SetUpSandboxEnvironment()
+/*static*/ void
+ContentProcess::SetUpSandboxEnvironment()
 {
   MOZ_ASSERT(nsDirectoryService::gService,
     "SetUpSandboxEnvironment relies on nsDirectoryService being initialized");
 
   if (!IsSandboxTempDirRequired()) {
-    return;
+printf("process %u doesn't require a tempdir for the sandbox but we forge ahead anyway\n", GetCurrentProcessId());
+    //return;
   }
 
   nsCOMPtr<nsIFile> sandboxedContentTemp;
@@ -97,11 +98,18 @@ SetUpSandboxEnvironment()
   // Undefine returns a failure if the property is not already set.
   Unused << nsDirectoryService::gService->Undefine(NS_OS_TEMP_DIR);
   rv = nsDirectoryService::gService->Set(NS_OS_TEMP_DIR, sandboxedContentTemp);
+printf("process %u setting temp dir to %p\n", GetCurrentProcessId(), sandboxedContentTemp.get());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
 
   SetTmpEnvironmentVariable(sandboxedContentTemp);
+}
+#else
+/*static*/ void
+ContentProcess::SetUpSandboxEnvironment()
+{
+  // no-op
 }
 #endif
 
@@ -247,9 +255,7 @@ ContentProcess::Init(int aArgc, char* aArgv[])
   mContent.SetProfileDir(profileDir);
 #endif
 
-#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
   SetUpSandboxEnvironment();
-#endif
 
   return true;
 }

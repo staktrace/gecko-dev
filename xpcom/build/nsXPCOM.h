@@ -79,7 +79,7 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
  * logging, and timers will work.
  */
 XPCOM_API(nsresult)
-NS_InitMinimalXPCOM();
+NS_InitMinimalXPCOM(nsIDirectoryServiceProvider* aAppFileLocationProvider);
 
 /**
  * Shutdown XPCOM. You must call this method after you are finished

@@ -1373,6 +1373,7 @@ PrepareChildExceptionTimeAnnotations()
   p = Concat(p, pidBuffer, &charsAvailable);
 
   // Now open the file...
+printf("PID %u writing to file %ws\n", GetCurrentProcessId(), tempPath);
   PlatformWriter apiData;
   OpenAPIData(apiData, tempPath);
 
@@ -3197,6 +3198,7 @@ GetExtraFileForChildPid(uint32_t aPid, nsIFile** aExtraFile)
   nsresult rv;
 
 #if defined(XP_WIN) || defined(XP_MACOSX)
+printf("parent looking in childProcessTmpDir %ws\n", childProcessTmpDir->c_str());
   if (!childProcessTmpDir) {
     return false;
   }
@@ -3310,6 +3312,7 @@ WriteExtraForMinidump(nsIFile* minidump,
   FILE* fd;
   if (pid && GetExtraFileForChildPid(pid, getter_AddRefs(exceptionTimeExtra)) &&
       NS_SUCCEEDED(exceptionTimeExtra->OpenANSIFileDesc("r", &fd))) {
+printf_stderr("pid %u reading extra file for child pid %u\n", GetCurrentProcessId(), pid);
     AnnotationTable exceptionTimeAnnotations;
     ReadAndValidateExceptionTimeAnnotations(fd, exceptionTimeAnnotations);
     fclose(fd);
@@ -3759,6 +3762,7 @@ InitChildProcessTmpDir(nsIFile* aDirOverride)
   nsresult rv = NS_GetSpecialDirectory(NS_OS_TEMP_DIR, getter_AddRefs(tmpDir));
   if (NS_SUCCEEDED(rv)) {
     childProcessTmpDir = CreatePathFromFile(tmpDir);
+printf("childProcessTmpDir in pid %u is %ws\n", GetCurrentProcessId(), childProcessTmpDir->c_str());
   }
 }
 #endif // defined(XP_WIN) || defined(XP_MACOSX)

@@ -60,6 +60,7 @@ static GPUParent* sGPUParent;
 
 GPUParent::GPUParent()
   : mLaunchTime(TimeStamp::Now())
+  , mXREEmbed(/*aMinimal=*/ true)
 {
   sGPUParent = this;
 }
@@ -110,7 +111,8 @@ GPUParent::Init(base::ProcessId aParentPid,
   DeviceManagerDx::Init();
 #endif
 
-  if (NS_FAILED(NS_InitMinimalXPCOM())) {
+  mXREEmbed.Start();
+  if (!mXREEmbed.IsRunning()) {
     return false;
   }
 
@@ -438,6 +440,12 @@ GPUParent::ActorDestroy(ActorDestroyReason aWhy)
   CrashReporterClient::DestroySingleton();
 #endif
   XRE_ShutdownChildProcess();
+}
+
+void
+GPUParent::CleanUp()
+{
+  mXREEmbed.Stop();
 }
 
 } // namespace gfx

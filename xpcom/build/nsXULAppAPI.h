@@ -359,6 +359,15 @@ XRE_API(nsresult,
         XRE_ParseAppData, (nsIFile* aINIFile,
                            mozilla::XREAppData& aAppData))
 
+/*
+ * Sets up a minimal set of embedding data structures needed in the GPU
+ * process. These two functions work similarly to XRE_InitEmbedding2 and
+ * XRE_TermEmbedding, but do less stuff.
+ */
+XRE_API(nsresult, XRE_InitMinimalEmbedding, (nsIFile* aLibXULDirectory))
+XRE_API(void, XRE_TermMinimalEmbedding, ())
+
+
 enum GeckoProcessType
 {
   GeckoProcessType_Default = 0,

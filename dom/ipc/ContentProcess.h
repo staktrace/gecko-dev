@@ -37,6 +37,15 @@ public:
   virtual bool Init(int aArgc, char* aArgv[]) override;
   virtual void CleanUp() override;
 
+  // This updates the temp dir to something that can be accessed from inside
+  // the sandbox. All non-main processes should call this, because at the very
+  // least it will ensure the main process and other processes are in sync with
+  // respect to where .extra files for crash reports end up. This function
+  // will internally be a no-op if sandboxing is not relevant in this build
+  // configuration, so it should be safe to call unconditionally at the call
+  // site.
+  static void SetUpSandboxEnvironment();
+
 private:
   ContentChild mContent;
   mozilla::ipc::ScopedXREEmbed mXREEmbed;
