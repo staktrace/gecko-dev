@@ -17,16 +17,14 @@ namespace ipc {
 class ScopedXREEmbed
 {
 public:
-  explicit ScopedXREEmbed(bool aMinimal = false);
+  ScopedXREEmbed();
   ~ScopedXREEmbed();
 
   void Start();
   void Stop();
-  bool IsRunning() const;
   void SetAppDir(const nsACString& aPath);
 
 private:
-  bool mMinimal;
   bool mShouldKillEmbedding;
   nsCOMPtr<nsIFile> mAppDir;
 };

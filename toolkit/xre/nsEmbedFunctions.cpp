@@ -232,38 +232,6 @@ XRE_ChildProcessTypeToString(GeckoProcessType aProcessType)
     kGeckoProcessTypeString[aProcessType] : "invalid";
 }
 
-nsresult
-XRE_InitMinimalEmbedding(nsIFile* aLibXULDirectory)
-{
-  new nsXREDirProvider; // This sets gDirServiceProvider
-  if (!gDirServiceProvider)
-    return NS_ERROR_OUT_OF_MEMORY;
-
-  nsresult rv = gDirServiceProvider->Initialize(
-      aLibXULDirectory, aLibXULDirectory, nullptr);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  rv = NS_InitMinimalXPCOM(gDirServiceProvider);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  return NS_OK;
-}
-
-void
-XRE_TermMinimalEmbedding()
-{
-  NS_ASSERTION(gDirServiceProvider,
-               "XRE_TermMinimalEmbedding without XRE_InitMinimalEmbedding");
-
-  gDirServiceProvider->DoShutdown();
-  NS_ShutdownXPCOM(nullptr);
-  delete gDirServiceProvider;
-}
-
 namespace mozilla {
 namespace startup {
 GeckoProcessType sChildProcessType = GeckoProcessType_Default;

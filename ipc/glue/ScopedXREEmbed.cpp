@@ -18,9 +18,8 @@
 
 using mozilla::ipc::ScopedXREEmbed;
 
-ScopedXREEmbed::ScopedXREEmbed(bool aMinimal)
-  : mShouldKillEmbedding(false)
-  , mMinimal(aMinimal)
+ScopedXREEmbed::ScopedXREEmbed()
+: mShouldKillEmbedding(false)
 {
   NS_LogInit();
 }
@@ -101,13 +100,10 @@ ScopedXREEmbed::Start()
   }
 #endif
 
-  if (mMinimal) {
-    rv = XRE_InitMinimalEmbedding(localFile);
-  } else if (mAppDir) {
+  if (mAppDir)
     rv = XRE_InitEmbedding2(localFile, mAppDir, nullptr);
-  } else {
+  else
     rv = XRE_InitEmbedding2(localFile, localFile, nullptr);
-  }
   if (NS_FAILED(rv))
     return;
 
@@ -118,17 +114,7 @@ void
 ScopedXREEmbed::Stop()
 {
   if (mShouldKillEmbedding) {
-    if (mMinimal) {
-      XRE_TermMinimalEmbedding();
-    } else {
-      XRE_TermEmbedding();
-    }
+    XRE_TermEmbedding();
     mShouldKillEmbedding = false;
   }
-}
-
-bool
-ScopedXREEmbed::IsRunning() const
-{
-  return mShouldKillEmbedding;
 }

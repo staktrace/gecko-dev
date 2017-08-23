@@ -45,7 +45,7 @@
 
 #undef COMPONENT_SUPPORTS
     COMPONENT(LOCAL_FILE, nsLocalFile::nsLocalFileConstructor)
-    COMPONENT_M(DIRECTORY_SERVICE, nsDirectoryService::Create, Module::ALLOW_IN_GPU_PROCESS)
+    COMPONENT(DIRECTORY_SERVICE, nsDirectoryService::Create)
     COMPONENT(PROCESS, nsProcessConstructor)
     COMPONENT(ENVIRONMENT, nsEnvironment::Create)
 

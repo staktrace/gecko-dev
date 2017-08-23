@@ -8,7 +8,6 @@
 
 #include "mozilla/RefPtr.h"
 #include "mozilla/gfx/PGPUParent.h"
-#include "mozilla/ipc/ScopedXREEmbed.h"
 
 namespace mozilla {
 
@@ -59,7 +58,6 @@ public:
     const MaybeFileDesc& DMDFile) override;
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
-  void CleanUp();
 
 private:
   const TimeStamp mLaunchTime;
@@ -67,7 +65,6 @@ private:
 #ifdef MOZ_GECKO_PROFILER
   RefPtr<ChildProfilerController> mProfilerController;
 #endif
-  mozilla::ipc::ScopedXREEmbed mXREEmbed;
 };
 
 } // namespace gfx

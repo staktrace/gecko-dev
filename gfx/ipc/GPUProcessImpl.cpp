@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "GPUProcessImpl.h"
-#include "mozilla/dom/ContentProcess.h"
 #include "mozilla/ipc/IOThreadChild.h"
 #include "nsXPCOM.h"
 
@@ -34,22 +33,15 @@ GPUProcessImpl::Init(int aArgc, char* aArgv[])
   mozilla::SandboxTarget::Instance()->StartSandbox();
 #endif
 
-  bool initted = mGPU.Init(ParentPid(),
+  return mGPU.Init(ParentPid(),
                    IOThreadChild::message_loop(),
                    IOThreadChild::channel());
-  if (!initted) {
-    return false;
-  }
-
-printf("GPUProcess pid %u setting up sandbox\n", GetCurrentProcessId());
-  mozilla::dom::ContentProcess::SetUpSandboxEnvironment();
-  return true;
 }
 
 void
 GPUProcessImpl::CleanUp()
 {
-  mGPU.CleanUp();
+  NS_ShutdownXPCOM(nullptr);
 }
 
 } // namespace gfx
