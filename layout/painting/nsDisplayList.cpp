@@ -6878,6 +6878,7 @@ nsDisplayStickyPosition::BuildLayer(nsDisplayListBuilder* aBuilder,
   nsRect outer;
   nsRect inner;
   stickyScrollContainer->GetScrollRanges(mFrame, &outer, &inner);
+  printf_stderr("sticky position DI has outer=%s inner=%s\n", Stringify(outer).c_str(), Stringify(inner).c_str());
   LayerRect stickyOuter(NSAppUnitsToFloatPixels(outer.x, factor) *
                           aContainerParameters.mXScale,
                         NSAppUnitsToFloatPixels(outer.y, factor) *
@@ -6894,6 +6895,7 @@ nsDisplayStickyPosition::BuildLayer(nsDisplayListBuilder* aBuilder,
                           aContainerParameters.mXScale,
                         NSAppUnitsToFloatPixels(inner.height, factor) *
                           aContainerParameters.mYScale);
+  printf_stderr("sticky position layer has outer=%s inner=%s\n", Stringify(stickyOuter).c_str(), Stringify(stickyInner).c_str());
   layer->SetStickyPositionData(scrollId, stickyOuter, stickyInner);
 
   return layer.forget();
@@ -6909,6 +6911,73 @@ bool nsDisplayStickyPosition::TryMerge(nsDisplayItem* aItem) {
   if (aItem->GetClipChain() != GetClipChain())
     return false;
   MergeFromTrackingMergedFrames(other);
+  return true;
+}
+
+bool
+nsDisplayStickyPosition::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
+                                                 const StackingContextHelper& aSc,
+                                                 nsTArray<WebRenderParentCommand>& aParentCommands,
+                                                 WebRenderLayerManager* aManager,
+                                                 nsDisplayListBuilder* aDisplayListBuilder)
+{
+  StickyScrollContainer* stickyScrollContainer = StickyScrollContainer::GetStickyScrollContainerForFrame(mFrame);
+  if (stickyScrollContainer) {
+    float auPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
+
+    bool snap;
+    nsRect itemBounds = GetBounds(aDisplayListBuilder, &snap);
+    LayoutDeviceRect bounds = LayoutDeviceRect::FromAppUnits(itemBounds, auPerDevPixel);
+
+    Maybe<wr::StickySideConstraint> top;
+    Maybe<wr::StickySideConstraint> right;
+    Maybe<wr::StickySideConstraint> bottom;
+    Maybe<wr::StickySideConstraint> left;
+
+    nsRect outer;
+    nsRect inner;
+    stickyScrollContainer->GetScrollRanges(mFrame, &outer, &inner);
+    if (outer.x != inner.x) {
+      //right = Some();
+    }
+    if (outer.y != inner.y) {
+      //bottom = Some();
+    }
+    if (outer.XMost() != inner.XMost()) {
+      //left = Some();
+    }
+    if (outer.YMost() != inner.YMost()) {
+      // TODO: the itemBounds we're using here already take into account
+      // the main-thread position:sticky implementation, so we somehow
+      // need to adjust to unaccount for that.
+      float topMargin = NSAppUnitsToFloatPixels(itemBounds.y - inner.YMost(), auPerDevPixel);
+      float maxOffset = NSAppUnitsToFloatPixels(outer.YMost() - inner.YMost(), auPerDevPixel);
+      top = Some(wr::StickySideConstraint { topMargin, maxOffset });
+
+      printf_stderr("outer YMost %f inner YMost %f bounds %f ssc %f %f\n",
+          LayoutDeviceRect::FromAppUnits(outer, auPerDevPixel).YMost(),
+          LayoutDeviceRect::FromAppUnits(inner, auPerDevPixel).YMost(),
+          bounds.y, topMargin, maxOffset);
+    }
+
+    wr::WrClipId id = aBuilder.DefineStickyFrame(aSc.ToRelativeLayoutRect(bounds),
+        top.ptrOr(nullptr), right.ptrOr(nullptr), bottom.ptrOr(nullptr), left.ptrOr(nullptr));
+
+    aBuilder.PushStickyFrame(id);
+  }
+
+  // TODO: if, inside this nested command builder, we try to turn a gecko clip
+  // chain into a WR clip chain, we might end up repushing the clip stack
+  // without `id` which effectively throws out the sticky behaviour. The
+  // repushing can happen because of the need to define a new clip while
+  // particular things are on the stack
+  nsDisplayOwnLayer::CreateWebRenderCommands(aBuilder, aSc,
+      aParentCommands, aManager, aDisplayListBuilder);
+
+  if (stickyScrollContainer) {
+    aBuilder.PopStickyFrame();
+  }
+
   return true;
 }
 

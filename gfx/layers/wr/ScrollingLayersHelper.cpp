@@ -108,6 +108,7 @@ ScrollingLayersHelper::ScrollingLayersHelper(nsDisplayItem* aItem,
     leafmostASR = ActiveScrolledRoot::PickDescendant(leafmostASR,
         aItem->GetClipChain()->mASR);
   }
+  printf_stderr("SLH: DefineAndPushScrollLayers\n");
   DefineAndPushScrollLayers(aItem, leafmostASR,
       aItem->GetClipChain(), aBuilder, auPerDevPixel, aStackingContext, aCache);
 
@@ -116,6 +117,7 @@ ScrollingLayersHelper::ScrollingLayersHelper(nsDisplayItem* aItem,
   // in the above call. This call may be a no-op if the item's ASR got picked
   // as the leaftmostASR previously, because that means these clips were pushed
   // already as being "outside" leafmostASR.
+  printf_stderr("SLH: DefineAndPushChain\n");
   DefineAndPushChain(aItem->GetClipChain(), aBuilder, aStackingContext,
       auPerDevPixel, aCache);
 
@@ -132,6 +134,7 @@ ScrollingLayersHelper::ScrollingLayersHelper(nsDisplayItem* aItem,
     mBuilder->PushClipAndScrollInfo(scrollId, clipId.ptrOr(nullptr));
     mPushedClipAndScroll = true;
   }
+  printf_stderr("SLH: Done\n");
 }
 
 void

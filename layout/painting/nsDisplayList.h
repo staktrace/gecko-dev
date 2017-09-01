@@ -4323,6 +4323,12 @@ public:
     return mozilla::LAYER_ACTIVE;
   }
   virtual bool TryMerge(nsDisplayItem* aItem) override;
+
+  virtual bool CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
+                                       const StackingContextHelper& aSc,
+                                       nsTArray<WebRenderParentCommand>& aParentCommands,
+                                       mozilla::layers::WebRenderLayerManager* aManager,
+                                       nsDisplayListBuilder* aDisplayListBuilder) override;
 };
 
 class nsDisplayFixedPosition : public nsDisplayOwnLayer {
