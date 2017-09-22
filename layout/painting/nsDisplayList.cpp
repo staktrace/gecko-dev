@@ -507,6 +507,7 @@ AddAnimationForProperty(nsIFrame* aFrame, const AnimationProperty& aProperty,
     aPending ?
     aAnimationInfo.AddAnimationForNextTransaction() :
     aAnimationInfo.AddAnimation();
+  printf_stderr("AddAnimationForProperty(%d) creating with id 0x%" PRIx64 " (pending=%d)\n", XRE_IsParentProcess(), aAnimationInfo.GetCompositorAnimationsId(), aPending);
 
   const TimingParams& timing = aAnimation->GetEffect()->SpecifiedTiming();
 
@@ -608,6 +609,7 @@ AddAnimationsForProperty(nsIFrame* aFrame, nsDisplayListBuilder* aBuilder,
                          nsDisplayItem* aItem, nsCSSPropertyID aProperty,
                          AnimationInfo& aAnimationInfo, bool aPending)
 {
+  printf_stderr("AddAnimationsForProperty(%d) clearing with id 0x%" PRIx64 " (pending=%d)\n", XRE_IsParentProcess(), aAnimationInfo.GetCompositorAnimationsId(), aPending);
   if (aPending) {
     aAnimationInfo.ClearAnimationsForNextTransaction();
   } else {
@@ -738,6 +740,7 @@ AddAnimationsForProperty(nsIFrame* aFrame, nsDisplayListBuilder* aBuilder,
     }
 
     AddAnimationForProperty(aFrame, *property, anim, aAnimationInfo, data, aPending);
+    printf_stderr("animation id 0x%" PRIx64 " state is %d (finished %d)\n", aAnimationInfo.GetCompositorAnimationsId(), (int)anim->PlayState(), (int)AnimationPlayState::Finished);
     keyframeEffect->SetIsRunningOnCompositor(aProperty, true);
     sentAnimations = true;
   }
@@ -6271,6 +6274,7 @@ nsDisplayOpacity::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuil
   uint64_t animationsId = animationInfo.GetCompositorAnimationsId();
 
   if (!animationInfo.GetAnimations().IsEmpty()) {
+    printf_stderr("nsDisplayOpacity(%d) adding animation with id 0x%" PRIx64 "\n", XRE_IsParentProcess(), animationsId);
     opacityForSC = nullptr;
     OptionalOpacity opacityForCompositor = mOpacity;
 

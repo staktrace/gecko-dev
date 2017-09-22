@@ -28,6 +28,7 @@ CompositorAnimationStorage::Clear()
 {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
 
+  printf_stderr("CAS clearing everything\n");
   mAnimatedValues.Clear();
   mAnimations.Clear();
 }
@@ -37,6 +38,7 @@ CompositorAnimationStorage::ClearById(const uint64_t& aId)
 {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
 
+  printf_stderr("CAS clearing id 0x%" PRIx64 "\n", aId);
   mAnimatedValues.Remove(aId);
   mAnimations.Remove(aId);
 }
@@ -573,6 +575,7 @@ AnimationHelper::SampleAnimations(CompositorAnimationStorage* aStorage,
     if (!hasInEffectAnimations) {
       continue;
     }
+    printf_stderr("Found an animation in effect, id 0x%" PRIx64 "\n", iter.Key());
 
     // Store the AnimatedValue
     Animation& animation = animations->LastElement();

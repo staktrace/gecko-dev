@@ -1010,6 +1010,7 @@ WebRenderLayerManager::AddActiveCompositorAnimationId(uint64_t aId)
 void
 WebRenderLayerManager::AddCompositorAnimationsIdForDiscard(uint64_t aId)
 {
+    printf_stderr("WRLM(%d) adding 0x%" PRIx64 " for discard\n", XRE_IsParentProcess(), aId);
   if (!IsLayersFreeTransaction()) {
     // For layers-full we don't track the active animation id in
     // mActiveCompositorAnimationIds, we just call this on layer destruction and
@@ -1028,6 +1029,7 @@ WebRenderLayerManager::DiscardCompositorAnimations()
 {
   if (WrBridge()->IPCOpen() &&
       !mDiscardedCompositorAnimationsIds.IsEmpty()) {
+    printf_stderr("WRLM(%d) discarding animations\n", XRE_IsParentProcess());
     WrBridge()->
       SendDeleteCompositorAnimations(mDiscardedCompositorAnimationsIds);
   }

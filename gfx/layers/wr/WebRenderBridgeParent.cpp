@@ -413,9 +413,11 @@ WebRenderBridgeParent::RecvDeleteCompositorAnimations(InfallibleTArray<uint64_t>
   }
 
   for (uint32_t i = 0; i < aIds.Length(); i++) {
+    printf_stderr("WRBP trying erase of id 0x%" PRIx64 "\n", aIds[i]);
     if (mActiveAnimations.erase(aIds[i]) > 0) {
       mAnimStorage->ClearById(aIds[i]);
     } else {
+        printf_stderr("!!! WRBP tried to delete invalid animation 0x%" PRIx64 "\n", aIds[i]);
       NS_ERROR("Tried to delete invalid animation");
     }
   }
@@ -643,6 +645,7 @@ WebRenderBridgeParent::ProcessWebRenderParentCommands(const InfallibleTArray<Web
         const OpAddCompositorAnimations& op = cmd.get_OpAddCompositorAnimations();
         CompositorAnimations data(Move(op.data()));
         if (data.animations().Length()) {
+            printf_stderr("WRBP adding animation with id 0x%" PRIx64 "\n", data.id());
           mAnimStorage->SetAnimations(data.id(), data.animations());
           mActiveAnimations.insert(data.id());
           // Store the default opacity
@@ -1095,10 +1098,12 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
 
   SampleAnimations(opacityArray, transformArray);
   if (!transformArray.IsEmpty() || !opacityArray.IsEmpty()) {
+      printf_stderr("scheduleComposite from %d %d\n", !transformArray.IsEmpty(), !opacityArray.IsEmpty());
     scheduleComposite = true;
   }
 
   if (PushAPZStateToWR(transformArray)) {
+      printf_stderr("scheduleComposite from APZ\n");
     scheduleComposite = true;
   }
 
@@ -1116,6 +1121,7 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
   }
 
   if (!mAsyncImageManager->GetCompositeUntilTime().IsNull()) {
+      printf_stderr("scheduleComposite from image manager\n");
     scheduleComposite = true;
   }
 

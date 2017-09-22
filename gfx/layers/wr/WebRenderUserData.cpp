@@ -228,6 +228,7 @@ WebRenderAnimationData::~WebRenderAnimationData()
   uint64_t animationId = mAnimationInfo.GetCompositorAnimationsId();
   // animationId might be 0 if mAnimationInfo never held any active animations.
   if (animationId) {
+      printf_stderr("WebRenderAnimationData adding id 0x%" PRIx64 " for discard\n", animationId);
     mWRManager->AddCompositorAnimationsIdForDiscard(animationId);
   }
 }
