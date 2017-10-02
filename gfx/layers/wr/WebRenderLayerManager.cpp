@@ -747,6 +747,7 @@ WebRenderLayerManager::EndTransactionInternal(DrawPaintedLayerCallback aCallback
                                               nsDisplayList* aDisplayList,
                                               nsDisplayListBuilder* aDisplayListBuilder)
 {
+    printf_stderr("EndTransactionInternal\n");
   AutoProfilerTracing tracing("Paint", "RenderLayers");
   mPaintedLayerCallback = aCallback;
   mPaintedLayerCallbackData = aCallbackData;

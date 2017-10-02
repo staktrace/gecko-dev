@@ -93,6 +93,7 @@ def _collect(pipe, poll_interval):
 
     sleep_interval = poll_interval
 
+    print "sleep_interval %s" % sleep_interval
     while not pipe.poll(sleep_interval):
         io = get_disk_io_counters()
         cpu_times = psutil.cpu_times(True)
@@ -124,6 +125,7 @@ def _collect(pipe, poll_interval):
         collection_overhead = time.time() - last_time - poll_interval
         last_time = measured_end_time
         sleep_interval = max(0, poll_interval - collection_overhead)
+        print "sleep_interval %s" % sleep_interval
 
     for entry in data:
         pipe.send(entry)

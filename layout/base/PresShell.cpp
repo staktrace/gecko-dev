@@ -6347,7 +6347,10 @@ PresShell::Paint(nsView*         aViewToPaint,
       if (layerManager->EndEmptyTransaction()) {
         return;
       }
+      printf_stderr("%d not paint layers failed empty\n", XRE_IsContentProcess());
       NS_WARNING("Must complete empty transaction when compositing!");
+    } else {
+      printf_stderr("%d need to paint layers\n", XRE_IsContentProcess());
     }
 
     if (!(aFlags & PAINT_SYNC_DECODE_IMAGES) &&
