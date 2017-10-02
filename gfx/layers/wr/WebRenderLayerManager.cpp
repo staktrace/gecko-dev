@@ -184,7 +184,11 @@ bool
 WebRenderLayerManager::EndEmptyTransaction(EndTransactionFlags aFlags)
 {
   if (!mRoot) {
-    return false;
+    // In layers-free mode, we never allow calls to set "pending data" for
+    // empty transactions. Any place that attempts to do so will get failure
+    // return values back, and will fall back to a full transaction. Therefore
+    // all empty transactions should be a no-op by definition.
+    return true;
   }
 
   // We might used painted layer images so don't delete them yet.
@@ -1283,6 +1287,15 @@ already_AddRefed<DisplayItemLayer>
 WebRenderLayerManager::CreateDisplayItemLayer()
 {
   return MakeAndAddRef<WebRenderDisplayItemLayer>(this);
+}
+
+bool
+WebRenderLayerManager::SetPendingScrollUpdateForNextTransaction(FrameMetrics::ViewID aScrollId,
+                                                                const ScrollUpdateInfo& aUpdateInfo)
+{
+  // If we ever support changing the scroll position in an "empty transactions"
+  // properly in WR we can fill this in. Covered by bug 1382259.
+  return false;
 }
 
 } // namespace layers
