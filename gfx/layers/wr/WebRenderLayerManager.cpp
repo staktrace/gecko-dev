@@ -181,6 +181,15 @@ WebRenderLayerManager::EndEmptyTransaction(EndTransactionFlags aFlags)
   // of "pending" information we need to send in an empty transaction is the
   // APZ focus state.
   WrBridge()->SendSetFocusTarget(mFocusTarget);
+
+  // We also need to update canvases that might have changed, but this code
+  // as-is causes crashes so comment it out for now.
+  //for (auto iter = mLastCanvasDatas.Iter(); !iter.Done(); iter.Next()) {
+  //  RefPtr<WebRenderCanvasData> canvasData = iter.Get()->GetKey();
+  //  WebRenderCanvasRendererAsync* canvas = canvasData->GetCanvasRenderer();
+  //  canvas->UpdateCompositableClient();
+  //}
+
   return true;
 }
 
@@ -357,17 +366,6 @@ WebRenderLayerManager::CreateWebRenderCommandsFromDisplayList(nsDisplayList* aDi
     MOZ_ASSERT(!mLayerScrollData.empty());
     mLayerScrollData.back().AddEventRegions(eventRegions);
   }
-}
-
-void
-WebRenderLayerManager::EndTransactionWithoutLayer(nsDisplayList* aDisplayList,
-                                                  nsDisplayListBuilder* aDisplayListBuilder)
-{
-  MOZ_ASSERT(aDisplayList && aDisplayListBuilder);
-  WrBridge()->RemoveExpiredFontKeys();
-  EndTransactionInternal(EndTransactionFlags::END_DEFAULT,
-                         aDisplayList,
-                         aDisplayListBuilder);
 }
 
 Maybe<wr::ImageKey>
@@ -711,11 +709,13 @@ WebRenderLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
   MOZ_ASSERT(false);
 }
 
-bool
-WebRenderLayerManager::EndTransactionInternal(EndTransactionFlags aFlags,
-                                              nsDisplayList* aDisplayList,
-                                              nsDisplayListBuilder* aDisplayListBuilder)
+void
+WebRenderLayerManager::EndTransactionWithoutLayer(nsDisplayList* aDisplayList,
+                                                  nsDisplayListBuilder* aDisplayListBuilder)
 {
+  MOZ_ASSERT(aDisplayList && aDisplayListBuilder);
+  WrBridge()->RemoveExpiredFontKeys();
+
   AutoProfilerTracing tracing("Paint", "RenderLayers");
   mTransactionIncomplete = false;
 
@@ -728,7 +728,7 @@ WebRenderLayerManager::EndTransactionInternal(EndTransactionFlags aFlags,
 
   LayoutDeviceIntSize size = mWidget->GetClientSize();
   if (!WrBridge()->BeginTransaction(size.ToUnknownSize())) {
-    return false;
+    return;
   }
   DiscardCompositorAnimations();
 
@@ -736,10 +736,8 @@ WebRenderLayerManager::EndTransactionInternal(EndTransactionFlags aFlags,
   wr::DisplayListBuilder builder(WrBridge()->GetPipeline(), contentSize);
   wr::IpcResourceUpdateQueue resourceUpdates(WrBridge()->GetShmemAllocator());
 
-  // aDisplayList being null here means this is an empty transaction following a layers-free
-  // transaction, so we reuse the previously built displaylist and scroll
-  // metadata information
-  if (aDisplayList && aDisplayListBuilder) {
+  { // scoping for StackingContextHelper RAII
+
     StackingContextHelper sc;
     mParentCommands.Clear();
     mScrollData = WebRenderScrollData();
@@ -780,12 +778,6 @@ WebRenderLayerManager::EndTransactionInternal(EndTransactionFlags aFlags,
     // Remove the user data those are not displayed on the screen and
     // also reset the data to unused for next transaction.
     RemoveUnusedAndResetWebRenderUserData();
-  } else {
-    for (auto iter = mLastCanvasDatas.Iter(); !iter.Done(); iter.Next()) {
-      RefPtr<WebRenderCanvasData> canvasData = iter.Get()->GetKey();
-      WebRenderCanvasRendererAsync* canvas = canvasData->GetCanvasRenderer();
-      canvas->UpdateCompositableClient();
-    }
   }
 
   builder.PushBuiltDisplayList(mBuiltDisplayList);
@@ -800,7 +792,7 @@ WebRenderLayerManager::EndTransactionInternal(EndTransactionFlags aFlags,
   if (mTransactionIncomplete) {
     DiscardLocalImages();
     WrBridge()->ProcessWebRenderParentCommands();
-    return false;
+    return;
   }
 
   if (AsyncPanZoomEnabled()) {
@@ -843,8 +835,6 @@ WebRenderLayerManager::EndTransactionInternal(EndTransactionFlags aFlags,
   mNeedsComposite = false;
 
   ClearDisplayItemLayers();
-
-  return true;
 }
 
 void
