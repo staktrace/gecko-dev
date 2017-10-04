@@ -377,6 +377,18 @@ struct IdNamespace {
 
 typedef IdNamespace WrIdNamespace;
 
+struct TypedPoint2D_f32__WorldPixel {
+  float x;
+  float y;
+
+  bool operator==(const TypedPoint2D_f32__WorldPixel& aOther) const {
+    return x == aOther.x &&
+           y == aOther.y;
+  }
+};
+
+typedef TypedPoint2D_f32__WorldPixel WorldPoint;
+
 // Represents RGBA screen colors with floating point numbers.
 // 
 // All components must be between 0.0 and 1.0.
@@ -869,6 +881,14 @@ WR_FUNC;
 
 WR_INLINE
 WrIdNamespace wr_api_get_namespace(DocumentHandle *aDh)
+WR_FUNC;
+
+WR_INLINE
+bool wr_api_hit_test(DocumentHandle *aDh,
+                     WorldPoint aPoint,
+                     WrPipelineId *aOutPipelineId,
+                     uint64_t *aOutScrollId,
+                     uint8_t *aOutAuxData)
 WR_FUNC;
 
 WR_INLINE

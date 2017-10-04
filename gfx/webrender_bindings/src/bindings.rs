@@ -1718,6 +1718,23 @@ pub unsafe extern "C" fn wr_api_finalize_builder(state: &mut WrState,
     *dl_descriptor = descriptor;
 }
 
+#[no_mangle]
+pub extern "C" fn wr_api_hit_test(dh: &mut DocumentHandle,
+                                  point: WorldPoint,
+                                  out_pipeline_id: &mut WrPipelineId,
+                                  out_scroll_id: &mut u64,
+                                  out_aux_data: &mut u8) -> bool {
+    let mut result = dh.api.hit_test(dh.document_id, None, point, HitTestFlags::empty());
+    debug_assert!(result.items.len() <= 1);
+    if let Some(item) = result.items.pop() {
+        *out_pipeline_id = item.pipeline;
+        *out_scroll_id = item.tag.0;
+        *out_aux_data = item.tag.1;
+        return true;
+    }
+    return false;
+}
+
 pub type VecU8 = Vec<u8>;
 pub type ArcVecU8 = Arc<VecU8>;
 

@@ -135,6 +135,10 @@ public:
   void UpdateScrollPosition(const wr::WrPipelineId& aPipelineId,
                             const layers::FrameMetrics::ViewID& aScrollId,
                             const wr::LayoutPoint& aScrollPosition);
+  bool HitTest(const wr::WorldPoint& aPoint,
+               wr::WrPipelineId& aOutPipelineId,
+               layers::FrameMetrics::ViewID& aOutScrollId,
+               wr::HitTestAuxData& aOutAuxData);
 
   void GenerateFrame();
   void GenerateFrame(const nsTArray<wr::WrOpacityProperty>& aOpacityArray,
