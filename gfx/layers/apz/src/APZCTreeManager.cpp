@@ -2163,13 +2163,43 @@ APZCTreeManager::GetTargetAPZC(const ScreenPoint& aPoint,
                                HitTestResult* aOutHitResult,
                                RefPtr<HitTestingTreeNode>* aOutScrollbarNode)
 {
-  MutexAutoLock lock(mTreeLock);
   HitTestResult hitResult = HitNothing;
   HitTestingTreeNode* scrollbarNode = nullptr;
-  ParentLayerPoint point = ViewAs<ParentLayerPixel>(aPoint,
-    PixelCastJustification::ScreenIsParentLayerForRoot);
-  RefPtr<AsyncPanZoomController> target = GetAPZCAtPoint(mRootNode, point,
-      &hitResult, &scrollbarNode);
+  RefPtr<AsyncPanZoomController> target;
+
+  if (RefPtr<wr::WebRenderAPI> wr = GetWebRenderAPI()) {
+    wr::WrPipelineId pipelineId;
+    FrameMetrics::ViewID scrollId;
+    wr::HitTestAuxData auxData;
+    bool hitSomething = wr->HitTest(wr::ToWorldPoint(aPoint),
+        pipelineId, scrollId, auxData);
+    if (hitSomething) {
+      uint64_t layersId = wr::AsUint64(pipelineId);
+      target = GetTargetAPZC(layersId, scrollId);
+      int panXY = wr::HitTestAuxData::eTouchActionPanX
+                | wr::HitTestAuxData::eTouchActionPanY;
+      if (auxData & wr::HitTestAuxData::eDispatchToContent) {
+        hitResult = HitDispatchToContentRegion;
+      } else if ((auxData & panXY) == panXY) {
+        hitResult = HitLayerTouchActionPanXY;
+      } else if (auxData & wr::HitTestAuxData::eTouchActionPanX) {
+        hitResult = HitLayerTouchActionPanX;
+      } else if (auxData & wr::HitTestAuxData::eTouchActionPanY) {
+        hitResult = HitLayerTouchActionPanY;
+      } else if (auxData & wr::HitTestAuxData::eTouchActionNone) {
+        hitResult = HitLayerTouchActionNone;
+      } else {
+        hitResult = HitLayer;
+      }
+
+      // TODO: scrollbar stuff
+    }
+  } else {
+    MutexAutoLock lock(mTreeLock);
+    ParentLayerPoint point = ViewAs<ParentLayerPixel>(aPoint,
+      PixelCastJustification::ScreenIsParentLayerForRoot);
+    target = GetAPZCAtPoint(mRootNode, point, &hitResult, &scrollbarNode);
+  }
 
   if (aOutHitResult) {
     *aOutHitResult = hitResult;
