@@ -256,6 +256,15 @@ static inline wr::LayoutPoint ToLayoutPoint(const gfx::PointTyped<T>& point)
 }
 
 template<class T>
+static inline wr::WorldPoint ToWorldPoint(const gfx::PointTyped<T>& point)
+{
+  wr::WorldPoint p;
+  p.x = point.x;
+  p.y = point.y;
+  return p;
+}
+
+template<class T>
 static inline wr::LayoutPoint ToLayoutPoint(const gfx::IntPointTyped<T>& point)
 {
   return ToLayoutPoint(IntPointToPoint(point));
