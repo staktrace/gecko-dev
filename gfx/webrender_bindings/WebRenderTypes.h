@@ -757,6 +757,15 @@ enum class WebRenderError : int8_t {
   Sentinel /* this must be last for serialization purposes. */
 };
 
+enum HitTestAuxData : uint8_t {
+  eScrollbar = 1 << 0,
+  eScrollThumb = 1 << 1,
+  eTouchActionNone = 1 << 2,
+  eTouchActionPanX = 1 << 3,
+  eTouchActionPanY = 1 << 4,
+  eDispatchToContent = 1 << 5,
+};
+
 } // namespace wr
 } // namespace mozilla
 
