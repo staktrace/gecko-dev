@@ -1191,19 +1191,48 @@ pub extern "C" fn wr_dp_pop_stacking_context(state: &mut WrState) {
     state.frame_builder.dl_builder.pop_stacking_context();
 }
 
+fn make_scroll_info(state: &mut WrState,
+                    scroll_id: Option<&u64>,
+                    clip_id: Option<&u64>)
+                    -> Option<ClipAndScrollInfo> {
+    if let Some(&sid) = scroll_id {
+        if let Some(&cid) = clip_id {
+            Some(ClipAndScrollInfo::new(
+                ClipId::new(sid, state.pipeline_id),
+                ClipId::Clip(cid, 0, state.pipeline_id)))
+        } else {
+            Some(ClipAndScrollInfo::simple(
+                ClipId::new(sid, state.pipeline_id)))
+        }
+    } else {
+        None
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn wr_dp_define_clip(state: &mut WrState,
+                                    scroll_id: *const u64,
+                                    parent_id: *const u64,
                                     clip_rect: LayoutRect,
                                     complex: *const ComplexClipRegion,
                                     complex_count: usize,
                                     mask: *const WrImageMask)
                                     -> u64 {
     debug_assert!(unsafe { is_in_main_thread() });
+
+    let info = make_scroll_info(state,
+                                unsafe { scroll_id.as_ref() },
+                                unsafe { parent_id.as_ref() });
+
     let complex_slice = make_slice(complex, complex_count);
     let complex_iter = complex_slice.iter().cloned();
     let mask : Option<ImageMask> = unsafe { mask.as_ref() }.map(|x| x.into());
 
-    let clip_id = state.frame_builder.dl_builder.define_clip(None, clip_rect, complex_iter, mask);
+    let clip_id = if info.is_some() {
+        state.frame_builder.dl_builder.define_clip_with_scrollinfo(None, info.unwrap(), clip_rect, complex_iter, mask)
+    } else {
+        state.frame_builder.dl_builder.define_clip(None, clip_rect, complex_iter, mask)
+    };
     // return the u64 id value from inside the ClipId::Clip(..)
     match clip_id {
         ClipId::Clip(id, nesting_index, pipeline_id) => {
@@ -1256,13 +1285,23 @@ pub extern "C" fn wr_dp_define_sticky_frame(state: &mut WrState,
 #[no_mangle]
 pub extern "C" fn wr_dp_define_scroll_layer(state: &mut WrState,
                                             scroll_id: u64,
+                                            parent_id: *const u64,
                                             content_rect: LayoutRect,
                                             clip_rect: LayoutRect) {
     assert!(unsafe { is_in_main_thread() });
+
+    let info = make_scroll_info(state, unsafe { parent_id.as_ref() }, None);
+
     let clip_id = ClipId::new(scroll_id, state.pipeline_id);
-    state.frame_builder.dl_builder.define_scroll_frame(
-        Some(clip_id), content_rect, clip_rect, vec![], None,
-        ScrollSensitivity::Script);
+    if info.is_some() {
+        state.frame_builder.dl_builder.define_scroll_frame_with_scrollinfo(
+            Some(clip_id), info.unwrap(), content_rect, clip_rect, vec![], None,
+            ScrollSensitivity::Script);
+    } else {
+        state.frame_builder.dl_builder.define_scroll_frame(
+            Some(clip_id), content_rect, clip_rect, vec![], None,
+            ScrollSensitivity::Script);
+    };
 }
 
 #[no_mangle]
@@ -1294,15 +1333,9 @@ pub extern "C" fn wr_dp_push_clip_and_scroll_info(state: &mut WrState,
                                                   scroll_id: u64,
                                                   clip_id: *const u64) {
     debug_assert!(unsafe { is_in_main_thread() });
-    let scroll_id = ClipId::new(scroll_id, state.pipeline_id);
-    let info = if let Some(&id) = unsafe { clip_id.as_ref() } {
-        ClipAndScrollInfo::new(
-            scroll_id,
-            ClipId::Clip(id, 0, state.pipeline_id))
-    } else {
-        ClipAndScrollInfo::simple(scroll_id)
-    };
-    state.frame_builder.dl_builder.push_clip_and_scroll_info(info);
+    let info = make_scroll_info(state, Some(&scroll_id), unsafe { clip_id.as_ref() });
+    debug_assert!(info.is_some());
+    state.frame_builder.dl_builder.push_clip_and_scroll_info(info.unwrap());
 }
 
 #[no_mangle]

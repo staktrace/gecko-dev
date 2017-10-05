@@ -683,11 +683,19 @@ DisplayListBuilder::PopStackingContext()
 }
 
 wr::WrClipId
-DisplayListBuilder::DefineClip(const wr::LayoutRect& aClipRect,
+DisplayListBuilder::DefineClip(const Maybe<layers::FrameMetrics::ViewID>& aScrollId,
+                               const Maybe<wr::WrClipId>& aParentId,
+                               const wr::LayoutRect& aClipRect,
                                const nsTArray<wr::ComplexClipRegion>* aComplex,
                                const wr::WrImageMask* aMask)
 {
-  uint64_t clip_id = wr_dp_define_clip(mWrState, aClipRect,
+  const uint64_t* parentId = nullptr;
+  if (aParentId) {
+    parentId = &(aParentId.ref().id);
+  }
+  uint64_t clip_id = wr_dp_define_clip(mWrState,
+      aScrollId.ptrOr(nullptr), parentId,
+      aClipRect,
       aComplex ? aComplex->Elements() : nullptr,
       aComplex ? aComplex->Length() : 0,
       aMask);
@@ -762,6 +770,7 @@ DisplayListBuilder::IsScrollLayerDefined(layers::FrameMetrics::ViewID aScrollId)
 
 void
 DisplayListBuilder::DefineScrollLayer(const layers::FrameMetrics::ViewID& aScrollId,
+                                      const Maybe<layers::FrameMetrics::ViewID>& aParentId,
                                       const wr::LayoutRect& aContentRect,
                                       const wr::LayoutRect& aClipRect)
 {
@@ -774,7 +783,7 @@ DisplayListBuilder::DefineScrollLayer(const layers::FrameMetrics::ViewID& aScrol
   if (it.second) {
     // An insertion took place, which means we haven't defined aScrollId before.
     // So let's define it now.
-    wr_dp_define_scroll_layer(mWrState, aScrollId, aContentRect, aClipRect);
+    wr_dp_define_scroll_layer(mWrState, aScrollId, aParentId.ptrOr(nullptr), aContentRect, aClipRect);
   } else {
     // aScrollId was already a key in mScrollParents so check that the parent
     // value is the same.
