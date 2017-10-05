@@ -683,11 +683,19 @@ DisplayListBuilder::PopStackingContext()
 }
 
 wr::WrClipId
-DisplayListBuilder::DefineClip(const wr::LayoutRect& aClipRect,
+DisplayListBuilder::DefineClip(const Maybe<layers::FrameMetrics::ViewID>& aAncestorScrollId,
+                               const Maybe<wr::WrClipId>& aAncestorClipId,
+                               const wr::LayoutRect& aClipRect,
                                const nsTArray<wr::ComplexClipRegion>* aComplex,
                                const wr::WrImageMask* aMask)
 {
-  uint64_t clip_id = wr_dp_define_clip(mWrState, aClipRect,
+  const uint64_t* ancestorClipId = nullptr;
+  if (aAncestorClipId) {
+    ancestorClipId = &(aAncestorClipId.ref().id);
+  }
+  uint64_t clip_id = wr_dp_define_clip(mWrState,
+      aAncestorScrollId.ptrOr(nullptr), ancestorClipId,
+      aClipRect,
       aComplex ? aComplex->Elements() : nullptr,
       aComplex ? aComplex->Length() : 0,
       aMask);
@@ -762,6 +770,8 @@ DisplayListBuilder::IsScrollLayerDefined(layers::FrameMetrics::ViewID aScrollId)
 
 void
 DisplayListBuilder::DefineScrollLayer(const layers::FrameMetrics::ViewID& aScrollId,
+                                      const Maybe<layers::FrameMetrics::ViewID>& aAncestorScrollId,
+                                      const Maybe<wr::WrClipId>& aAncestorClipId,
                                       const wr::LayoutRect& aContentRect,
                                       const wr::LayoutRect& aClipRect)
 {
@@ -774,7 +784,12 @@ DisplayListBuilder::DefineScrollLayer(const layers::FrameMetrics::ViewID& aScrol
   if (it.second) {
     // An insertion took place, which means we haven't defined aScrollId before.
     // So let's define it now.
-    wr_dp_define_scroll_layer(mWrState, aScrollId, aContentRect, aClipRect);
+    const uint64_t* ancestorClipId = nullptr;
+    if (aAncestorClipId) {
+      ancestorClipId = &(aAncestorClipId.ref().id);
+    }
+    wr_dp_define_scroll_layer(mWrState, aScrollId, aAncestorScrollId.ptrOr(nullptr),
+        ancestorClipId, aContentRect, aClipRect);
   } else {
     // aScrollId was already a key in mScrollParents so check that the parent
     // value is the same.
