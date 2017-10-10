@@ -33,6 +33,17 @@ public:
   ~ScrollingLayersHelper();
 
 private:
+  Maybe<FrameMetrics::ViewID>
+  DefineScrollChain(nsDisplayItem* aItem,
+                    const ActiveScrolledRoot* aAsr,
+                    const StackingContextHelper& aStackingContext);
+  Maybe<wr::WrClipId>
+  DefineClipChain(nsDisplayItem* aItem,
+                  const DisplayItemClipChain* aChain,
+                  int32_t aAppUnitsPerDevPixel,
+                  const StackingContextHelper& aStackingContext,
+                  WebRenderCommandBuilder::ClipIdMap& aCache);
+
   void DefineAndPushScrollLayers(nsDisplayItem* aItem,
                                  const ActiveScrolledRoot* aAsr,
                                  const DisplayItemClipChain* aChain,

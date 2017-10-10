@@ -68,6 +68,100 @@ ScrollingLayersHelper::ScrollingLayersHelper(nsDisplayItem* aItem,
   }
 }
 
+Maybe<FrameMetrics::ViewID>
+ScrollingLayersHelper::DefineScrollChain(nsDisplayItem* aItem,
+                                         const ActiveScrolledRoot* aAsr,
+                                         const StackingContextHelper& aStackingContext)
+{
+  if (!aAsr) {
+    return Some(FrameMetrics::NULL_SCROLL_ID);
+  }
+  FrameMetrics::ViewID scrollId = nsLayoutUtils::ViewIDForASR(aAsr);
+  if (mBuilder->IsScrollLayerDefined(scrollId)) {
+    return Some(scrollId);
+  }
+
+  // Recurse to define the parent chain
+  Maybe<FrameMetrics::ViewID> parentId = DefineScrollChain(aItem,
+          aAsr->mParent, aStackingContext);
+
+  Maybe<ScrollMetadata> metadata = aAsr->mScrollableFrame->ComputeScrollMetadata(
+      nullptr, aItem->ReferenceFrame(), ContainerLayerParameters(), nullptr);
+  MOZ_ASSERT(metadata);
+  FrameMetrics& metrics = metadata->GetMetrics();
+  if (!metrics.IsScrollable()) {
+    // If this metadata is not scrollable, skip over it in the chain
+    return parentId;
+  }
+
+  // If we get here, we need to define the scrolling clip because it hasn't
+  // been defined yet.
+  LayerRect contentRect = ViewAs<LayerPixel>(
+      metrics.GetExpandedScrollableRect() * metrics.GetDevPixelsPerCSSPixel(),
+      PixelCastJustification::WebRenderHasUnitResolution);
+  // TODO: check coordinate systems are sane here
+  LayerRect clipBounds = ViewAs<LayerPixel>(
+      metrics.GetCompositionBounds(),
+      PixelCastJustification::MovingDownToChildren);
+  // The content rect that we hand to DefineScrollLayer should be relative to
+  // the same origin as the clipBounds that we hand to DefineScrollLayer - that
+  // is, both of them should be relative to the stacking context `aStackingContext`.
+  // However, when we get the scrollable rect from the FrameMetrics, the origin
+  // has nothing to do with the position of the frame but instead represents
+  // the minimum allowed scroll offset of the scrollable content. While APZ
+  // uses this to clamp the scroll position, we don't need to send this to
+  // WebRender at all. Instead, we take the position from the composition
+  // bounds.
+  contentRect.MoveTo(clipBounds.TopLeft());
+  mBuilder->DefineScrollLayer(scrollId, parentId,
+      aStackingContext.ToRelativeLayoutRect(contentRect),
+      aStackingContext.ToRelativeLayoutRect(clipBounds));
+  return Some(scrollId);
+}
+
+Maybe<wr::WrClipId>
+ScrollingLayersHelper::DefineClipChain(nsDisplayItem* aItem,
+                                       const DisplayItemClipChain* aChain,
+                                       int32_t aAppUnitsPerDevPixel,
+                                       const StackingContextHelper& aStackingContext,
+                                       WebRenderCommandBuilder::ClipIdMap& aCache)
+{
+  if (!aChain) {
+    return Nothing();
+  }
+  auto it = aCache.find(aChain);
+  if (it != aCache.end()) {
+    return Some(it->second);
+  }
+
+  Maybe<wr::WrClipId> parentId = DefineClipChain(aItem, aChain->mParent,
+          aAppUnitsPerDevPixel, aStackingContext, aCache);
+
+  if (!aChain->mClip.HasClip()) {
+    // This item in the chain is a no-op, skip over it
+    return parentId;
+  }
+
+  // This call should not actually define any new scroll layers since we
+  // will have already defined them when we called DefineScrollChain on the
+  // leafmost ASR in the ScrollingLayersHelper constructor. We're just using
+  // this to get the scrollId.
+  Maybe<FrameMetrics::ViewID> scrollId = DefineScrollChain(aItem,
+      aChain->mASR, aStackingContext);
+
+  LayoutDeviceRect clip = LayoutDeviceRect::FromAppUnits(
+      aChain->mClip.GetClipRect(), aAppUnitsPerDevPixel);
+  nsTArray<wr::ComplexClipRegion> wrRoundedRects;
+  aChain->mClip.ToComplexClipRegions(aAppUnitsPerDevPixel, aStackingContext, wrRoundedRects);
+
+  wr::WrClipId clipId = mBuilder->DefineClip(scrollId, parentId,
+          aStackingContext.ToRelativeLayoutRect(clip), &wrRoundedRects);
+
+  aCache[aChain] = clipId;
+  return Some(clipId);
+}
+
+
 void
 ScrollingLayersHelper::DefineAndPushScrollLayers(nsDisplayItem* aItem,
                                                  const ActiveScrolledRoot* aAsr,
