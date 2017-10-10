@@ -12,8 +12,8 @@
 #include "mozilla/widget/CompositorWidget.h"
 #include "mozilla/layers/SynchronousTask.h"
 
-#define WRDL_LOG(...)
-//#define WRDL_LOG(...) printf_stderr("WRDL(%p): " __VA_ARGS__)
+//#define WRDL_LOG(...)
+#define WRDL_LOG(...) if (XRE_IsContentProcess()) printf_stderr("WRDL(%p): " __VA_ARGS__)
 
 namespace mozilla {
 namespace wr {
@@ -698,8 +698,11 @@ DisplayListBuilder::DefineClip(const Maybe<layers::FrameMetrics::ViewID>& aScrol
       aComplex ? aComplex->Elements() : nullptr,
       aComplex ? aComplex->Length() : 0,
       aMask);
-  WRDL_LOG("DefineClip id=%" PRIu64 " r=%s m=%p b=%s complex=%zu\n", mWrState,
-      clip_id, Stringify(aClipRect).c_str(), aMask,
+  WRDL_LOG("DefineClip id=%" PRIu64 " s=%s p=%s r=%s m=%p b=%s complex=%zu\n", mWrState,
+      clip_id,
+      aScrollId ? Stringify(aScrollId.ref()).c_str() : "(nil)",
+      aParentId ? Stringify(*parentId).c_str() : "(nil)",
+      Stringify(aClipRect).c_str(), aMask,
       aMask ? Stringify(aMask->rect).c_str() : "none",
       aComplex ? aComplex->Length() : 0);
   return wr::WrClipId { clip_id };
@@ -779,8 +782,9 @@ DisplayListBuilder::DefineScrollLayer(const layers::FrameMetrics::ViewID& aScrol
                                       const wr::LayoutRect& aContentRect,
                                       const wr::LayoutRect& aClipRect)
 {
-  WRDL_LOG("DefineScrollLayer id=%" PRIu64 " co=%s cl=%s\n", mWrState,
-      aScrollId, Stringify(aContentRect).c_str(), Stringify(aClipRect).c_str());
+  WRDL_LOG("DefineScrollLayer id=%" PRIu64 " p=%s co=%s cl=%s\n", mWrState,
+      aScrollId, aParentId ? Stringify(aParentId.ref()).c_str() : "(nil)",
+      Stringify(aContentRect).c_str(), Stringify(aClipRect).c_str());
 
   MOZ_ASSERT(!IsScrollLayerDefined(aScrollId));
   wr_dp_define_scroll_layer(mWrState, aScrollId, aParentId.ptrOr(nullptr), aContentRect, aClipRect);
