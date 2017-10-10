@@ -92,16 +92,28 @@ ScrollingLayersHelper::DefineClipChain(nsDisplayItem* aItem,
   // invariants: PickDescendant(aChain->mASR, aAsr) == aAsr
 
   if (aChain && aChain->mASR == aAsr) {
-    auto it = aCache.find(aChain);
-    if (it != aCache.end()) {
-      // If we've already defined this clip before, we can early-exit
-      if (aAsr) {
-        FrameMetrics::ViewID scrollId = nsLayoutUtils::ViewIDForASR(aAsr);
-        MOZ_ASSERT(mBuilder->IsScrollLayerDefined(scrollId));
-        ids.first = Some(scrollId);
+    if (mBuilder->HasMaskClip()) {
+      ids.second = mBuilder->GetCacheOverride(aChain);
+      if (ids.second) {
+        if (aAsr) {
+          FrameMetrics::ViewID scrollId = nsLayoutUtils::ViewIDForASR(aAsr);
+          MOZ_ASSERT(mBuilder->IsScrollLayerDefined(scrollId));
+          ids.first = Some(scrollId);
+        }
+        return ids;
       }
-      ids.second = Some(it->second);
-      return ids;
+    } else {
+      auto it = aCache.find(aChain);
+      if (it != aCache.end()) {
+        // If we've already defined this clip before, we can early-exit
+        if (aAsr) {
+          FrameMetrics::ViewID scrollId = nsLayoutUtils::ViewIDForASR(aAsr);
+          MOZ_ASSERT(mBuilder->IsScrollLayerDefined(scrollId));
+          ids.first = Some(scrollId);
+        }
+        ids.second = Some(it->second);
+        return ids;
+      }
     }
 
     auto ancestorIds = DefineClipChain(
@@ -115,7 +127,7 @@ ScrollingLayersHelper::DefineClipChain(nsDisplayItem* aItem,
     }
 
     if (aChain->mParent) {
-      if (aChain->mParent->mASR == aAsr) {
+      if (mBuilder->GetCacheOverride(aChain->mParent) || aChain->mParent->mASR == aAsr) {
         // If the parent clip item shares the ASR, then this clip needs to be
         // a child of the parent clip, which will automatically inherit from
         // the ASR.
@@ -137,7 +149,9 @@ ScrollingLayersHelper::DefineClipChain(nsDisplayItem* aItem,
     wr::WrClipId clipId = mBuilder->DefineClip(
             ancestorIds.first, ancestorIds.second,
             aStackingContext.ToRelativeLayoutRect(clip), &wrRoundedRects);
-    aCache[aChain] = clipId;
+    if (!mBuilder->HasMaskClip()) {
+      aCache[aChain] = clipId;
+    }
 
     ids.second = Some(clipId);
     return ids;
