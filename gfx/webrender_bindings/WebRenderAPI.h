@@ -8,6 +8,7 @@
 #define MOZILLA_LAYERS_WEBRENDERAPI_H
 
 #include <vector>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "mozilla/AlreadyAddRefed.h"
@@ -20,6 +21,8 @@
 #include "Units.h"
 
 namespace mozilla {
+
+struct DisplayItemClipChain;
 
 namespace widget {
 class CompositorWidget;
@@ -227,8 +230,9 @@ public:
                           const wr::LayoutRect& aClipRect,
                           const nsTArray<wr::ComplexClipRegion>* aComplex = nullptr,
                           const wr::WrImageMask* aMask = nullptr);
-  void PushClip(const wr::WrClipId& aClipId, bool aMask);
-  void PopClip(bool aMask);
+  void PushClip(const wr::WrClipId& aClipId, const DisplayItemClipChain* aParent);
+  void PopClip(const DisplayItemClipChain* aParent);
+  Maybe<wr::WrClipId> GetCacheOverride(const DisplayItemClipChain* aParent);
 
   wr::WrStickyId DefineStickyFrame(const wr::LayoutRect& aContentRect,
                                    const wr::StickySideConstraint* aTop,
@@ -390,7 +394,7 @@ public:
   wr::WrState* Raw() { return mWrState; }
 
   // Return true if the current clip stack has any mask type clip.
-  bool HasMaskClip() { return mMaskClipCount > 0; }
+  bool HasMaskClip() { return !mCacheOverride.empty(); }
 
 protected:
   wr::WrState* mWrState;
@@ -399,7 +403,7 @@ protected:
   std::unordered_set<layers::FrameMetrics::ViewID> mScrollIds;
 
   // The number of mask clips that are in the stack.
-  uint32_t mMaskClipCount;
+  std::unordered_map<const DisplayItemClipChain*, std::vector<wr::WrClipId>> mCacheOverride;
 
   friend class WebRenderAPI;
 };

@@ -97,9 +97,17 @@ ScrollingLayersHelper::DefineClipChain(nsDisplayItem* aItem,
   if (!aChain) {
     return Nothing();
   }
-  auto it = aCache.find(aChain);
-  if (it != aCache.end()) {
-    return Some(it->second);
+
+  if (mBuilder->HasMaskClip()) {
+    Maybe<wr::WrClipId> overrideId = mBuilder->GetCacheOverride(aChain);
+    if (overrideId) {
+      return overrideId;
+    }
+  } else {
+    auto it = aCache.find(aChain);
+    if (it != aCache.end()) {
+      return Some(it->second);
+    }
   }
 
   Maybe<wr::WrClipId> parentId = DefineClipChain(aItem, aChain->mParent,
@@ -125,7 +133,9 @@ ScrollingLayersHelper::DefineClipChain(nsDisplayItem* aItem,
   wr::WrClipId clipId = mBuilder->DefineClip(scrollId, parentId,
           aStackingContext.ToRelativeLayoutRect(clip), &wrRoundedRects);
 
-  aCache[aChain] = clipId;
+  if (!mBuilder->HasMaskClip()) {
+    aCache[aChain] = clipId;
+  }
   return Some(clipId);
 }
 

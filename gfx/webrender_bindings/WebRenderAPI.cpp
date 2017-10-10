@@ -625,7 +625,6 @@ WebRenderAPI::RunOnRenderThread(UniquePtr<RendererEvent> aEvent)
 DisplayListBuilder::DisplayListBuilder(PipelineId aId,
                                        const wr::LayoutSize& aContentSize,
                                        size_t aCapacity)
-  : mMaskClipCount(0)
 {
   MOZ_COUNT_CTOR(DisplayListBuilder);
   mWrState = wr_state_new(aId, aContentSize, aCapacity);
@@ -707,23 +706,33 @@ DisplayListBuilder::DefineClip(const Maybe<layers::FrameMetrics::ViewID>& aScrol
 }
 
 void
-DisplayListBuilder::PushClip(const wr::WrClipId& aClipId, bool aMask)
+DisplayListBuilder::PushClip(const wr::WrClipId& aClipId,
+                             const DisplayItemClipChain* aParent)
 {
   wr_dp_push_clip(mWrState, aClipId.id);
   WRDL_LOG("PushClip id=%" PRIu64 "\n", mWrState, aClipId.id);
-  if (aMask) {
-    mMaskClipCount++;
-  }
+  auto it = mCacheOverride.insert({ aParent, std::vector<wr::WrClipId>() });
+  it.first->second.push_back(aClipId);
 }
 
 void
-DisplayListBuilder::PopClip(bool aMask)
+DisplayListBuilder::PopClip(const DisplayItemClipChain* aParent)
 {
   WRDL_LOG("PopClip\n", mWrState);
-  if (aMask) {
-    mMaskClipCount--;
+  auto it = mCacheOverride.find(aParent);
+  MOZ_ASSERT(it != mCacheOverride.end());
+  it->second.pop_back();
+  if (it->second.empty()) {
+    mCacheOverride.erase(it);
   }
   wr_dp_pop_clip(mWrState);
+}
+
+Maybe<wr::WrClipId>
+DisplayListBuilder::GetCacheOverride(const DisplayItemClipChain* aParent)
+{
+  auto it = mCacheOverride.find(aParent);
+  return it == mCacheOverride.end() ? Nothing() : Some(it->second.back());
 }
 
 wr::WrStickyId
