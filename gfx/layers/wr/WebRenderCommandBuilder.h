@@ -6,6 +6,8 @@
 #ifndef GFX_WEBRENDERCOMMANDBUILDER_H
 #define GFX_WEBRENDERCOMMANDBUILDER_H
 
+#include <unordered_map>
+
 #include "mozilla/webrender/WebRenderAPI.h"
 #include "mozilla/layers/WebRenderMessages.h"
 #include "mozilla/layers/WebRenderScrollData.h"

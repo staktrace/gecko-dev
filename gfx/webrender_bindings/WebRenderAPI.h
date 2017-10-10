@@ -8,7 +8,7 @@
 #define MOZILLA_LAYERS_WEBRENDERAPI_H
 
 #include <vector>
-#include <unordered_map>
+#include <unordered_set>
 
 #include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/layers/SyncObject.h"
@@ -227,8 +227,8 @@ public:
                           const wr::LayoutRect& aClipRect,
                           const nsTArray<wr::ComplexClipRegion>* aComplex = nullptr,
                           const wr::WrImageMask* aMask = nullptr);
-  void PushClip(const wr::WrClipId& aClipId, bool aMask = false);
-  void PopClip(bool aMask = false);
+  void PushClip(const wr::WrClipId& aClipId, bool aMask);
+  void PopClip(bool aMask);
 
   wr::WrStickyId DefineStickyFrame(const wr::LayoutRect& aContentRect,
                                    const wr::StickySideConstraint* aTop,
@@ -243,8 +243,6 @@ public:
                          const Maybe<layers::FrameMetrics::ViewID>& aParentId,
                          const wr::LayoutRect& aContentRect, // TODO: We should work with strongly typed rects
                          const wr::LayoutRect& aClipRect);
-  void PushScrollLayer(const layers::FrameMetrics::ViewID& aScrollId);
-  void PopScrollLayer();
 
   void PushClipAndScrollInfo(const layers::FrameMetrics::ViewID& aScrollId,
                              const wr::WrClipId* aClipId);
@@ -388,17 +386,6 @@ public:
                      const float& aBorderRadius,
                      const wr::BoxShadowClipMode& aClipMode);
 
-  // Returns the clip id that was most recently pushed with PushClip and that
-  // has not yet been popped with PopClip. Return Nothing() if the clip stack
-  // is empty.
-  Maybe<wr::WrClipId> TopmostClipId();
-  // Same as TopmostClipId() but for scroll layers.
-  layers::FrameMetrics::ViewID TopmostScrollId();
-  // Returns the scroll id that was pushed just before the given scroll id. This
-  // function returns Nothing() if the given scrollid has not been encountered,
-  // or if it is the rootmost scroll id (and therefore has no ancestor).
-  Maybe<layers::FrameMetrics::ViewID> ParentScrollIdFor(layers::FrameMetrics::ViewID aScrollId);
-
   // Try to avoid using this when possible.
   wr::WrState* Raw() { return mWrState; }
 
@@ -408,17 +395,8 @@ public:
 protected:
   wr::WrState* mWrState;
 
-  // Track the stack of clip ids and scroll layer ids that have been pushed
-  // (by PushClip and PushScrollLayer, respectively) and are still active.
-  // This is helpful for knowing e.g. what the ancestor scroll id of a particular
-  // scroll id is, and doing other "queries" of current state.
-  std::vector<wr::WrClipId> mClipIdStack;
-  std::vector<layers::FrameMetrics::ViewID> mScrollIdStack;
-
-  // Track the parent scroll id of each scroll id that we encountered. A
-  // Nothing() value indicates a root scroll id. We also use this structure to
-  // ensure that we don't define a particular scroll layer multiple times.
-  std::unordered_map<layers::FrameMetrics::ViewID, Maybe<layers::FrameMetrics::ViewID>> mScrollParents;
+  // Track whether a particular scroll id has been defined or not.
+  std::unordered_set<layers::FrameMetrics::ViewID> mScrollIds;
 
   // The number of mask clips that are in the stack.
   uint32_t mMaskClipCount;
