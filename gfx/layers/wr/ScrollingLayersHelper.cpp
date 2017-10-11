@@ -42,17 +42,14 @@ ScrollingLayersHelper::ScrollingLayersHelper(nsDisplayItem* aItem,
     leafmostASR = ActiveScrolledRoot::PickDescendant(leafmostASR,
         aItem->GetClipChain()->mASR);
   }
-  DefineAndPushScrollLayers(aItem, leafmostASR,
-      aItem->GetClipChain(), aBuilder, auPerDevPixel, aStackingContext, aCache);
+  auto ids = DefineClipChain(aItem, leafmostASR, aItem->GetClipChain(),
+      auPerDevPixel, aStackingContext, aCache);
 
-  // Next, we push the leaf part of the clip chain that is scrolled by the
-  // leafmost ASR. All the clips outside the leafmost ASR were already pushed
-  // in the above call. This call may be a no-op if the item's ASR got picked
-  // as the leaftmostASR previously, because that means these clips were pushed
-  // already as being "outside" leafmostASR.
-  DefineAndPushChain(aItem->GetClipChain(), aBuilder, aStackingContext,
-      auPerDevPixel, aCache);
-
+  if (ids.second) {
+    aBuilder.PushClip(ids.second.value());
+    mPushedClips.push_back(wr::ScrollOrClipId(ids.second.value()));
+  }
+ 
   // Finally, if clip chain's ASR was the leafmost ASR, then the top of the
   // scroll id stack right now will point to that, rather than the item's ASR
   // which is what we want. So we override that by doing a PushClipAndScrollInfo
