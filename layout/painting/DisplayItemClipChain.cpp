@@ -33,6 +33,23 @@ DisplayItemClipChain::Equal(const DisplayItemClipChain* aClip1, const DisplayIte
          Equal(aClip1->mParent, aClip2->mParent);
 }
 
+uint32_t
+DisplayItemClipChain::Hash(const DisplayItemClipChain* aClip)
+{
+  if (!aClip) {
+    return 0;
+  }
+
+  uint32_t hash = Hash(aClip->mParent);
+  hash = AddToHash(hash, aClip->mASR, aClip->mClip.GetRoundedRectCount());
+  if (aClip->mClip.HasClip()) {
+    const nsRect& rect = aClip->mClip.GetClipRect();
+    hash = AddToHash(hash, rect.x, rect.y, rect.width, rect.height);
+  }
+
+  return hash;
+}
+
 /* static */ nsCString
 DisplayItemClipChain::ToString(const DisplayItemClipChain* aClipChain)
 {

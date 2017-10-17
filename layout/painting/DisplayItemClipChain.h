@@ -44,6 +44,11 @@ struct DisplayItemClipChain {
                                            const ActiveScrolledRoot* aASR);
 
   static bool Equal(const DisplayItemClipChain* aClip1, const DisplayItemClipChain* aClip2);
+  /**
+   * Hash function that returns the same value for any two clips A and B
+   * where Equal(A, B) is true.
+   */
+  static uint32_t Hash(const DisplayItemClipChain* aClip);
 
   static nsCString ToString(const DisplayItemClipChain* aClipChain);
 
