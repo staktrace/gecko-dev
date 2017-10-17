@@ -9,6 +9,7 @@
 
 #include <unordered_map>
 
+#include "DisplayItemClipChain.h"
 #include "mozilla/Attributes.h"
 
 class nsDisplayItem;
@@ -16,7 +17,6 @@ class nsDisplayItem;
 namespace mozilla {
 
 struct ActiveScrolledRoot;
-struct DisplayItemClipChain;
 
 namespace wr {
 class DisplayListBuilder;
@@ -72,15 +72,12 @@ private:
 
   // Note: two DisplayItemClipChain* A and B might actually be "equal" (as per
   // DisplayItemClipChain::Equal(A, B)) even though they are not the same pointer
-  // (A != B). In this hopefully-rare case, they will get separate entries
-  // in this map when in fact we could collapse them. However, to collapse
-  // them involves writing a custom hash function for the pointer type such that
-  // A and B hash to the same things whenever DisplayItemClipChain::Equal(A, B)
-  // is true, and that will incur a performance penalty for all the hashmap
-  // operations, so is probably not worth it. With the current code we might
-  // end up creating multiple clips in WR that are effectively identical but
-  // have separate clip ids. Hopefully this won't happen very often.
-  typedef std::unordered_map<const DisplayItemClipChain*, wr::WrClipId> ClipIdMap;
+  // (A != B). We override the hash/equals function on the map to ensure these
+  // items get collapsed together.
+  typedef std::unordered_map<const DisplayItemClipChain*,
+                             wr::WrClipId,
+                             DisplayItemClipChainHasher,
+                             DisplayItemClipChainEqualer> ClipIdMap;
 
   WebRenderLayerManager* MOZ_NON_OWNING_REF mManager;
   wr::DisplayListBuilder* mBuilder;

@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "DisplayItemClipChain.h"
 #include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/layers/SyncObject.h"
 #include "mozilla/Range.h"
@@ -21,8 +22,6 @@
 #include "Units.h"
 
 namespace mozilla {
-
-struct DisplayItemClipChain;
 
 namespace widget {
 class CompositorWidget;
@@ -451,7 +450,10 @@ protected:
   // stores X -> ClipId of Y, which allows ScrollingLayersHelper to do the
   // necessary lookup. Note that there theoretically might be multiple
   // different "Y" clips which is why we need a vector.
-  std::unordered_map<const DisplayItemClipChain*, std::vector<wr::WrClipId>> mCacheOverride;
+  std::unordered_map<const DisplayItemClipChain*,
+                     std::vector<wr::WrClipId>,
+                     DisplayItemClipChainHasher,
+                     DisplayItemClipChainEqualer> mCacheOverride;
 
   friend class WebRenderAPI;
 };

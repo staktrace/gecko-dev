@@ -6,7 +6,6 @@
 
 #include "mozilla/layers/ScrollingLayersHelper.h"
 
-#include "DisplayItemClipChain.h"
 #include "FrameMetrics.h"
 #include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/layers/WebRenderLayerManager.h"
@@ -511,7 +510,7 @@ bool
 ScrollingLayersHelper::ItemClips::HasSameInputs(const ItemClips& aOther)
 {
   return mAsr == aOther.mAsr &&
-         mChain == aOther.mChain;
+         DisplayItemClipChain::Equal(mChain, aOther.mChain);
 }
 
 } // namespace layers
