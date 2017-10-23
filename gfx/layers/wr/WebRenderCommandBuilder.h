@@ -145,6 +145,26 @@ public:
     return res.forget();
   }
 
+  template<class T> already_AddRefed<T>
+  GetWebRenderUserData(nsIFrame* aFrame, uint32_t aPerFrameKey)
+  {
+    RefPtr<T> result;
+    MOZ_ASSERT(aFrame);
+    nsIFrame::WebRenderUserDataTable* userDataTable =
+      aFrame->GetProperty(nsIFrame::WebRenderUserDataProperty());
+    if (!userDataTable) {
+      return result.forget();
+    }
+
+    WebRenderUserData* data = nullptr;
+    if (userDataTable->Get(aPerFrameKey, &data)) {
+      if (data->GetType() == T::Type() && data->IsDataValid(mManager)) {
+        result = static_cast<T*>(data);
+      }
+    }
+    return result.forget();
+  }
+
 public:
   // Note: two DisplayItemClipChain* A and B might actually be "equal" (as per
   // DisplayItemClipChain::Equal(A, B)) even though they are not the same pointer
