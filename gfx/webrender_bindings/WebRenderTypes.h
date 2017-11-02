@@ -750,6 +750,31 @@ enum class WebRenderError : int8_t {
   Sentinel /* this must be last for serialization purposes. */
 };
 
+enum HitTestAuxData : uint8_t {
+  eInvisibleToHitTest = 0,
+  eVisibleToHitTest = 1 << 0,
+  eDispatchToContent = 1 << 1,
+  eScrollbar = 1 << 2,
+  eScrollThumb = 1 << 3,
+  eTouchActionPanX = 1 << 4,
+  eTouchActionPanY = 1 << 5,
+  eTouchActionPinchZoom = 1 << 6,
+  eTouchActionDoubleTapZoom = 1 << 7,
+};
+
+MOZ_ALWAYS_INLINE HitTestAuxData
+operator|(HitTestAuxData a, HitTestAuxData b)
+{
+  return (HitTestAuxData)((int)a | (int)b);
+}
+
+MOZ_ALWAYS_INLINE HitTestAuxData&
+operator|=(HitTestAuxData& a, HitTestAuxData b)
+{
+  a = a | b;
+  return a;
+}
+
 } // namespace wr
 } // namespace mozilla
 

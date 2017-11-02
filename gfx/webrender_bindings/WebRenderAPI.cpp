@@ -210,6 +210,17 @@ WebRenderAPI::UpdateScrollPosition(const wr::WrPipelineId& aPipelineId,
   wr_scroll_layer_with_id(mDocHandle, aPipelineId, aScrollId, aScrollPosition);
 }
 
+bool
+WebRenderAPI::HitTest(const wr::WorldPoint& aPoint,
+                      wr::WrPipelineId& aOutPipelineId,
+                      layers::FrameMetrics::ViewID& aOutScrollId,
+                      wr::HitTestAuxData& aOutAuxData)
+{
+  static_assert(sizeof(wr::HitTestAuxData) == sizeof(uint8_t), "HitTestAuxData should be u8-sized");
+  return wr_api_hit_test(mDocHandle, aPoint,
+          &aOutPipelineId, &aOutScrollId, (uint8_t*)&aOutAuxData);
+}
+
 void
 WebRenderAPI::GenerateFrame()
 {
@@ -1219,6 +1230,13 @@ DisplayListBuilder::TopmostIsClip()
     return false;
   }
   return mClipStack.back().is<wr::WrClipId>();
+}
+
+void
+DisplayListBuilder::SetHitTestInfo(const layers::FrameMetrics::ViewID& aScrollId,
+                                   wr::HitTestAuxData aAuxData)
+{
+  wr_set_item_tag(mWrState, aScrollId, aAuxData);
 }
 
 } // namespace wr

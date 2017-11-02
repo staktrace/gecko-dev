@@ -431,6 +431,19 @@ struct WrTransformProperty {
 
 typedef IdNamespace WrIdNamespace;
 
+// A 2d Point tagged with a unit.
+struct TypedPoint2D_f32__WorldPixel {
+  float x;
+  float y;
+
+  bool operator==(const TypedPoint2D_f32__WorldPixel& aOther) const {
+    return x == aOther.x &&
+           y == aOther.y;
+  }
+};
+
+typedef TypedPoint2D_f32__WorldPixel WorldPoint;
+
 // Represents RGBA screen colors with floating point numbers.
 //
 // All components must be between 0.0 and 1.0.
@@ -998,6 +1011,14 @@ WrIdNamespace wr_api_get_namespace(DocumentHandle *aDh)
 WR_FUNC;
 
 WR_INLINE
+bool wr_api_hit_test(DocumentHandle *aDh,
+                     WorldPoint aPoint,
+                     WrPipelineId *aOutPipelineId,
+                     uint64_t *aOutScrollId,
+                     uint8_t *aOutAuxData)
+WR_FUNC;
+
+WR_INLINE
 void wr_api_send_external_event(DocumentHandle *aDh,
                                 size_t aEvt)
 WR_DESTRUCTOR_SAFE_FUNC;
@@ -1501,6 +1522,12 @@ void wr_scroll_layer_with_id(DocumentHandle *aDh,
                              WrPipelineId aPipelineId,
                              uint64_t aScrollId,
                              LayoutPoint aNewScrollOrigin)
+WR_FUNC;
+
+WR_INLINE
+void wr_set_item_tag(WrState *aState,
+                     uint64_t aScrollId,
+                     uint8_t aAuxData)
 WR_FUNC;
 
 WR_INLINE
