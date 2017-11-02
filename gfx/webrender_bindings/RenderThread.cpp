@@ -203,6 +203,9 @@ NotifyDidRender(layers::CompositorBridgeParentBase* aBridge,
   wr_rendered_epochs_delete(aEpochs);
 }
 
+static int sCount = 0;
+static TimeStamp sLastDumpTime;
+
 void
 RenderThread::UpdateAndRender(wr::WindowId aWindowId)
 {
@@ -227,6 +230,16 @@ RenderThread::UpdateAndRender(wr::WindowId aWindowId)
   }
 
   TimeStamp end = TimeStamp::Now();
+  if (sLastDumpTime.IsNull()) {
+    sLastDumpTime = end;
+  } else if ((end - sLastDumpTime).ToMilliseconds() >= 1000) {
+    printf_stderr("UpdateAndRender (%f ms) -> Render FPS: %d\n",
+      (end - sLastDumpTime).ToMilliseconds(),
+      sCount);
+    sCount = 0;
+    sLastDumpTime = end;
+  }
+  sCount++;
 
   auto epochs = renderer->FlushRenderedEpochs();
   layers::CompositorThreadHolder::Loop()->PostTask(NewRunnableFunction(

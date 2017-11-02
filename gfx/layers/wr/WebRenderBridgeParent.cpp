@@ -1133,11 +1133,31 @@ WebRenderBridgeParent::SampleAnimations(nsTArray<wr::WrOpacityProperty>& aOpacit
   }
 }
 
+static int sCompositeCount = 0;
+static int sPauseCount = 0;
+static int sBusyCount = 0;
+static TimeStamp sLastDumpTime;
+
 void
 WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::IntRect* aRect)
 {
+  TimeStamp now = TimeStamp::Now();
+  if (sLastDumpTime.IsNull()) {
+    sLastDumpTime = now;
+  } else if ((now - sLastDumpTime).ToMilliseconds() >= 1000) {
+    printf_stderr("CompositeToTarget (%f ms) -> called %d times, of which %d pause, %d busy, %d GenerateFrame FPS\n",
+      (now - sLastDumpTime).ToMilliseconds(), sCompositeCount, sPauseCount,
+      sBusyCount, (sCompositeCount - sPauseCount - sBusyCount));
+    sCompositeCount = 0;
+    sPauseCount = 0;
+    sBusyCount = 0;
+    sLastDumpTime = now;
+  }
+  sCompositeCount++;
+
   AUTO_PROFILER_TRACING("Paint", "CompositeToTraget");
   if (mPaused) {
+    sPauseCount++;
     return;
   }
 
@@ -1147,6 +1167,7 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
       wr::RenderThread::Get()->GetPendingFrameCount(mApi->GetId()) >= maxPendingFrameCount) {
     // Render thread is busy, try next time.
     ScheduleComposition();
+    sBusyCount++;
     return;
   }
 
