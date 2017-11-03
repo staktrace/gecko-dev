@@ -4286,6 +4286,41 @@ bool nsWindow::DispatchPluginEvent(UINT aMessage,
   return ret;
 }
 
+bool nsWindow::TouchEventShouldStartDrag(EventMessage aEventMessage,
+                                         LayoutDeviceIntPoint aEventPoint)
+{
+  // Allow users to start dragging by double-tapping.
+  if (aEventMessage == eMouseDoubleClick) {
+    return true;
+  }
+
+  // In the UI process, allow touchdownstartsdrag attributes
+  // to cause any touchdown event to trigger a drag.
+  if (XRE_GetProcessType() == GeckoProcessType_Default &&
+      aEventMessage == eMouseDown) {
+    WidgetMouseEvent hittest(true, eMouseHitTest, this,
+                             WidgetMouseEvent::eReal);
+    hittest.mRefPoint = aEventPoint;
+    hittest.mIgnoreRootScrollFrame = true;
+    hittest.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
+    DispatchInputEvent(&hittest);
+
+    EventTarget* target = hittest.GetDOMEventTarget();
+    if (target) {
+      nsCOMPtr<nsIDOMElement> node = do_QueryInterface(target);
+      if (node) {
+        nsAutoString startDrag;
+        node->GetAttribute(NS_LITERAL_STRING("touchdownstartsdrag"), startDrag);
+        if (!startDrag.IsEmpty()) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 // Deal with all sort of mouse event
 bool
 nsWindow::DispatchMouseEvent(EventMessage aEventMessage, WPARAM wParam,
@@ -4342,7 +4377,7 @@ nsWindow::DispatchMouseEvent(EventMessage aEventMessage, WPARAM wParam,
       // the touch-generated mouse double-click, which is used to start off the
       // touch-based drag-and-drop gesture.
       MOZ_ASSERT(mAPZC);
-      if (aEventMessage == eMouseDoubleClick) {
+      if (TouchEventShouldStartDrag(aEventMessage, eventPoint)) {
         aEventMessage = eMouseTouchDrag;
       } else {
         return result;
