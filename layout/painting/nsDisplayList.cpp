@@ -2860,6 +2860,9 @@ nsDisplayItem::nsDisplayItem(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
   , mForceNotVisible(aBuilder->IsBuildingInvisibleItems())
   , mDisableSubpixelAA(false)
   , mReusedItem(false)
+  , mInPointerEventsNoneDoc(aBuilder->IsInsidePointerEventsNoneDoc())
+  , mRequiresApzDispatchToContent(aBuilder->IsBuildingNonLayerizedScrollbar()
+                               || aBuilder->GetAncestorHasApzAwareEventHandler())
 #ifdef MOZ_DUMP_PAINTING
   , mPainted(false)
 #endif

@@ -2632,6 +2632,9 @@ public:
       nsDisplayListBuilder* aBuilder,
       const ActiveScrolledRoot* aASR) const;
 
+  bool IsInPointerEventsNoneDoc() const { return mInPointerEventsNoneDoc; }
+  bool RequiresApzDispatchToContent() const { return mRequiresApzDispatchToContent; }
+
 protected:
   nsDisplayItem() = delete;
 
@@ -2658,6 +2661,8 @@ protected:
   bool      mForceNotVisible;
   bool      mDisableSubpixelAA;
   bool      mReusedItem;
+  bool      mInPointerEventsNoneDoc;
+  bool      mRequiresApzDispatchToContent;
 #ifdef MOZ_DUMP_PAINTING
   // True if this frame has been painted.
   bool      mPainted;
