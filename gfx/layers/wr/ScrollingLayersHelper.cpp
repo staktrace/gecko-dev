@@ -12,6 +12,8 @@
 #include "mozilla/layers/WebRenderLayerManager.h"
 #include "mozilla/webrender/WebRenderAPI.h"
 #include "nsDisplayList.h"
+#include "nsPluginFrame.h"
+#include "nsStyleStructInlines.h"
 #include "UnitTransforms.h"
 
 #define SLH_LOG(...)
@@ -36,6 +38,12 @@ ScrollingLayersHelper::BeginBuild(WebRenderLayerManager* aManager,
   mBuilder = &aBuilder;
   MOZ_ASSERT(mCache.empty());
   MOZ_ASSERT(mItemClipStack.empty());
+
+  // Start the stack with something so that in BeginList() we have an item
+  // to duplicate
+  MOZ_ASSERT(mItemHitTestStack.empty());
+  mItemHitTestStack.emplace_back(nullptr);
+  mItemHitTestStack.back().Apply(mBuilder);
 }
 
 void
@@ -45,12 +53,24 @@ ScrollingLayersHelper::EndBuild()
   mManager = nullptr;
   mCache.clear();
   MOZ_ASSERT(mItemClipStack.empty());
+
+  // Clear out the item we pushed on during BeginBuild()
+  mItemHitTestStack.pop_back();
+  MOZ_ASSERT(mItemHitTestStack.empty());
 }
 
 void
 ScrollingLayersHelper::BeginList()
 {
   mItemClipStack.emplace_back(nullptr, nullptr);
+
+  // When recursing into a nested display list, duplicate the topmost item on
+  // the stack. The topmost item is the one whose info was last set on the
+  // wr::DisplayListBuilder so we maintain the invariant that mItemHitTestStack's
+  // topmost item is what wr::DisplayListBuilder has as the current hit-test
+  // info.
+  ItemHitTestInfo current_info = mItemHitTestStack.back();
+  mItemHitTestStack.push_back(current_info);
 }
 
 void
@@ -59,6 +79,12 @@ ScrollingLayersHelper::EndList()
   MOZ_ASSERT(!mItemClipStack.empty());
   mItemClipStack.back().Unapply(mBuilder);
   mItemClipStack.pop_back();
+
+  // Pop off the item we pushed in BeginList() and re-apply whatever was
+  // underneath it.
+  MOZ_ASSERT(mItemHitTestStack.size() >= 2);
+  mItemHitTestStack.pop_back();
+  mItemHitTestStack.back().Apply(mBuilder);
 }
 
 void
@@ -66,6 +92,12 @@ ScrollingLayersHelper::BeginItem(nsDisplayItem* aItem,
                                  const StackingContextHelper& aStackingContext)
 {
   SLH_LOG("processing item %p\n", aItem);
+
+  ItemHitTestInfo hitInfo(aItem);
+  MOZ_ASSERT(!mItemHitTestStack.empty());
+  hitInfo.Populate(mItemHitTestStack.back());
+  mItemHitTestStack.back() = hitInfo;
+  hitInfo.Apply(mBuilder);
 
   ItemClips clips(aItem->GetActiveScrolledRoot(), aItem->GetClipChain());
   MOZ_ASSERT(!mItemClipStack.empty());
@@ -108,9 +140,13 @@ ScrollingLayersHelper::BeginItem(nsDisplayItem* aItem,
   // TopmostClipId, so now we need to push at most two things onto the stack.
 
   FrameMetrics::ViewID leafmostId = ids.first.valueOr(FrameMetrics::NULL_SCROLL_ID);
-  FrameMetrics::ViewID scrollId = aItem->GetActiveScrolledRoot()
-      ? nsLayoutUtils::ViewIDForASR(aItem->GetActiveScrolledRoot())
-      : FrameMetrics::NULL_SCROLL_ID;
+  // ViewIdFromASR is relatively expensive so we can avoid calling it by using
+  // hitInfo.mScrollId which should give the correct scrollid.
+  FrameMetrics::ViewID scrollId = hitInfo.mScrollId;
+  MOZ_ASSERT(scrollId == (aItem->GetActiveScrolledRoot()
+                          ? nsLayoutUtils::ViewIdFromASR(aItem->GetActiveScrolledRoot())
+                          : FrameMetrics::NULL_SCROLL_ID));
+
   // If the leafmost ASR is not the same as the item's ASR then we are dealing
   // with a case where the item's clip chain is scrolled by something other than
   // the item's ASR. So for those cases we need to use the ClipAndScroll API.
@@ -512,6 +548,121 @@ ScrollingLayersHelper::ItemClips::HasSameInputs(const ItemClips& aOther)
 {
   return mAsr == aOther.mAsr &&
          mChain == aOther.mChain;
+}
+
+ScrollingLayersHelper::ItemHitTestInfo::ItemHitTestInfo(nsDisplayItem* aItem)
+  : mItem(aItem)
+  , mScrollId(layers::FrameMetrics::NULL_SCROLL_ID)
+  , mHitTestData(wr::HitTestAuxData::eInvisibleToHitTest)
+  , mScrollbarFlags(wr::HitTestAuxData::eInvisibleToHitTest)
+  , mScrollbarTarget(layers::FrameMetrics::NULL_SCROLL_ID)
+{
+  MOZ_ASSERT(mItem);
+}
+
+void
+ScrollingLayersHelper::ItemHitTestInfo::Apply(wr::DisplayListBuilder* aBuilder)
+{
+  // If the pref is off, then avoid setting anything in the DisplayListBuilder
+  // as populating this info on display items might result in extra overhead
+  // inside WR
+  if (gfxPrefs::WebRenderHitTest()) {
+    aBuilder->SetHitTestInfo(mScrollbarFlags ? mScrollbarTarget : mScrollId,
+                             mHitTestData | mScrollbarFlags);
+  }
+}
+
+void
+ScrollingLayersHelper::ItemHitTestInfo::Populate(const ItemHitTestInfo& aCurrentInfo)
+{
+  const ActiveScrolledRoot* asr = mItem->GetActiveScrolledRoot();
+  if (asr == aCurrentInfo.mItem->GetActiveScrolledRoot()) {
+    // Optimization path - avoid the more expensive ViewIDForASR() call if we
+    // can just steal the result from the "current info" item.
+    mScrollId = aCurrentInfo.mScrollId;
+    MOZ_ASSERT(mScrollId == asr ? nsLayoutUtils::ViewIDForASR(asr)
+                                : FrameMetrics::NULL_SCROLL_ID);
+  } else if (asr) {
+    mScrollId = nsLayoutUtils::ViewIDForASR(asr);
+  }
+
+  if (gfxPrefs::WebRenderHitTest()) {
+    if (mItem->Frame() == aCurrentInfo.mItem->Frame()) {
+      // Optimization path - avoid the more expensive ComputeHitTestData() call
+      // if we can just steal the result from the "current info" item.
+      mHitTestData = aCurrentInfo.mHitTestData;
+      MOZ_ASSERT(mHitTestData == ComputeHitTestData());
+    } else {
+      mHitTestData = ComputeHitTestData();
+    }
+
+    // We need to recompute the scrollbar data for every item, because there
+    // might be different items generated from a single frame that have different
+    // scrollbar flags.
+    ComputeScrollbarData();
+  }
+}
+
+wr::HitTestAuxData
+ScrollingLayersHelper::ItemHitTestInfo::ComputeHitTestData() const
+{
+  nsIFrame* frame = mItem->Frame();
+  MOZ_ASSERT(frame);
+  wr::HitTestAuxData result = wr::HitTestAuxData::eInvisibleToHitTest;
+
+  // !!!!!!
+  // Keep this code in sync with nsDisplayLayerEventRegions::AddFrame
+  // !!!!!!
+
+  if (mItem->IsInPointerEventsNoneDoc()) {
+    // Somewhere up the parent document chain is a subdocument with pointer-
+    // events:none set on it.
+    return result;
+  }
+
+  if (!frame->GetParent()) {
+    MOZ_ASSERT(frame->IsViewportFrame());
+    // Viewport frames are never event targets, other frames, like canvas frames,
+    // are the event targets for any regions viewport frames may cover.
+    return result;
+  }
+
+  uint8_t pointerEvents =
+    frame->StyleUserInterface()->GetEffectivePointerEvents(frame);
+  if (pointerEvents == NS_STYLE_POINTER_EVENTS_NONE) {
+    return result;
+  }
+
+  if (!frame->StyleVisibility()->IsVisible()) {
+    return result;
+  }
+
+  result |= wr::HitTestAuxData::eVisibleToHitTest;
+
+  if (mItem->RequiresApzDispatchToContent()) {
+    result |= wr::HitTestAuxData::eDispatchToContent;
+  }
+
+  if (frame->IsObjectFrame()) {
+    // If the frame is a plugin frame and wants to handle wheel events as
+    // default action, we should add the frame to dispatch-to-content region.
+    nsPluginFrame* pluginFrame = do_QueryFrame(frame);
+    if (pluginFrame && pluginFrame->WantsToHandleWheelEventAsDefaultAction()) {
+      result |= wr::HitTestAuxData::eDispatchToContent;
+    }
+  }
+
+  // TODO: check for document-level APZ-aware listeners -> add eDispatchToContent
+  // TODO: check for inactive scroll port -> add eDispatchToContent
+  // TODO: set touch action flags.
+
+  return result;
+}
+
+void
+ScrollingLayersHelper::ItemHitTestInfo::ComputeScrollbarData()
+{
+  // TODO: update mScrollbarFlags and mScrollbarTarget
 }
 
 } // namespace layers

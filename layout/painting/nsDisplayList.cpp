@@ -4807,6 +4807,11 @@ nsDisplayLayerEventRegions::AddFrame(nsDisplayListBuilder* aBuilder,
 {
   NS_ASSERTION(aBuilder->FindReferenceFrameFor(aFrame) == aBuilder->FindReferenceFrameFor(mFrame),
                "Reference frame mismatch");
+
+  // !!!!!!
+  // Keep this code in sync with ScrollingLayersHelper::ItemHitTestInfo::ComputeAuxData
+  // !!!!!!
+
   if (aBuilder->IsInsidePointerEventsNoneDoc()) {
     // Somewhere up the parent document chain is a subdocument with pointer-
     // events:none set on it.

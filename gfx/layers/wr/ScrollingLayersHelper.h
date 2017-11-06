@@ -102,7 +102,33 @@ private:
     bool HasSameInputs(const ItemClips& aOther);
   };
 
+  // Stack of ItemClips, with one item on the stack corresponding to each level
+  // of nesting in the Gecko display list traversal. The topmost item on the
+  // stack is updated for each display item at that level (or used to early-exit
+  // processing of that item, if no change is needed).
   std::vector<ItemClips> mItemClipStack;
+
+  struct ItemHitTestInfo {
+    explicit ItemHitTestInfo(nsDisplayItem* aItem);
+
+    nsDisplayItem* mItem;
+
+    FrameMetrics::ViewID mScrollId;
+    wr::HitTestAuxData mHitTestData;
+    wr::HitTestAuxData mScrollbarFlags;
+    FrameMetrics::ViewID mScrollbarTarget;
+
+    void Apply(wr::DisplayListBuilder* aBuilder);
+    void Populate(const ItemHitTestInfo& aCurrentInfo);
+    wr::HitTestAuxData ComputeHitTestData() const;
+    void ComputeScrollbarData();
+  };
+
+  // Stack of ItemHitTestInfo, with one item on the stack corresponding to each
+  // level of nesting in the Gecko display list traversal (plus one extra one).
+  // The topmost item on the stack is updated for each display item at that
+  // level.
+  std::vector<ItemHitTestInfo> mItemHitTestStack;
 };
 
 } // namespace layers
