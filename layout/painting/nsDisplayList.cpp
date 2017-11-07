@@ -2112,13 +2112,13 @@ nsDisplayListBuilder::AppendNewScrollInfoItemForHoisting(nsDisplayScrollInfoLaye
 bool
 nsDisplayListBuilder::IsBuildingLayerEventRegions()
 {
-  if (IsPaintingToWindow()) {
-    // Note: this function and LayerEventRegionsEnabled are the only places
-    // that get to query LayoutEventRegionsEnabled 'directly' - other code
-    // should call this function.
-    return gfxPrefs::LayoutEventRegionsEnabledDoNotUseDirectly() ||
-           mAsyncPanZoomEnabled;
-  }
+  //if (IsPaintingToWindow()) {
+  //  // Note: this function and LayerEventRegionsEnabled are the only places
+  //  // that get to query LayoutEventRegionsEnabled 'directly' - other code
+  //  // should call this function.
+  //  return gfxPrefs::LayoutEventRegionsEnabledDoNotUseDirectly() ||
+  //         mAsyncPanZoomEnabled;
+  //}
   return false;
 }
 
