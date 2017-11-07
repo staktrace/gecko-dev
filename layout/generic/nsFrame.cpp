@@ -2318,7 +2318,7 @@ nsFrame::DisplayBackgroundUnconditional(nsDisplayListBuilder* aBuilder,
   // Here we don't try to detect background propagation. Frames that might
   // receive a propagated background should just set aForceBackground to
   // true.
-  if (aBuilder->IsForEventDelivery() || aForceBackground ||
+  if ((aBuilder->IsForEventDelivery() || true) || aForceBackground ||
       !StyleBackground()->IsTransparent(this) || StyleDisplay()->mAppearance) {
     return nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
         aBuilder, this, GetRectRelativeToSelf(), aLists.BorderBackground());

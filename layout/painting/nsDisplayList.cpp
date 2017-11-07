@@ -3513,7 +3513,7 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
   // Even if we don't actually have a background color to paint, we may still need
   // to create an item for hit testing.
   if ((drawBackgroundColor && color != NS_RGBA(0,0,0,0)) ||
-      aBuilder->IsForEventDelivery()) {
+      (aBuilder->IsForEventDelivery() || true)) {
     Maybe<DisplayListClipState::AutoSaveRestore> clipState;
     nsRect bgColorRect = bgRect;
     if (bg && !aBuilder->IsForEventDelivery()) {
@@ -4499,10 +4499,12 @@ nsDisplayBackgroundColor::GetLayerState(nsDisplayListBuilder* aBuilder,
                                         LayerManager* aManager,
                                         const ContainerLayerParameters& aParameters)
 {
-  StyleGeometryBox clip = mBackgroundStyle->mImage.mLayers[0].mClip;
-  if ((ForceActiveLayers() || ShouldUseAdvancedLayer(aManager, gfxPrefs::LayersAllowBackgroundColorLayers)) &&
-      clip != StyleGeometryBox::Text) {
-    return LAYER_ACTIVE;
+  if (mBackgroundStyle) {
+    StyleGeometryBox clip = mBackgroundStyle->mImage.mLayers[0].mClip;
+    if ((ForceActiveLayers() || ShouldUseAdvancedLayer(aManager, gfxPrefs::LayersAllowBackgroundColorLayers)) &&
+        clip != StyleGeometryBox::Text) {
+      return LAYER_ACTIVE;
+    }
   }
   return LAYER_NONE;
 }
