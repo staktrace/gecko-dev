@@ -53,6 +53,8 @@ WebRenderCommandBuilder::NeedsEmptyTransaction()
   return !mLastCanvasDatas.IsEmpty();
 }
 
+static int sDisplayItemCount = 0;
+
 void
 WebRenderCommandBuilder::BuildWebRenderCommands(wr::DisplayListBuilder& aBuilder,
                                                 wr::IpcResourceUpdateQueue& aResourceUpdates,
@@ -70,12 +72,14 @@ WebRenderCommandBuilder::BuildWebRenderCommands(wr::DisplayListBuilder& aBuilder
     mLastCanvasDatas.Clear();
     mLastAsr = nullptr;
     mScrollingHelper.BeginBuild(mManager, aBuilder);
+    sDisplayItemCount = 0;
 
     {
       StackingContextHelper pageRootSc(sc, aBuilder);
       CreateWebRenderCommandsFromDisplayList(aDisplayList, aDisplayListBuilder,
                                              pageRootSc, aBuilder, aResourceUpdates);
     }
+    if (XRE_IsContentProcess()) printf_stderr("Gecko DL size: %d\n", sDisplayItemCount);
 
     // Make a "root" layer data that has everything else as descendants
     mLayerScrollData.emplace_back();
@@ -124,6 +128,7 @@ WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(nsDisplayList* a
 
   FlattenedDisplayItemIterator iter(aDisplayListBuilder, aDisplayList);
   while (nsDisplayItem* i = iter.GetNext()) {
+    sDisplayItemCount++;
     nsDisplayItem* item = i;
     DisplayItemType itemType = item->GetType();
 
@@ -150,6 +155,7 @@ WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(nsDisplayList* a
 
       // Move the iterator forward since we will merge this item.
       i = iter.GetNext();
+      sDisplayItemCount++;
     }
 
     if (mergedItems.Length() > 1) {

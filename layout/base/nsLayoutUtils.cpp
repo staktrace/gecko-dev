@@ -3829,6 +3829,7 @@ nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext, nsIFrame* aFrame,
     }
   }
 
+  if (XRE_IsContentProcess()) printf_stderr("BuildDisplayList time: %f\n", (TimeStamp::Now() - startBuildDisplayList).ToMilliseconds());
   Telemetry::AccumulateTimeDelta(Telemetry::PAINT_BUILD_DISPLAYLIST_TIME,
                                  startBuildDisplayList);
 

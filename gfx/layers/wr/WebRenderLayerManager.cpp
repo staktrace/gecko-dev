@@ -286,6 +286,7 @@ WebRenderLayerManager::EndTransactionWithoutLayer(nsDisplayList* aDisplayList,
                                                   mScrollData,
                                                   contentSize);
 
+  if (XRE_IsContentProcess()) printf_stderr("WR command build time: %f\n", (TimeStamp::Now() - mAnimationReadyTime).ToMilliseconds());
   mWidget->AddWindowOverlayWebRenderCommands(WrBridge(), builder, resourceUpdates);
   mWindowOverlayChanged = false;
 
@@ -320,6 +321,7 @@ WebRenderLayerManager::EndTransactionWithoutLayer(nsDisplayList* aDisplayList,
     }
   }
 
+  TimeStamp now = TimeStamp::Now();
   wr::BuiltDisplayList dl;
   builder.Finalize(contentSize, dl);
   mLastDisplayListSize = dl.dl.inner.capacity;
@@ -329,6 +331,7 @@ WebRenderLayerManager::EndTransactionWithoutLayer(nsDisplayList* aDisplayList,
     WrBridge()->EndTransaction(contentSize, dl, resourceUpdates, size.ToUnknownSize(),
                                mLatestTransactionId, mScrollData, transactionStart);
   }
+  if (XRE_IsContentProcess()) printf_stderr("Finalize+IPC send: %f | size %lu\n", (TimeStamp::Now() - now).ToMilliseconds(), dl.dl.Length());
 
   MakeSnapshotIfRequired(size);
   mNeedsComposite = false;
