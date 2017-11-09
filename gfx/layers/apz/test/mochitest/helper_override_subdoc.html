@@ -10,6 +10,6 @@
 <body>
     This just loads helper_override_root in an iframe, so that we test event
     regions overriding on in-process subdocuments.
-    <iframe src="helper_override_root.html"></iframe>
+    <iframe id="ifr" src="helper_override_root.html" onload="document.getElementById('ifr').focus()"></iframe>
 </body>
 </html>
