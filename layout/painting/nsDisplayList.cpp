@@ -9438,6 +9438,22 @@ nsDisplayMask::PaintAsLayer(nsDisplayListBuilder* aBuilder,
   nsDisplayMaskGeometry::UpdateDrawResult(this, imgParams.result);
 }
 
+struct MaskInfo {
+    const mozilla::StyleShapeSource* mClipPath;
+    const ActiveScrolledRoot* mAsr;
+    const DisplayItemClipChain* mClip;
+
+    wr::WrClipId mId;
+
+    bool operator==(const MaskInfo& aOther) {
+        return *mClipPath == *(aOther.mClipPath) &&
+               mAsr == aOther.mAsr &&
+               mClip == aOther.mClip;
+    }
+};
+
+static Maybe<MaskInfo> sMaskCache;
+
 bool
 nsDisplayMask::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
                                        mozilla::wr::IpcResourceUpdateQueue& aResources,
@@ -9445,26 +9461,48 @@ nsDisplayMask::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder
                                        mozilla::layers::WebRenderLayerManager* aManager,
                                        nsDisplayListBuilder* aDisplayListBuilder)
 {
-  bool snap;
-  float appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
-  nsRect displayBound = GetBounds(aDisplayListBuilder, &snap);
-  LayoutDeviceRect bounds = LayoutDeviceRect::FromAppUnits(displayBound, appUnitsPerDevPixel);
+  Maybe<wr::WrClipId> clipId;
 
-  Maybe<wr::WrImageMask> mask = aManager->CommandBuilder().BuildWrMaskImage(this, aBuilder, aResources,
-                                                                            aSc, aDisplayListBuilder,
-                                                                            bounds);
-  if (mask) {
-    wr::WrClipId clipId = aBuilder.DefineClip(Nothing(), Nothing(),
-        aSc.ToRelativeLayoutRect(bounds), nullptr, mask.ptr());
+  bool canCache = CanMergeDisplayMaskFrame(mFrame);
+  if (canCache) {
+    MaskInfo info { &(mFrame->StyleSVGReset()->mClipPath), GetActiveScrolledRoot(), GetClipChain() };
+    if (sMaskCache && sMaskCache.ref() == info) {
+      // cache hit
+      clipId = Some(sMaskCache->mId);
+    } else {
+      // cache miss
+      sMaskCache = Some(info);
+    }
+  }
+
+  if (!clipId) {
+    bool snap;
+    float appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
+    nsRect displayBound = GetBounds(aDisplayListBuilder, &snap);
+    LayoutDeviceRect bounds = LayoutDeviceRect::FromAppUnits(displayBound, appUnitsPerDevPixel);
+
+    Maybe<wr::WrImageMask> mask = aManager->CommandBuilder().BuildWrMaskImage(this, aBuilder, aResources,
+                                                                              aSc, aDisplayListBuilder,
+                                                                              bounds);
+    if (mask) {
+      clipId = Some(aBuilder.DefineClip(Nothing(), Nothing(),
+          aSc.ToRelativeLayoutRect(bounds), nullptr, mask.ptr()));
+      if (canCache) {
+        MOZ_ASSERT(sMaskCache);
+        sMaskCache->mId = clipId.value();
+      }
+    }
+  }
+  if (clipId) {
     // Don't record this clip push in aBuilder's internal clip stack, because
     // otherwise any nested ScrollingLayersHelper instances that are created
     // will get confused about which clips are pushed.
-    aBuilder.PushClipWithOverride(clipId, GetClipChain());
+    aBuilder.PushClipWithOverride(clipId.ref(), GetClipChain());
   }
 
   nsDisplaySVGEffects::CreateWebRenderCommands(aBuilder, aResources, aSc, aManager, aDisplayListBuilder);
 
-  if (mask) {
+  if (clipId) {
     aBuilder.PopClipWithOverride(GetClipChain());
   }
 
