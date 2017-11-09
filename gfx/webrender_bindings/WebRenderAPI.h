@@ -236,8 +236,11 @@ public:
                           const wr::LayoutRect& aClipRect,
                           const nsTArray<wr::ComplexClipRegion>* aComplex = nullptr,
                           const wr::WrImageMask* aMask = nullptr);
-  void PushClip(const wr::WrClipId& aClipId, const DisplayItemClipChain* aParent = nullptr);
-  void PopClip(const DisplayItemClipChain* aParent = nullptr);
+  void PushClip(const wr::WrClipId& aClipId);
+  void PopClip();
+
+  void PushClipWithOverride(const wr::WrClipId& aClipId, const DisplayItemClipChain* aParent);
+  void PopClipWithOverride(const DisplayItemClipChain* aParent);
   Maybe<wr::WrClipId> GetCacheOverride(const DisplayItemClipChain* aParent);
 
   wr::WrStickyId DefineStickyFrame(const wr::LayoutRect& aContentRect,
@@ -418,7 +421,7 @@ public:
   wr::WrState* Raw() { return mWrState; }
 
   // Return true if the current clip stack has any extra clip.
-  bool HasExtraClip() { return !mCacheOverride.empty(); }
+  bool HasExtraClip() { return mCacheOverridesPushed > 0; }
 
 protected:
   void PushCacheOverride(const DisplayItemClipChain* aParent,
@@ -454,6 +457,7 @@ protected:
                      std::vector<wr::WrClipId>,
                      DisplayItemClipChainHasher,
                      DisplayItemClipChainEqualer> mCacheOverride;
+  int mCacheOverridesPushed;
 
   friend class WebRenderAPI;
 };

@@ -640,6 +640,7 @@ WebRenderAPI::RunOnRenderThread(UniquePtr<RendererEvent> aEvent)
 DisplayListBuilder::DisplayListBuilder(PipelineId aId,
                                        const wr::LayoutSize& aContentSize,
                                        size_t aCapacity)
+  : mCacheOverridesPushed(0)
 {
   MOZ_COUNT_CTOR(DisplayListBuilder);
   mWrState = wr_state_new(aId, aContentSize, aCapacity);
@@ -728,28 +729,38 @@ DisplayListBuilder::DefineClip(const Maybe<layers::FrameMetrics::ViewID>& aAnces
 }
 
 void
-DisplayListBuilder::PushClip(const wr::WrClipId& aClipId,
-                             const DisplayItemClipChain* aParent)
+DisplayListBuilder::PushClip(const wr::WrClipId& aClipId)
 {
   wr_dp_push_clip(mWrState, aClipId.id);
   WRDL_LOG("PushClip id=%" PRIu64 "\n", mWrState, aClipId.id);
-  if (!aParent) {
-    mClipStack.push_back(wr::ScrollOrClipId(aClipId));
-  } else {
-    PushCacheOverride(aParent, aClipId);
-  }
+  mClipStack.push_back(wr::ScrollOrClipId(aClipId));
 }
 
 void
-DisplayListBuilder::PopClip(const DisplayItemClipChain* aParent)
+DisplayListBuilder::PopClip()
 {
   WRDL_LOG("PopClip\n", mWrState);
-  if (!aParent) {
-    MOZ_ASSERT(mClipStack.back().is<wr::WrClipId>());
-    mClipStack.pop_back();
-  } else {
-    PopCacheOverride(aParent);
-  }
+  MOZ_ASSERT(mClipStack.back().is<wr::WrClipId>());
+  mClipStack.pop_back();
+  wr_dp_pop_clip(mWrState);
+}
+
+void
+DisplayListBuilder::PushClipWithOverride(const wr::WrClipId& aClipId,
+                                         const DisplayItemClipChain* aParent)
+{
+  wr_dp_push_clip(mWrState, aClipId.id);
+  WRDL_LOG("PushClip id=%" PRIu64 " p=%p\n", mWrState, aClipId.id, aParent);
+  mCacheOverridesPushed++;
+  PushCacheOverride(aParent, aClipId);
+}
+
+void
+DisplayListBuilder::PopClipWithOverride(const DisplayItemClipChain* aParent)
+{
+  WRDL_LOG("PopClip p=%p\n", mWrState, aParent);
+  PopCacheOverride(aParent);
+  mCacheOverridesPushed--;
   wr_dp_pop_clip(mWrState);
 }
 

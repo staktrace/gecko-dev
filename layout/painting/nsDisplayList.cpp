@@ -9459,13 +9459,13 @@ nsDisplayMask::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder
     // Don't record this clip push in aBuilder's internal clip stack, because
     // otherwise any nested ScrollingLayersHelper instances that are created
     // will get confused about which clips are pushed.
-    aBuilder.PushClip(clipId, GetClipChain());
+    aBuilder.PushClipWithOverride(clipId, GetClipChain());
   }
 
   nsDisplaySVGEffects::CreateWebRenderCommands(aBuilder, aResources, aSc, aManager, aDisplayListBuilder);
 
   if (mask) {
-    aBuilder.PopClip(GetClipChain());
+    aBuilder.PopClipWithOverride(GetClipChain());
   }
 
   return true;
