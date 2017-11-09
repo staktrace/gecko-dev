@@ -2188,6 +2188,7 @@ APZCTreeManager::GetTargetAPZC(const ScreenPoint& aPoint,
   RefPtr<AsyncPanZoomController> target;
 
   if (RefPtr<wr::WebRenderAPI> wr = GetWebRenderAPI()) {
+    TimeStamp now = TimeStamp::Now();
     wr::WrPipelineId pipelineId;
     FrameMetrics::ViewID scrollId;
     wr::HitTestAuxData auxData;
@@ -2214,12 +2215,17 @@ APZCTreeManager::GetTargetAPZC(const ScreenPoint& aPoint,
 
       // TODO: scrollbar stuff
     }
-  } else {
+    printf_stderr("WR hit-test time: %f\n", (TimeStamp::Now() - now).ToMilliseconds());
+  }
+  hitResult = HitNothing;
+  TimeStamp now = TimeStamp::Now();
+  {
     MutexAutoLock lock(mTreeLock);
     ParentLayerPoint point = ViewAs<ParentLayerPixel>(aPoint,
       PixelCastJustification::ScreenIsParentLayerForRoot);
     target = GetAPZCAtPoint(mRootNode, point, &hitResult, &scrollbarNode);
   }
+  printf_stderr("APZ hit-test time: %f\n", (TimeStamp::Now() - now).ToMilliseconds());
 
   if (aOutHitResult) {
     *aOutHitResult = hitResult;
