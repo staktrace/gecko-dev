@@ -9463,7 +9463,7 @@ nsDisplayMask::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder
 {
   Maybe<wr::WrClipId> clipId;
 
-  bool canCache = CanMergeDisplayMaskFrame(mFrame);
+  bool canCache = false;//CanMergeDisplayMaskFrame(mFrame);
   if (canCache) {
     MaskInfo info { &(mFrame->StyleSVGReset()->mClipPath), GetActiveScrolledRoot(), GetClipChain() };
     if (sMaskCache && sMaskCache.ref() == info) {
