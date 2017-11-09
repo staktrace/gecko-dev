@@ -13,8 +13,8 @@
 #include "nsDisplayList.h"
 #include "UnitTransforms.h"
 
-#define SLH_LOG(...)
-//#define SLH_LOG(...) printf_stderr("SLH: " __VA_ARGS__)
+//#define SLH_LOG(...)
+#define SLH_LOG(...) printf_stderr("SLH: " __VA_ARGS__)
 
 namespace mozilla {
 namespace layers {
@@ -221,6 +221,7 @@ ScrollingLayersHelper::RecurseAndDefineClip(nsDisplayItem* aItem,
   // This will hold our return value
   std::pair<Maybe<FrameMetrics::ViewID>, Maybe<wr::WrClipId>> ids;
 
+  SLH_LOG("For clip chain %p builder has extra clip: %d\n", aChain, mBuilder->HasExtraClip());
   if (mBuilder->HasExtraClip()) {
     // We can't use mCache directly. However if there's an out-of-band clip that
     // was pushed on top of aChain, we should return the id for that OOB clip,
@@ -325,6 +326,7 @@ ScrollingLayersHelper::RecurseAndDefineClip(nsDisplayItem* aItem,
       aSc.ToRelativeLayoutRect(clip), &wrRoundedRects);
   if (!mBuilder->HasExtraClip()) {
     mCache[aChain] = clipId;
+    SLH_LOG("Caching %p -> %" PRIu64 "\n", aChain, clipId.id);
   }
 
   ids.second = Some(clipId);
@@ -348,6 +350,7 @@ ScrollingLayersHelper::RecurseAndDefineAsr(nsDisplayItem* aItem,
     // If we've already defined this scroll layer before, we can early-exit
     ids.first = Some(scrollId);
     if (aChain) {
+      SLH_LOG("For clip chain %p (asr %p) builder has extra clip: %d\n", aChain, aAsr, mBuilder->HasExtraClip());
       if (mBuilder->HasExtraClip()) {
         ids.second = mBuilder->GetCacheOverride(aChain);
       } else {
