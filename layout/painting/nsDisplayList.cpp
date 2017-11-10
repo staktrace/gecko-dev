@@ -963,6 +963,11 @@ nsDisplayListBuilder::nsDisplayListBuilder(nsIFrame* aReferenceFrame,
 {
   MOZ_COUNT_CTOR(nsDisplayListBuilder);
 
+  mBuildCompositorHitTestInfo = gfxVars::UseWebRender()
+      && gfxPrefs::WebRenderHitTest()
+      && mAsyncPanZoomEnabled
+      && mMode == nsDisplayListBuilderMode::PAINTING;
+
   nsPresContext* pc = aReferenceFrame->PresContext();
   nsIPresShell *shell = pc->PresShell();
   if (pc->IsRenderingOnlySelection()) {
