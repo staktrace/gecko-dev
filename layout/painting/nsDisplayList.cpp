@@ -4815,6 +4815,14 @@ nsDisplayEventReceiver::HitTest(nsDisplayListBuilder* aBuilder,
   aOutFrames->AppendElement(mFrame);
 }
 
+static bool
+IsOverflowVisible(nsIFrame* aFrame)
+{
+  const nsStyleDisplay* style = aFrame->StyleDisplay();
+  return style->mOverflowX == NS_STYLE_OVERFLOW_VISIBLE ||
+         style->mOverflowY == NS_STYLE_OVERFLOW_VISIBLE;
+}
+
 void
 nsDisplayLayerEventRegions::AddFrame(nsDisplayListBuilder* aBuilder,
                                      nsIFrame* aFrame)
@@ -4875,6 +4883,16 @@ nsDisplayLayerEventRegions::AddFrame(nsDisplayListBuilder* aBuilder,
   borderBox += aBuilder->ToReferenceFrame(aFrame);
 
   bool shouldBeContained = false;
+  if (XRE_IsContentProcess()) {
+    shouldBeContained = !(
+        scrollFrame ||  // scroll root
+        aFrame->mIsOutOfFlowRoot || // out of flow root
+        aFrame->GetParent()->IsViewportFrame() ||  // frame tree root
+        aFrame->Type() == LayoutFrameType::Scrollbar || aFrame->GetParent()->Type() == LayoutFrameType::Slider || // scrollbar or thumb
+        ZIndexForFrame(aFrame) != 0 ||  // zindex root
+        IsOverflowVisible(aFrame->GetParent()) // aFrame not clipped by parent
+    );
+  }
 
   bool borderBoxHasRoundedCorners = false;
   if (!simpleRegions) {

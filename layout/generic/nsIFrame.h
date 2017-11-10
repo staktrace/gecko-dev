@@ -633,6 +633,7 @@ public:
     , mMayHaveWillChangeBudget(false)
     , mBuiltBlendContainer(false)
     , mIsPrimaryFrame(false)
+    , mIsOutOfFlowRoot(false)
   {
     mozilla::PodZero(&mOverflow);
   }
@@ -4334,6 +4335,8 @@ private:
    * True if this is the primary frame for mContent.
    */
   bool mIsPrimaryFrame : 1;
+public:
+  bool mIsOutOfFlowRoot: 1;
 
 protected:
 

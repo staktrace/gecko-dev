@@ -86,7 +86,9 @@ public:
   void       SetOutOfFlowFrame(nsIFrame* aFrame) {
                NS_ASSERTION(!aFrame || !aFrame->GetPrevContinuation(),
                             "OOF must be first continuation");
+               if (mOutOfFlowFrame) mOutOfFlowFrame->mIsOutOfFlowRoot = false;
                mOutOfFlowFrame = aFrame;
+               if (aFrame) aFrame->mIsOutOfFlowRoot = true;
              }
 
   // nsIFrame overrides
