@@ -4919,6 +4919,7 @@ nsDisplayLayerEventRegions::AddFrame(nsDisplayListBuilder* aBuilder,
       nsRegion result(mozilla::gfx::ArrayView<pixman_box32_t>(mMaybeHitRegion.mBoxes));
       if (!result.Contains(borderBox)) {
         printf_stderr("%p should be contained, but %s not inside maybehitregion %s\n", aFrame, Stringify(borderBox).c_str(), Stringify(result).c_str());
+        MOZ_RELEASE_ASSERT(false);
       }
     }
     mMaybeHitRegion.Add(aFrame, borderBox);
@@ -4927,6 +4928,7 @@ nsDisplayLayerEventRegions::AddFrame(nsDisplayListBuilder* aBuilder,
       nsRegion result(mozilla::gfx::ArrayView<pixman_box32_t>(mHitRegion.mBoxes));
       if (!result.Contains(borderBox)) {
         printf_stderr("%p should be contained, but %s not inside hitregion %s\n", aFrame, Stringify(borderBox).c_str(), Stringify(result).c_str());
+        MOZ_RELEASE_ASSERT(false);
       }
     }
     mHitRegion.Add(aFrame, borderBox);
