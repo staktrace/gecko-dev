@@ -3592,6 +3592,8 @@ nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext, nsIFrame* aFrame,
                           nsDisplayListBuilderMode aBuilderMode,
                           PaintFrameFlags aFlags)
 {
+  if (XRE_IsContentProcess()) aFrame->DumpFrameTree();
+
   AUTO_PROFILER_LABEL("nsLayoutUtils::PaintFrame", GRAPHICS);
 
 #ifdef MOZ_DUMP_PAINTING
