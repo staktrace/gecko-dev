@@ -1,0 +1,70 @@
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+}
+
+.curtain {
+  position: relative;
+}
+.curtain-item {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: white;
+}
+.curtain-item:nth-child(1) {
+  z-index: 1;
+  margin-top: -100vh;
+  margin-bottom: 100vh;
+}
+.curtain-item:nth-child(2) {
+  z-index: 0;
+  margin-top: 0vh;
+  margin-bottom: 0vh;
+  bottom: 0;
+}
+.curtain-item::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(red,red);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -1;
+  content: "";
+}
+.curtain-item:nth-child(2)::before {
+  filter: hue-rotate(-0.6turn);
+}
+
+</style>
+
+<section class="curtain">
+  <header class="curtain-item">
+  </header>
+  <section class="curtain-item">
+  </section>
+</section>
+
+<script>
+function scrollDown() {
+    if (document.scrollingElement.scrollTop + 10 < document.scrollingElement.scrollTopMax) {
+        document.scrollingElement.scrollTop += 10;
+        setTimeout(scrollDown, 10);
+    } else {
+        document.scrollingElement.scrollTop = document.scrollingElement.scrollTopMax;
+        window.top.document.documentElement.classList.remove('reftest-wait');
+    }
+}
+
+addEventListener('load', function(e) {
+    document.scrollingElement.scrollTop = 0;
+    setTimeout(scrollDown, 10);
+});
+</script>

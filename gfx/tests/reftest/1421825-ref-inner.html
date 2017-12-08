@@ -1,0 +1,16 @@
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+  height: 200vh;
+  width: 100%;
+  background-color: #007700;
+}
+</style>
+<script>
+addEventListener('load', function() {
+    document.scrollingElement.scrollTop = document.scrollingElement.scrollTopMax;
+    window.top.document.documentElement.classList.remove('reftest-wait');
+});
+</script>
