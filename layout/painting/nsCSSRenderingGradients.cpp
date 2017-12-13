@@ -943,11 +943,18 @@ nsCSSGradientRenderer::Paint(gfxContext& aContext,
 
   // x and y are the top-left corner of the tile to draw
   for (nscoord y = yStart; y < yEnd; y += aRepeatSize.height) {
+    if (y >= dirty.YMost() || y + aDest.height < dirty.y) {
+      // This row is not dirty, skip it
+      continue;
+    }
     for (nscoord x = xStart; x < xEnd; x += aRepeatSize.width) {
+      nsRect tile(x, y, aDest.width, aDest.height);
+      if (!tile.Intersects(dirty)) {
+        // This tile is not dirty, skip it
+        continue;
+      }
       // The coordinates of the tile
-      gfxRect tileRect = nsLayoutUtils::RectToGfxRect(
-                      nsRect(x, y, aDest.width, aDest.height),
-                      appUnitsPerDevPixel);
+      gfxRect tileRect = nsLayoutUtils::RectToGfxRect(tile, appUnitsPerDevPixel);
       // The actual area to fill with this tile is the intersection of this
       // tile with the overall area we're supposed to be filling
       gfxRect fillRect =
