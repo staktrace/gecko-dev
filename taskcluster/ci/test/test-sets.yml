@@ -104,7 +104,7 @@ stylo-disabled-tests:
 reftest-stylo:
     - reftest-stylo
 
-qr-talos:
+linux-qr-talos:
     - talos-chrome
     - talos-dromaeojs
     - talos-g1
@@ -123,7 +123,7 @@ qr-talos:
     - talos-h1
     - talos-h2
 
-qr-tests:
+linux-qr-tests:
     - cppunit
     - crashtest
     - gtest
@@ -136,6 +136,35 @@ qr-tests:
     - mochitest-webgl
     - reftest
     - xpcshell
+
+windows-qr-talos:
+    - talos-chrome
+    - talos-dromaeojs
+    - talos-g1
+    - talos-g2
+    - talos-g4
+    - talos-g5
+    - talos-other
+    - talos-perf-reftest
+    - talos-perf-reftest-singletons
+    - talos-svgr
+    - talos-tp5o
+    - talos-xperf
+    - talos-tp6
+    - talos-tp6-stylo-threads
+    - talos-speedometer
+    - talos-h1
+    - talos-h2
+
+windows-qr-tests:
+    - crashtest
+    - jsreftest
+    - mochitest
+    - mochitest-a11y
+    - mochitest-gpu
+    - mochitest-media
+    - mochitest-webgl
+    - reftest
 
 jsdcov-code-coverage-tests:
     - mochitest

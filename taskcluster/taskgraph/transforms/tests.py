@@ -106,6 +106,11 @@ WINDOWS_WORKER_TYPES = {
       'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
       'hardware': 'releng-hardware/gecko-t-win10-64-hw',
     },
+    'windows10-64-qr': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
     # These values don't really matter since BBB will be executing them
     'windows8-64': {
       'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
@@ -423,11 +428,11 @@ def set_defaults(config, tests):
         else:
             test['allow-software-gl-layers'] = False
 
-        # Enable WebRender by default on the QuantumRender test platform, since
+        # Enable WebRender by default on the QuantumRender test platforms, since
         # the whole point of QuantumRender is to run with WebRender enabled.
-        # If other *-qr test platforms are added they should also be checked for
-        # here; currently linux64-qr is the only one.
-        if test['test-platform'].startswith('linux64-qr'):
+        # This currently matches linux64-qr and windows10-64-qr; both of these
+        # have /opt and /debug variants.
+        if "-qr/" in test['test-platform']:
             test['webrender'] = True
         else:
             test.setdefault('webrender', False)

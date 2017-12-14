@@ -25,6 +25,10 @@ crashtest:
         by-test-platform:
             android.*: xlarge
             default: default
+    virtualization:
+        by-test-platform:
+            windows10-64-qr/.*: virtual-with-gpu
+            default: virtual
     chunks:
         by-test-platform:
             android-4.3-arm7-api-16/debug: 10
@@ -48,6 +52,10 @@ jsreftest:
         by-test-platform:
             android.*: xlarge
             default: default
+    virtualization:
+        by-test-platform:
+            windows10-64-qr/.*: virtual-with-gpu
+            default: virtual
     chunks:
         by-test-platform:
             android-4.3-arm7-api-16/debug: 100

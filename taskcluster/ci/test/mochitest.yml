@@ -27,6 +27,10 @@ mochitest:
             default: mochitest/plain-chunked
     treeherder-symbol: tc-M()
     loopback-video: true
+    virtualization:
+        by-test-platform:
+            windows10-64-qr/.*: virtual-with-gpu
+            default: virtual
     instance-size:
         by-test-platform:
             linux64-jsdcov/opt: xlarge
@@ -72,10 +76,14 @@ mochitest-a11y:
     suite: mochitest/a11y
     treeherder-symbol: tc-M(a11y)
     loopback-video: true
+    virtualization:
+        by-test-platform:
+            windows10-64-qr/.*: virtual-with-gpu
+            default: virtual
     e10s: false
     run-on-projects:
         by-test-platform:
-            linux64-qr/.*: ['mozilla-central', 'try']
+            .*-qr/.*: ['mozilla-central', 'try']
             default: built-projects
     mozharness:
         mochitest-flavor: a11y
@@ -279,6 +287,10 @@ mochitest-media:
     treeherder-symbol: tc-M(mda)
     max-run-time: 5400
     loopback-video: true
+    virtualization:
+        by-test-platform:
+            windows10-64-qr/.*: virtual-with-gpu
+            default: virtual
     instance-size:
         by-test-platform:
             android.*: xlarge
