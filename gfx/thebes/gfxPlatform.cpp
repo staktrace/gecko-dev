@@ -2483,10 +2483,12 @@ gfxPlatform::InitWebRenderConfig()
 
   if (prefEnabled) {
     featureWebRender.UserEnable("Enabled by pref");
+    printf_stderr("webrender enabled by pref\n");
   } else {
     const char* env = PR_GetEnv("MOZ_WEBRENDER");
     if (env && *env == '1') {
       featureWebRender.UserEnable("Enabled by envvar");
+    printf_stderr("webrender enabled by envvar\n");
     }
   }
 
@@ -2496,6 +2498,7 @@ gfxPlatform::InitWebRenderConfig()
       FeatureStatus::Unavailable,
       "Hardware compositing is disabled",
       NS_LITERAL_CSTRING("FEATURE_FAILURE_WEBRENDER_NEED_HWCOMP"));
+    printf_stderr("webrender disabled by hw comp\n");
   }
 
   // WebRender relies on the GPU process when on Windows
@@ -2505,6 +2508,7 @@ gfxPlatform::InitWebRenderConfig()
       FeatureStatus::Unavailable,
       "GPU Process is disabled",
       NS_LITERAL_CSTRING("FEATURE_FAILURE_GPU_PROCESS_DISABLED"));
+    printf_stderr("webrender disabled by gpu proc\n");
   }
 #endif
 
@@ -2513,6 +2517,7 @@ gfxPlatform::InitWebRenderConfig()
       FeatureStatus::Unavailable,
       "Safe-mode is enabled",
       NS_LITERAL_CSTRING("FEATURE_FAILURE_SAFE_MODE"));
+    printf_stderr("webrender disabled by safe mode\n");
   }
 
 #ifndef MOZ_BUILD_WEBRENDER
@@ -2520,6 +2525,7 @@ gfxPlatform::InitWebRenderConfig()
     FeatureStatus::Unavailable,
     "Build doesn't include WebRender",
     NS_LITERAL_CSTRING("FEATURE_FAILURE_NO_WEBRENDER"));
+  printf_stderr("webrender disabled by unavailable\n");
 #endif
 
 #ifdef XP_WIN
@@ -2529,6 +2535,7 @@ gfxPlatform::InitWebRenderConfig()
         FeatureStatus::Unavailable,
         "ANGLE is disabled",
         NS_LITERAL_CSTRING("FEATURE_FAILURE_ANGLE_DISABLED"));
+      printf_stderr("webrender disabled by angle\n");
     } else {
       gfxVars::SetUseWebRenderANGLE(gfxConfig::IsEnabled(Feature::WEBRENDER));
     }
@@ -2544,6 +2551,7 @@ gfxPlatform::InitWebRenderConfig()
     FeatureStatus::Unavailable,
     "WebRender not ready for use on Android",
     NS_LITERAL_CSTRING("FEATURE_FAILURE_ANDROID"));
+  printf_stderr("webrender disabled by android\n");
 #endif
 
   // gfxFeature is not usable in the GPU process, so we use gfxVars to transmit this feature

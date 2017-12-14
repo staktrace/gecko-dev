@@ -1701,6 +1701,7 @@ CompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::PipelineId& aPipel
   MOZ_ASSERT(!mCompositor);
   MOZ_ASSERT(!mCompositorScheduler);
 
+  printf_stderr("AllocPWebRenderBridgeParent\n");
 
   MOZ_ASSERT(mWidget);
   RefPtr<widget::CompositorWidget> widget = mWidget;
