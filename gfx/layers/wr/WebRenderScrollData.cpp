@@ -49,10 +49,13 @@ WebRenderLayerScrollData::Initialize(WebRenderScrollData& aOwner,
 
   MOZ_ASSERT(aItem);
   aItem->UpdateScrollData(&aOwner, this);
-  for (const ActiveScrolledRoot* asr = aItem->GetActiveScrolledRoot();
-       asr && asr != aStopAtAsr;
-       asr = asr->mParent) {
-    MOZ_ASSERT(aOwner.GetManager());
+
+  MOZ_ASSERT(aOwner.GetManager());
+  const ActiveScrolledRoot* asr = aItem->GetActiveScrolledRoot();
+  while (asr) {
+    if (asr == aStopAtAsr) {
+      break;
+    }
     FrameMetrics::ViewID scrollId = asr->GetViewId();
     if (Maybe<size_t> index = aOwner.HasMetadataFor(scrollId)) {
       mScrollIds.AppendElement(index.ref());
@@ -64,6 +67,13 @@ WebRenderLayerScrollData::Initialize(WebRenderScrollData& aOwner,
       MOZ_ASSERT(metadata->GetMetrics().GetScrollId() == scrollId);
       mScrollIds.AppendElement(aOwner.AddMetadata(metadata.ref()));
     }
+
+    asr = asr->mParent;
+  }
+  if (aStopAtAsr && asr != aStopAtAsr) {
+    // we must have exited the loop above after walking the whole chain without
+    // encountering aStopAtAsr
+    MOZ_ASSERT(!asr);
   }
 }
 
