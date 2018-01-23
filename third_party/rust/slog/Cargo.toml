@@ -12,7 +12,7 @@
 
 [package]
 name = "slog"
-version = "1.6.0"
+version = "1.7.1"
 authors = ["Dawid Ciężarkiewicz <dpc@dpc.pw>"]
 description = "Structured, composable logging for Rust"
 homepage = "https://github.com/slog-rs/slog"
@@ -35,17 +35,17 @@ debug = false
 debug-assertions = false
 
 [features]
-default = ["std"]
-max_level_debug = []
-release_max_level_off = []
-release_max_level_warn = []
-max_level_warn = []
-max_level_info = []
-max_level_off = []
-release_max_level_debug = []
-max_level_trace = []
-max_level_error = []
 release_max_level_info = []
-release_max_level_trace = []
-release_max_level_error = []
+release_max_level_off = []
+max_level_warn = []
+default = ["std"]
+max_level_off = []
 std = []
+max_level_info = []
+max_level_debug = []
+release_max_level_trace = []
+release_max_level_warn = []
+max_level_error = []
+release_max_level_debug = []
+release_max_level_error = []
+max_level_trace = []
