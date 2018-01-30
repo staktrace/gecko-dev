@@ -10,11 +10,11 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Types.h"
 #include "mozilla/gfx/DrawEventRecorder.h"
+#include "mozilla/layers/ClipManager.h"
 #include "mozilla/layers/ImageClient.h"
 #include "mozilla/layers/WebRenderBridgeChild.h"
 #include "mozilla/layers/WebRenderLayerManager.h"
 #include "mozilla/layers/IpcResourceUpdateQueue.h"
-#include "mozilla/layers/ScrollingLayersHelper.h"
 #include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/layers/UpdateImageHelper.h"
 #include "gfxEnv.h"
@@ -70,7 +70,7 @@ WebRenderCommandBuilder::BuildWebRenderCommands(wr::DisplayListBuilder& aBuilder
     MOZ_ASSERT(mLayerScrollData.empty());
     mLastCanvasDatas.Clear();
     mLastAsr = nullptr;
-    mScrollingHelper.BeginBuild(mManager, aBuilder);
+    mClipManager.BeginBuild(mManager, aBuilder);
 
     {
       StackingContextHelper pageRootSc(sc, aBuilder, aFilters);
@@ -95,7 +95,7 @@ WebRenderCommandBuilder::BuildWebRenderCommands(wr::DisplayListBuilder& aBuilder
       aScrollData.AddLayerData(*i);
     }
     mLayerScrollData.clear();
-    mScrollingHelper.EndBuild();
+    mClipManager.EndBuild();
 
     // Remove the user data those are not displayed on the screen and
     // also reset the data to unused for next transaction.
@@ -112,7 +112,7 @@ WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(nsDisplayList* a
                                                                 wr::DisplayListBuilder& aBuilder,
                                                                 wr::IpcResourceUpdateQueue& aResources)
 {
-  mScrollingHelper.BeginList(aSc);
+  mClipManager.BeginList(aSc);
 
   bool apzEnabled = mManager->AsyncPanZoomEnabled();
   EventRegions eventRegions;
@@ -217,7 +217,7 @@ WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(nsDisplayList* a
       }
     }
 
-    mScrollingHelper.BeginItem(item, aSc);
+    mClipManager.BeginItem(item, aSc);
     // Note: this call to CreateWebRenderCommands can recurse back into
     // this function if the |item| is a wrapper for a sublist.
     if (itemType != DisplayItemType::TYPE_LAYER_EVENT_REGIONS &&
@@ -263,7 +263,20 @@ WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(nsDisplayList* a
     mLayerScrollData.back().AddEventRegions(eventRegions);
   }
 
-  mScrollingHelper.EndList(aSc);
+  mClipManager.EndList(aSc);
+}
+
+void
+WebRenderCommandBuilder::PushOverrideForASR(const ActiveScrolledRoot* aASR,
+                                            const Maybe<wr::WrClipId>& aClipId)
+{
+  mClipManager.PushOverrideForASR(aASR, aClipId);
+}
+
+void
+WebRenderCommandBuilder::PopOverrideForASR(const ActiveScrolledRoot* aASR)
+{
+  mClipManager.PopOverrideForASR(aASR);
 }
 
 Maybe<wr::ImageKey>

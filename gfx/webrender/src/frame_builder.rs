@@ -302,6 +302,8 @@ impl FrameBuilder {
         let mut clip_chain_local_clip_rects = Vec::with_capacity(total_prim_runs);
         clip_chain_local_clip_rects.push(LayerRect::max_rect());
 
+        //println!("CST before");
+        //clip_scroll_tree.print(&self.clip_store);
         clip_scroll_tree.update_tree(
             &self.screen_rect.to_i32(),
             device_pixel_scale,
@@ -312,6 +314,8 @@ impl FrameBuilder {
             &mut node_data,
             scene_properties,
         );
+        //println!("CST after");
+        //clip_scroll_tree.print(&self.clip_store);
 
         self.update_scroll_bars(clip_scroll_tree, gpu_cache);
 

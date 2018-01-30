@@ -7726,19 +7726,21 @@ nsDisplayStickyPosition::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder
       NSAppUnitsToFloatPixels(appliedOffset.x, auPerDevPixel),
       NSAppUnitsToFloatPixels(appliedOffset.y, auPerDevPixel)
     };
-    wr::WrStickyId id = aBuilder.DefineStickyFrame(aSc.ToRelativeLayoutRect(bounds),
+    wr::WrClipId id = aBuilder.DefineStickyFrame(aSc.ToRelativeLayoutRect(bounds),
         topMargin.ptrOr(nullptr), rightMargin.ptrOr(nullptr),
         bottomMargin.ptrOr(nullptr), leftMargin.ptrOr(nullptr),
         vBounds, hBounds, applied);
 
-    aBuilder.PushStickyFrame(id, GetClipChain());
+    aBuilder.PushClip(id);
+    aManager->CommandBuilder().PushOverrideForASR(GetActiveScrolledRoot(), Some(id));
   }
 
   nsDisplayOwnLayer::CreateWebRenderCommands(aBuilder, aResources, aSc,
       aManager, aDisplayListBuilder);
 
   if (stickyScrollContainer) {
-    aBuilder.PopStickyFrame(GetClipChain());
+    aManager->CommandBuilder().PopOverrideForASR(GetActiveScrolledRoot());
+    aBuilder.PopClip();
   }
 
   return true;
@@ -9754,18 +9756,17 @@ nsDisplayMask::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder
                                                                             aSc, aDisplayListBuilder,
                                                                             bounds);
   if (mask) {
-    wr::WrClipId clipId = aBuilder.DefineClip(Nothing(), Nothing(),
+    wr::WrClipId clipId = aBuilder.DefineClip(Nothing(),
         aSc.ToRelativeLayoutRect(bounds), nullptr, mask.ptr());
-    // Don't record this clip push in aBuilder's internal clip stack, because
-    // otherwise any nested ScrollingLayersHelper instances that are created
-    // will get confused about which clips are pushed.
-    aBuilder.PushClip(clipId, GetClipChain());
+    aBuilder.PushClip(clipId);
+    aManager->CommandBuilder().PushOverrideForASR(GetActiveScrolledRoot(), Some(clipId));
   }
 
   nsDisplaySVGEffects::CreateWebRenderCommands(aBuilder, aResources, aSc, aManager, aDisplayListBuilder);
 
   if (mask) {
-    aBuilder.PopClip(GetClipChain());
+    aManager->CommandBuilder().PopOverrideForASR(GetActiveScrolledRoot());
+    aBuilder.PopClip();
   }
 
   return true;
