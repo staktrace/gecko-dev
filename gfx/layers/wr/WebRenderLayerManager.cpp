@@ -28,7 +28,7 @@
 
 // Useful for debugging, it dumps the Gecko display list *before* we try to
 // build WR commands from it, and dumps the WR display list after building it.
-#define DUMP_LISTS 0
+#define DUMP_LISTS 1
 
 namespace mozilla {
 
