@@ -189,7 +189,7 @@ AsyncImagePipelineManager::UpdateImageKeys(wr::TransactionBuilder& aResources,
 
   WebRenderTextureHost* wrTexture = texture->AsWebRenderTextureHost();
 
-  bool useExternalImage = !gfxEnv::EnableWebRenderRecording() && wrTexture;
+  bool useExternalImage = wrTexture;
   aPipeline->mUseExternalImage = useExternalImage;
 
   // The non-external image code path falls back to converting the texture into

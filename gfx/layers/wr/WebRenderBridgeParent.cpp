@@ -384,14 +384,12 @@ WebRenderBridgeParent::AddExternalImage(wr::ExternalImageId aExtId, wr::ImageKey
 
   RefPtr<DataSourceSurface> dSurf = SharedSurfacesParent::Get(aExtId);
   if (dSurf) {
-    if (!gfxEnv::EnableWebRenderRecording()) {
-      wr::ImageDescriptor descriptor(dSurf->GetSize(), dSurf->Stride(),
-                                     dSurf->GetFormat());
-      aResources.AddExternalImage(aKey, descriptor, aExtId,
-                                  wr::WrExternalImageBufferType::ExternalBuffer,
-                                  0);
-      return true;
-    }
+    wr::ImageDescriptor descriptor(dSurf->GetSize(), dSurf->Stride(),
+                                   dSurf->GetFormat());
+    aResources.AddExternalImage(aKey, descriptor, aExtId,
+                                wr::WrExternalImageBufferType::ExternalBuffer,
+                                0);
+    return true;
   } else {
     MOZ_ASSERT(mExternalImageIds.Get(wr::AsUint64(aExtId)).get());
 
@@ -400,18 +398,16 @@ WebRenderBridgeParent::AddExternalImage(wr::ExternalImageId aExtId, wr::ImageKey
       gfxCriticalNote << "CompositableHost does not exist for extId:" << wr::AsUint64(aExtId);
       return false;
     }
-    if (!gfxEnv::EnableWebRenderRecording()) {
-      TextureHost* texture = host->GetAsTextureHostForComposite();
-      if (!texture) {
-        gfxCriticalNote << "TextureHost does not exist for extId:" << wr::AsUint64(aExtId);
-        return false;
-      }
-      WebRenderTextureHost* wrTexture = texture->AsWebRenderTextureHost();
-      if (wrTexture) {
-        wrTexture->PushResourceUpdates(aResources, TextureHost::ADD_IMAGE, keys,
-                                       wrTexture->GetExternalImageKey());
-        return true;
-      }
+    TextureHost* texture = host->GetAsTextureHostForComposite();
+    if (!texture) {
+      gfxCriticalNote << "TextureHost does not exist for extId:" << wr::AsUint64(aExtId);
+      return false;
+    }
+    WebRenderTextureHost* wrTexture = texture->AsWebRenderTextureHost();
+    if (wrTexture) {
+      wrTexture->PushResourceUpdates(aResources, TextureHost::ADD_IMAGE, keys,
+                                     wrTexture->GetExternalImageKey());
+      return true;
     }
     dSurf = host->GetAsSurface();
   }
