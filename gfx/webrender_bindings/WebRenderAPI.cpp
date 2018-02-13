@@ -241,7 +241,7 @@ WebRenderAPI::InitExternalLogHandler()
 {
   // Redirect the webrender's log to gecko's log system.
   // The current log level is "error".
-  mozilla::wr::wr_init_external_log_handler(wr::WrLogLevelFilter::Error);
+  mozilla::wr::wr_init_external_log_handler(wr::WrLogLevelFilter::Info);
 }
 
 /*static*/ void
