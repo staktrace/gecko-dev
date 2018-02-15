@@ -100,7 +100,8 @@ struct FileInfo {
       return;
     }
 
-    Interesting = Rname.compare(0, Srcdir.length(), Srcdir) == 0;
+    Interesting = (Rname.length() > Srcdir.length()) &&
+                  (Rname.compare(0, Srcdir.length(), Srcdir) == 0);
     if (Interesting) {
       // Remove the trailing `/' as well.
       Realname.erase(0, Srcdir.length() + 1);
@@ -176,9 +177,12 @@ private:
       // We haven't seen this file before. We need to make the FileInfo
       // structure information ourselves
       std::string Filename = SM.getFilename(Loc);
-      std::string Absolute = getAbsolutePath(Filename);
-      if (Absolute.empty()) {
-        Absolute = Filename;
+      std::string Absolute;
+      if (!Filename.empty()) {
+        Absolute = getAbsolutePath(Filename);
+        if (Absolute.empty()) {
+          Absolute = Filename;
+        }
       }
       std::unique_ptr<FileInfo> Info = llvm::make_unique<FileInfo>(Absolute);
       It = FileMap.insert(std::make_pair(Id, std::move(Info))).first;
