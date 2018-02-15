@@ -915,7 +915,7 @@ pref("gfx.webrender.all", false);
 #ifdef MOZ_ENABLE_WEBRENDER
 pref("gfx.webrender.enabled", true);
 #else
-pref("gfx.webrender.enabled", false);
+pref("gfx.webrender.enabled", true);
 #endif
 #ifdef XP_WIN
 pref("gfx.webrender.force-angle", true);
