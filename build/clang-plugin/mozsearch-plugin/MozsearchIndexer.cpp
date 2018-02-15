@@ -176,14 +176,25 @@ private:
     if (It == FileMap.end()) {
       // We haven't seen this file before. We need to make the FileInfo
       // structure information ourselves
+      printf("\nnew FileInfo! (macro=%d)\n", Loc.isMacroID());
+      Loc.dump(SM);
+      printf("\n");
       std::string Filename = SM.getFilename(Loc);
+      if (Filename.empty()) {
+        if (const FileEntry *F = SM.getFileEntryForID(Id)) {
+          std::string realpath = F->tryGetRealPathName();
+          printf("realPath: [%s]\n", realpath.c_str());
+        }
+      }
       std::string Absolute;
+      printf("Building fileinfo for [%s]\n", Filename.c_str());
       if (!Filename.empty()) {
         Absolute = getAbsolutePath(Filename);
         if (Absolute.empty()) {
           Absolute = Filename;
         }
       }
+      printf("Absolute path is [%s]\n", Absolute.c_str());
       std::unique_ptr<FileInfo> Info = llvm::make_unique<FileInfo>(Absolute);
       It = FileMap.insert(std::make_pair(Id, std::move(Info))).first;
     }
@@ -426,6 +437,7 @@ public:
 
   // All we need is to follow the final declaration.
   virtual void HandleTranslationUnit(ASTContext &Ctx) {
+    TRACEFUNC;
     CurMangleContext =
       clang::ItaniumMangleContext::create(Ctx, CI.getDiagnostics());
 
@@ -443,6 +455,7 @@ public:
 
       std::string Filename = Outdir;
       Filename += It->second->Realname;
+        printf("MOZSEARCH Processing %s\n", Filename.c_str());
 
       ensurePath(Filename);
 
