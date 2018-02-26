@@ -104,6 +104,10 @@ reftest:
             windows10-64.*/opt: 1
             windows10-64.*/debug: 2
             default: 8
+    run-on-projects:
+        by-test-platform:
+            .*-qr/.*: ['mozilla-central', 'integration', 'try']  # exclude beta and project branches
+            default: built-projects
     e10s:
         by-test-platform:
             linux32/debug: both
