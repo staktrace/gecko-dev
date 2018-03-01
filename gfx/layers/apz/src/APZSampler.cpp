@@ -123,5 +123,27 @@ APZSampler::SetTestAsyncZoom(uint64_t aLayersId,
   }
 }
 
+bool
+APZSampler::SampleAnimations(const LayerMetricsWrapper& aLayer,
+                             const TimeStamp& aSampleTime)
+{
+  // TODO: we can drop the aLayer argument and just walk the APZ tree directly
+  // in mApz.
+
+  bool activeAnimations = false;
+
+  ForEachNodePostOrder<ForwardIterator>(aLayer,
+      [&activeAnimations, &aSampleTime](LayerMetricsWrapper aLayerMetrics)
+      {
+        if (AsyncPanZoomController* apzc = aLayerMetrics.GetApzc()) {
+          apzc->ReportCheckerboard(aSampleTime);
+          activeAnimations |= apzc->AdvanceAnimations(aSampleTime);
+        }
+      }
+  );
+
+  return activeAnimations;
+}
+
 } // namespace layers
 } // namespace mozilla
