@@ -162,5 +162,23 @@ APZSampler::ComputeTransformForScrollThumb(const LayerToParentLayerMatrix4x4& aC
                                               aOutClipTransform);
 }
 
+AsyncTransform
+APZSampler::GetCurrentAsyncTransform(const LayerMetricsWrapper& aLayer)
+{
+  return aLayer.GetApzc()->GetCurrentAsyncTransform(AsyncPanZoomController::eForCompositing);
+}
+
+AsyncTransformComponentMatrix
+APZSampler::GetOverscrollTransform(const LayerMetricsWrapper& aLayer)
+{
+  return aLayer.GetApzc()->GetOverscrollTransform(AsyncPanZoomController::eForCompositing);
+}
+
+void
+APZSampler::MarkAsyncTransformAppliedToContent(const LayerMetricsWrapper& aLayer)
+{
+  aLayer.GetApzc()->MarkAsyncTransformAppliedToContent();
+}
+
 } // namespace layers
 } // namespace mozilla
