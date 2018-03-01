@@ -230,6 +230,7 @@ void
 Layer::SetAsyncPanZoomController(uint32_t aIndex, AsyncPanZoomController *controller)
 {
   MOZ_ASSERT(aIndex < GetScrollMetadataCount());
+  MOZ_ASSERT(!controller || GetFrameMetrics(aIndex).IsScrollable());
   mApzcs[aIndex] = controller;
 }
 
