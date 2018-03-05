@@ -7,9 +7,11 @@
 #ifndef mozilla_layers_APZSampler_h
 #define mozilla_layers_APZSampler_h
 
+#include "LayersTypes.h"
 #include "mozilla/layers/APZTestData.h"
 #include "mozilla/Maybe.h"
 #include "nsTArray.h"
+#include "Units.h"
 
 namespace mozilla {
 
@@ -26,6 +28,7 @@ class APZCTreeManager;
 class FocusTarget;
 class Layer;
 class LayerMetricsWrapper;
+struct ScrollThumbData;
 class WebRenderScrollData;
 
 /**
@@ -73,6 +76,13 @@ public:
 
   bool SampleAnimations(const LayerMetricsWrapper& aLayer,
                         const TimeStamp& aSampleTime);
+
+  LayerToParentLayerMatrix4x4 ComputeTransformForScrollThumb(
+      const LayerToParentLayerMatrix4x4& aCurrentTransform,
+      const LayerMetricsWrapper& aContent,
+      const ScrollThumbData& aThumbData,
+      bool aScrollbarIsDescendant,
+      AsyncTransformComponentMatrix* aOutClipTransform);
 
 protected:
   virtual ~APZSampler();
