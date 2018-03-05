@@ -162,6 +162,12 @@ APZSampler::ComputeTransformForScrollThumb(const LayerToParentLayerMatrix4x4& aC
                                               aOutClipTransform);
 }
 
+ParentLayerPoint
+APZSampler::GetCurrentAsyncScrollOffset(const LayerMetricsWrapper& aLayer)
+{
+  return aLayer.GetApzc()->GetCurrentAsyncScrollOffset(AsyncPanZoomController::eForCompositing);
+}
+
 AsyncTransform
 APZSampler::GetCurrentAsyncTransform(const LayerMetricsWrapper& aLayer)
 {
@@ -174,10 +180,25 @@ APZSampler::GetOverscrollTransform(const LayerMetricsWrapper& aLayer)
   return aLayer.GetApzc()->GetOverscrollTransform(AsyncPanZoomController::eForCompositing);
 }
 
+AsyncTransformComponentMatrix
+APZSampler::GetCurrentAsyncTransformWithOverscroll(const LayerMetricsWrapper& aLayer)
+{
+  return aLayer.GetApzc()->GetCurrentAsyncTransformWithOverscroll(AsyncPanZoomController::eForCompositing);
+}
+
 void
 APZSampler::MarkAsyncTransformAppliedToContent(const LayerMetricsWrapper& aLayer)
 {
   aLayer.GetApzc()->MarkAsyncTransformAppliedToContent();
+}
+
+bool
+APZSampler::HasUnusedAsyncTransform(const LayerMetricsWrapper& aLayer)
+{
+  AsyncPanZoomController* apzc = aLayer.GetApzc();
+  return apzc
+      && !apzc->GetAsyncTransformAppliedToContent()
+      && !AsyncTransformComponentMatrix(apzc->GetCurrentAsyncTransform(AsyncPanZoomController::eForHitTesting)).IsIdentity();
 }
 
 } // namespace layers
