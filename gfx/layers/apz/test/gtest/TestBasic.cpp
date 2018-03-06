@@ -12,6 +12,7 @@
 TEST_F(APZCBasicTester, Overzoom) {
   // the visible area of the document in CSS pixels is x=10 y=0 w=100 h=100
   FrameMetrics fm;
+  fm.SetLayersId(0);
   fm.SetCompositionBounds(ParentLayerRect(0, 0, 100, 100));
   fm.SetScrollableRect(CSSRect(0, 0, 125, 150));
   fm.SetScrollOffset(CSSPoint(10, 0));
@@ -89,6 +90,7 @@ TEST_F(APZCBasicTester, ComplexTransform) {
   metrics.SetPresShellResolution(2.0f);
   metrics.SetZoom(CSSToParentLayerScale2D(6, 6));
   metrics.SetDevPixelsPerCSSPixel(CSSToLayoutDeviceScale(3));
+  metrics.SetLayersId(0);
   metrics.SetScrollId(FrameMetrics::START_SCROLL_ID);
 
   ScrollMetadata childMetadata = metadata;

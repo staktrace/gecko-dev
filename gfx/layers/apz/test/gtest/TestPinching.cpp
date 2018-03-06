@@ -19,6 +19,7 @@ protected:
   FrameMetrics GetPinchableFrameMetrics()
   {
     FrameMetrics fm;
+    fm.SetLayersId(0);
     fm.SetCompositionBounds(ParentLayerRect(200, 200, 100, 200));
     fm.SetScrollableRect(CSSRect(0, 0, 980, 1000));
     fm.SetScrollOffset(CSSPoint(300, 300));

@@ -62,6 +62,7 @@ protected:
   {
     ScrollMetadata metadata;
     FrameMetrics& metrics = metadata.GetMetrics();
+    metrics.SetLayersId(0);
     metrics.SetScrollId(aScrollId);
     // By convention in this test file, START_SCROLL_ID is the root, so mark it as such.
     if (aScrollId == FrameMetrics::START_SCROLL_ID) {

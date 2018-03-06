@@ -155,6 +155,7 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
   static void Write(Message* aMsg, const paramType& aParam)
   {
     WriteParam(aMsg, aParam.mScrollId);
+    // Don't propagate mLayersId; that is strictly compositor-only
     WriteParam(aMsg, aParam.mPresShellResolution);
     WriteParam(aMsg, aParam.mCompositionBounds);
     WriteParam(aMsg, aParam.mDisplayPort);

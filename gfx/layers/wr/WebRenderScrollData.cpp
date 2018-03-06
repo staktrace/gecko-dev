@@ -226,6 +226,14 @@ WebRenderScrollData::GetPaintSequenceNumber() const
 }
 
 void
+WebRenderScrollData::SetLayersId(const uint64_t& aLayersId)
+{
+  for (ScrollMetadata& m : mScrollMetadatas) {
+    m.GetMetrics().SetLayersId(aLayersId);
+  }
+}
+
+void
 WebRenderScrollData::Dump() const
 {
   printf_stderr("WebRenderScrollData with %zu layers firstpaint: %d\n",

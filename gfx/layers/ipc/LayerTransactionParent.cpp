@@ -552,7 +552,12 @@ LayerTransactionParent::SetLayerAttributes(const OpSetLayerAttributes& aOp)
   }
   if (common.scrollMetadata() != layer->GetAllScrollMetadata()) {
     UpdateHitTestingTree(layer, "scroll metadata changed");
-    layer->SetScrollMetadata(common.scrollMetadata());
+    nsTArray<ScrollMetadata> metadata;
+    for (ScrollMetadata m : common.scrollMetadata()) {
+      m.GetMetrics().SetLayersId(mId);
+      metadata.AppendElement(m);
+    }
+    layer->SetScrollMetadata(metadata);
   }
   layer->SetDisplayListLog(common.displayListLog().get());
 

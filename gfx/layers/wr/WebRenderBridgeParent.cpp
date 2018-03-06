@@ -629,6 +629,7 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
   HoldPendingTransactionId(wrEpoch, aTransactionId, aTxnStartTime, aFwdTime);
 
   mScrollData = aScrollData;
+  mScrollData.SetLayersId(GetLayersId());
   UpdateAPZ(true);
 
   if (mIdNamespace != aIdNamespace) {

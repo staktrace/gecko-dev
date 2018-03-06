@@ -19,6 +19,14 @@ ScrollMetadata::SetUsesContainerScrolling(bool aValue) {
   mUsesContainerScrolling = aValue;
 }
 
+void
+FrameMetrics::SetLayersId(uint64_t aLayersId)
+{
+  MOZ_ASSERT(XRE_IsGPUProcess() || XRE_IsParentProcess());
+  MOZ_ASSERT(mLayersId.isNothing());
+  mLayersId = Some(aLayersId);
+}
+
 static OverscrollBehavior
 ToOverscrollBehavior(StyleOverscrollBehavior aBehavior)
 {

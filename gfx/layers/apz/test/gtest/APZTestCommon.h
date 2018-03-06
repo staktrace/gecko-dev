@@ -648,6 +648,7 @@ TestFrameMetrics()
 {
   FrameMetrics fm;
 
+  fm.SetLayersId(0);
   fm.SetDisplayPort(CSSRect(0, 0, 10, 10));
   fm.SetCompositionBounds(ParentLayerRect(0, 0, 10, 10));
   fm.SetCriticalDisplayPort(CSSRect(0, 0, 10, 10));

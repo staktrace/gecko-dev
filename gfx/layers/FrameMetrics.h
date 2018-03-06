@@ -103,6 +103,7 @@ public:
   {
     // Put mScrollId at the top since it's the most likely one to fail.
     return mScrollId == aOther.mScrollId &&
+           // don't compare mLayersId
            mPresShellResolution == aOther.mPresShellResolution &&
            mCompositionBounds.IsEqualEdges(aOther.mCompositionBounds) &&
            mDisplayPort.IsEqualEdges(aOther.mDisplayPort) &&
@@ -416,6 +417,14 @@ public:
     mScrollId = scrollId;
   }
 
+  void SetLayersId(uint64_t aLayersId);
+
+  uint64_t GetLayersId() const
+  {
+    // This should never be called if mLayersId is Nothing()
+    return *mLayersId;
+  }
+
   void SetRootCompositionSize(const CSSSize& aRootCompositionSize)
   {
     mRootCompositionSize = aRootCompositionSize;
@@ -503,6 +512,10 @@ public:
 private:
   // A unique ID assigned to each scrollable frame.
   ViewID mScrollId;
+
+  // Layers ID for the layers tree to which this scrollable frame ends up on.
+  // This field is only populated in the compositor.
+  Maybe<uint64_t> mLayersId;
 
   // The pres-shell resolution that has been induced on the document containing
   // this scroll frame as a result of zooming this scroll frame (whether via

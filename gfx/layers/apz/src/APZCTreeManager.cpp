@@ -843,6 +843,7 @@ APZCTreeManager::PrepareNodeForLayer(const ScrollNode& aLayer,
     return node;
   }
 
+  MOZ_ASSERT(aMetrics.GetLayersId() == aLayersId);
   AsyncPanZoomController* apzc = nullptr;
   // If we get here, aLayer is a scrollable layer and somebody
   // has registered a GeckoContentController for it, so we need to ensure

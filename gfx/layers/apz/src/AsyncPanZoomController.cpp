@@ -3786,6 +3786,7 @@ void AsyncPanZoomController::NotifyLayersUpdated(const ScrollMetadata& aScrollMe
   bool isDefault = mScrollMetadata.IsDefault();
 
   const FrameMetrics& aLayerMetrics = aScrollMetadata.GetMetrics();
+  MOZ_ASSERT(mLayersId == aLayerMetrics.GetLayersId());
 
   if ((aScrollMetadata == mLastContentPaintMetadata) && !isDefault) {
     // No new information here, skip it.
@@ -3917,6 +3918,9 @@ void AsyncPanZoomController::NotifyLayersUpdated(const ScrollMetadata& aScrollMe
     // If we're not taking the aLayerMetrics wholesale we still need to pull
     // in some things into our local mFrameMetrics because these things are
     // determined by Gecko and our copy in mFrameMetrics may be stale.
+
+    MOZ_ASSERT(mFrameMetrics.GetScrollId() == aLayerMetrics.GetScrollId());
+    MOZ_ASSERT(mFrameMetrics.GetLayersId() == aLayerMetrics.GetLayersId());
 
     if (FuzzyEqualsAdditive(mFrameMetrics.GetCompositionBounds().Width(), aLayerMetrics.GetCompositionBounds().Width()) &&
         mFrameMetrics.GetDevPixelsPerCSSPixel() == aLayerMetrics.GetDevPixelsPerCSSPixel() &&

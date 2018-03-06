@@ -157,6 +157,8 @@ public:
   void SetPaintSequenceNumber(uint32_t aPaintSequenceNumber);
   uint32_t GetPaintSequenceNumber() const;
 
+  void SetLayersId(const uint64_t& aLayersId);
+
   friend struct IPC::ParamTraits<WebRenderScrollData>;
 
   void Dump() const;
