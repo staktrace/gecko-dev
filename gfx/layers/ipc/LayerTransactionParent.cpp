@@ -59,6 +59,11 @@ LayerTransactionParent::LayerTransactionParent(HostLayerManager* aManager,
   , mDestroyed(false)
   , mIPCOpen(false)
 {
+  if (mId == 0) {
+    MOZ_ASSERT(mCompositorBridge->AsCompositorBridgeParent());
+    mId = mCompositorBridge->AsCompositorBridgeParent()->RootLayerTreeId();
+  }
+  MOZ_ASSERT(mId != 0);
 }
 
 LayerTransactionParent::~LayerTransactionParent()
