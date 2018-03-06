@@ -857,6 +857,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 if self.config['enable_webrender']:
                     env['MOZ_WEBRENDER'] = '1'
                     env['MOZ_ACCELERATED'] = '1'
+                    env['MALLOC_LOG'] = '2'
 
                 if self.config['disable_stylo']:
                     if self.config['single_stylo_traversal']:

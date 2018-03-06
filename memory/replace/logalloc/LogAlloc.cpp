@@ -24,6 +24,7 @@
 static malloc_table_t sFuncs;
 static intptr_t sFd = 0;
 static bool sStdoutOrStderr = false;
+static size_t sMinSize = 1048576;
 
 static Mutex sMutex;
 
@@ -81,7 +82,7 @@ replace_malloc(size_t aSize)
 {
   MutexAutoLock lock(sMutex);
   void* ptr = sFuncs.malloc(aSize);
-  FdPrintf(sFd, "%zu %zu malloc(%zu)=%p\n", GetPid(), GetTid(), aSize, ptr);
+  if (aSize > sMinSize) FdPrintf(sFd, "%zu %zu malloc(%zu)=%p\n", GetPid(), GetTid(), aSize, ptr);
   return ptr;
 }
 
@@ -90,7 +91,7 @@ replace_posix_memalign(void** aPtr, size_t aAlignment, size_t aSize)
 {
   MutexAutoLock lock(sMutex);
   int ret = sFuncs.posix_memalign(aPtr, aAlignment, aSize);
-  FdPrintf(sFd,
+  if (aSize > sMinSize) FdPrintf(sFd,
            "%zu %zu posix_memalign(%zu,%zu)=%p\n",
            GetPid(),
            GetTid(),
@@ -105,7 +106,7 @@ replace_aligned_alloc(size_t aAlignment, size_t aSize)
 {
   MutexAutoLock lock(sMutex);
   void* ptr = sFuncs.aligned_alloc(aAlignment, aSize);
-  FdPrintf(sFd,
+  if (aSize > sMinSize) FdPrintf(sFd,
            "%zu %zu aligned_alloc(%zu,%zu)=%p\n",
            GetPid(),
            GetTid(),
@@ -120,7 +121,7 @@ replace_calloc(size_t aNum, size_t aSize)
 {
   MutexAutoLock lock(sMutex);
   void* ptr = sFuncs.calloc(aNum, aSize);
-  FdPrintf(
+  if (aSize > sMinSize) FdPrintf(
     sFd, "%zu %zu calloc(%zu,%zu)=%p\n", GetPid(), GetTid(), aNum, aSize, ptr);
   return ptr;
 }
@@ -130,7 +131,7 @@ replace_realloc(void* aPtr, size_t aSize)
 {
   MutexAutoLock lock(sMutex);
   void* new_ptr = sFuncs.realloc(aPtr, aSize);
-  FdPrintf(sFd,
+  if (aSize > sMinSize) FdPrintf(sFd,
            "%zu %zu realloc(%p,%zu)=%p\n",
            GetPid(),
            GetTid(),
@@ -144,7 +145,7 @@ static void
 replace_free(void* aPtr)
 {
   MutexAutoLock lock(sMutex);
-  FdPrintf(sFd, "%zu %zu free(%p)\n", GetPid(), GetTid(), aPtr);
+  //FdPrintf(sFd, "%zu %zu free(%p)\n", GetPid(), GetTid(), aPtr);
   sFuncs.free(aPtr);
 }
 
@@ -153,7 +154,7 @@ replace_memalign(size_t aAlignment, size_t aSize)
 {
   MutexAutoLock lock(sMutex);
   void* ptr = sFuncs.memalign(aAlignment, aSize);
-  FdPrintf(sFd,
+  if (aSize > sMinSize) FdPrintf(sFd,
            "%zu %zu memalign(%zu,%zu)=%p\n",
            GetPid(),
            GetTid(),
@@ -168,7 +169,7 @@ replace_valloc(size_t aSize)
 {
   MutexAutoLock lock(sMutex);
   void* ptr = sFuncs.valloc(aSize);
-  FdPrintf(sFd, "%zu %zu valloc(%zu)=%p\n", GetPid(), GetTid(), aSize, ptr);
+  if (aSize > sMinSize) FdPrintf(sFd, "%zu %zu valloc(%zu)=%p\n", GetPid(), GetTid(), aSize, ptr);
   return ptr;
 }
 
@@ -177,7 +178,7 @@ replace_jemalloc_stats(jemalloc_stats_t* aStats)
 {
   MutexAutoLock lock(sMutex);
   sFuncs.jemalloc_stats(aStats);
-  FdPrintf(sFd, "%zu %zu jemalloc_stats()\n", GetPid(), GetTid());
+  //FdPrintf(sFd, "%zu %zu jemalloc_stats()\n", GetPid(), GetTid());
 }
 
 void
