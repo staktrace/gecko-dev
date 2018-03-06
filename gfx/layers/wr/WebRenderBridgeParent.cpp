@@ -490,7 +490,7 @@ WebRenderBridgeParent::GetRootCompositorBridgeParent() const
   if (mWidget) {
     // This WebRenderBridgeParent is attached to the root
     // CompositorBridgeParent.
-    return static_cast<CompositorBridgeParent*>(mCompositorBridge);
+    return mCompositorBridge->AsCompositorBridgeParent();
   }
 
   // Otherwise, this WebRenderBridgeParent is attached to a

@@ -130,6 +130,7 @@ public:
   ShmemAllocator* AsShmemAllocator() override { return this; }
 
   CompositorBridgeParentBase* AsCompositorBridgeParentBase() override { return this; }
+  virtual CompositorBridgeParent* AsCompositorBridgeParent() { return nullptr; }
 
   mozilla::ipc::IPCResult RecvSyncWithCompositor() override { return IPC_OK(); }
 
@@ -204,6 +205,8 @@ public:
                                   const CompositorOptions& aOptions,
                                   bool aUseExternalSurfaceSize,
                                   const gfx::IntSize& aSurfaceSize);
+
+  CompositorBridgeParent* AsCompositorBridgeParent() override { return this; }
 
   void InitSameProcess(widget::CompositorWidget* aWidget, const uint64_t& aLayerTreeId);
 
