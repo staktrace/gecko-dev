@@ -201,15 +201,6 @@ public:
     return Metadata().GetMetrics();
   }
 
-  AsyncPanZoomController* GetApzc() const
-  {
-    return nullptr;
-  }
-
-  void SetApzc(AsyncPanZoomController* aApzc) const
-  {
-  }
-
   const char* Name() const
   {
     return "WebRenderScrollDataWrapper";

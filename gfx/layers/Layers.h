@@ -79,7 +79,6 @@ namespace layers {
 
 class Animation;
 class AsyncCanvasRenderer;
-class AsyncPanZoomController;
 class BasicLayerManager;
 class ClientLayerManager;
 class HostLayerManager;
@@ -945,7 +944,6 @@ public:
     if (mScrollMetadata.Length() != 1 || mScrollMetadata[0] != aScrollMetadata) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
       mScrollMetadata.ReplaceElementsAt(0, mScrollMetadata.Length(), aScrollMetadata);
-      ScrollMetadataChanged();
       Mutated();
     }
   }
@@ -973,7 +971,6 @@ public:
     if (mScrollMetadata != aMetadataArray) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
       mScrollMetadata = aMetadataArray;
-      ScrollMetadataChanged();
       Mutated();
     }
   }
@@ -1794,21 +1791,9 @@ public:
    */
   virtual void ClearInvalidRegion() { mInvalidRegion.SetEmpty(); }
 
-  // These functions allow attaching an AsyncPanZoomController to this layer,
-  // and can be used anytime.
-  // A layer has an APZC at index aIndex only-if GetFrameMetrics(aIndex).IsScrollable();
-  // attempting to get an APZC for a non-scrollable metrics will return null.
-  // The aIndex for these functions must be less than GetScrollMetadataCount().
-  void SetAsyncPanZoomController(uint32_t aIndex, AsyncPanZoomController *controller);
-  AsyncPanZoomController* GetAsyncPanZoomController(uint32_t aIndex) const;
-  // The ScrollMetadataChanged function is used internally to ensure the APZC array length
-  // matches the frame metrics array length.
-
   virtual void ClearCachedResources() {}
 
   virtual bool SupportsAsyncUpdate() { return false; }
-private:
-  void ScrollMetadataChanged();
 public:
 
   void ApplyPendingUpdatesForThisTransaction();
@@ -1932,7 +1917,6 @@ protected:
   Maybe<ParentLayerIntRect> mClipRect;
   gfx::IntRect mTileSourceRect;
   gfx::TiledIntRegion mInvalidRegion;
-  nsTArray<RefPtr<AsyncPanZoomController> > mApzcs;
   bool mUseTileSourceRect;
 #ifdef DEBUG
   uint32_t mDebugColorIndex;

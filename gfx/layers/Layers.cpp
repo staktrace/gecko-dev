@@ -227,32 +227,6 @@ Layer::StartPendingAnimations(const TimeStamp& aReadyTime)
 }
 
 void
-Layer::SetAsyncPanZoomController(uint32_t aIndex, AsyncPanZoomController *controller)
-{
-  MOZ_ASSERT(aIndex < GetScrollMetadataCount());
-  MOZ_ASSERT(!controller || GetFrameMetrics(aIndex).IsScrollable());
-  mApzcs[aIndex] = controller;
-}
-
-AsyncPanZoomController*
-Layer::GetAsyncPanZoomController(uint32_t aIndex) const
-{
-  MOZ_ASSERT(aIndex < GetScrollMetadataCount());
-#ifdef DEBUG
-  if (mApzcs[aIndex]) {
-    MOZ_ASSERT(GetFrameMetrics(aIndex).IsScrollable());
-  }
-#endif
-  return mApzcs[aIndex];
-}
-
-void
-Layer::ScrollMetadataChanged()
-{
-  mApzcs.SetLength(GetScrollMetadataCount());
-}
-
-void
 Layer::ApplyPendingUpdatesToSubtree()
 {
   ForEachNode<ForwardIterator>(

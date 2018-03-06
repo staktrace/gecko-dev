@@ -243,29 +243,6 @@ public:
     return Metadata().GetMetrics();
   }
 
-  AsyncPanZoomController* GetApzc() const
-  {
-    MOZ_ASSERT(IsValid());
-
-    if (mIndex >= mLayer->GetScrollMetadataCount()) {
-      return nullptr;
-    }
-    return mLayer->GetAsyncPanZoomController(mIndex);
-  }
-
-  void SetApzc(AsyncPanZoomController* aApzc) const
-  {
-    MOZ_ASSERT(IsValid());
-
-    if (mLayer->GetScrollMetadataCount() == 0) {
-      MOZ_ASSERT(mIndex == 0);
-      MOZ_ASSERT(aApzc == nullptr);
-      return;
-    }
-    MOZ_ASSERT(mIndex < mLayer->GetScrollMetadataCount());
-    mLayer->SetAsyncPanZoomController(mIndex, aApzc);
-  }
-
   const char* Name() const
   {
     MOZ_ASSERT(IsValid());
