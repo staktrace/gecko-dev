@@ -969,6 +969,9 @@ impl PrimitiveStore {
         container: PrimitiveContainer,
     ) -> PrimitiveIndex {
         let prim_index = self.cpu_metadata.len();
+        if prim_index > 5000 {
+            println!("prim_store: cpu_metadata.len() is {}", prim_index);
+        }
 
         let base_metadata = PrimitiveMetadata {
             clip_sources,

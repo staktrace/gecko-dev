@@ -172,4 +172,8 @@ impl<T> FreeList<T> {
         self.free_list_head = Some(id.index);
         slot.value.take().unwrap()
     }
+
+    pub fn len(&self) -> usize {
+        self.slots.len()
+    }
 }

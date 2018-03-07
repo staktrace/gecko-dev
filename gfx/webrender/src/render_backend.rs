@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::{ApiMsg, BuiltDisplayList, ClearCache, DebugCommand};
+use api::{ApiMsg, BuiltDisplayList, BuiltDisplayListIter, ClearCache, DebugCommand};
 #[cfg(feature = "debugger")]
-use api::{BuiltDisplayListIter, SpecificDisplayItem};
+use api::{SpecificDisplayItem};
 use api::{DeviceIntPoint, DevicePixelScale, DeviceUintPoint, DeviceUintRect, DeviceUintSize};
 use api::{DocumentId, DocumentLayer, ExternalScrollId, FrameMsg, HitTestResult};
 use api::{IdNamespace, LayerPoint, PipelineId, RenderNotifier, SceneMsg, ScrollClamping};
@@ -529,6 +529,14 @@ impl RenderBackend {
 
                 let built_display_list =
                     BuiltDisplayList::from_data(data.display_list_data, list_descriptor);
+                println!("render_backend got a display list:");
+                {
+                    let mut iter = BuiltDisplayListIter::new(&built_display_list);
+                    while let Some(item) = iter.next() {
+                        println!("{:?}", item.display_item());
+                    }
+                }
+
 
                 if !preserve_frame_state {
                     doc.discard_frame_state_for_pipeline(pipeline_id);

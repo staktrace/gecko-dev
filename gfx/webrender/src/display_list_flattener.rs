@@ -1165,6 +1165,10 @@ impl<'a> DisplayListFlattener<'a> {
         let stacking_context = self.sc_stack.last().expect("bug: no stacking context!");
 
         let clip_sources = self.clip_store.insert(ClipSources::new(clip_sources));
+        let len = self.clip_store.len();
+        if len > 5000 {
+            println!("create_primitive has clip_store.len() = {}", len);
+        }
         let prim_index = self.prim_store.add_primitive(
             &info.rect,
             &info.local_clip.clip_rect(),
@@ -1649,6 +1653,10 @@ impl<'a> DisplayListFlattener<'a> {
 
         debug_assert!(clip_sources.has_clips());
         let handle = self.clip_store.insert(clip_sources);
+        let len = self.clip_store.len();
+        if len > 5000 {
+            println!("add_clip_node has clip_store.len() = {}", len);
+        }
 
         let node_index = self.id_to_index_mapper.get_node_index(new_node_id);
         let clip_chain_index = self.clip_scroll_tree.add_clip_node(
