@@ -20,6 +20,7 @@
 #include "replace_malloc.h"
 #include "FdPrintf.h"
 #include "Mutex.h"
+#include "mozilla/StackWalk.h"
 
 static malloc_table_t sFuncs;
 static intptr_t sFd = 0;
@@ -126,6 +127,29 @@ replace_calloc(size_t aNum, size_t aSize)
   return ptr;
 }
 
+extern "C" {
+
+static void
+PrintStackFrame(uint32_t aFrameNumber, void* aPC, void* aSP, void* aClosure)
+{
+  FILE* stream = (FILE*)aClosure;
+  MozCodeAddressDetails details;
+  char buf[1024];
+
+  MozDescribeCodeAddress(aPC, &details);
+  MozFormatCodeAddressDetails(buf, sizeof(buf), aFrameNumber, aPC, &details);
+  fprintf(stream, "%s\n", buf);
+  fflush(stream);
+}
+
+}
+
+void hang() {
+  while (true) {
+    sleep(10);
+  }
+}
+
 static void*
 replace_realloc(void* aPtr, size_t aSize)
 {
@@ -138,6 +162,14 @@ replace_realloc(void* aPtr, size_t aSize)
            aPtr,
            aSize,
            new_ptr);
+  if (aSize > (512 * 1024 * 1024)) {
+    hang();
+    MozStackWalk(PrintStackFrame, 1, 30, stderr);
+    if (new_ptr == nullptr) {
+      // trigger crash
+      *(int*)new_ptr = 0xDEADDEAD;
+    }
+  }
   return new_ptr;
 }
 
