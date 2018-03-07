@@ -690,13 +690,17 @@ private:
    * isolation (that is, if its tree pointers are not being accessed or mutated). The
    * lock also needs to be held when accessing the mRootNode instance variable, as that
    * is considered part of the APZC tree management state.
-   * Finally, the lock needs to be held when accessing mZoomConstraints.
+   * Finally, the lock needs to be held when accessing mApzcMap or mZoomConstraints.
    * IMPORTANT: See the note about lock ordering at the top of this file. */
   mutable mozilla::RecursiveMutex mTreeLock;
   RefPtr<HitTestingTreeNode> mRootNode;
+  /* Holds the APZCs in a map so we can get a hold of one quickly without having
+   * to walk around in the hit-testing tree */
+  std::unordered_map<ScrollableLayerGuid, RefPtr<AsyncPanZoomController>, ScrollableLayerGuidHash> mApzcMap;
   /* Holds the zoom constraints for scrollable layers, as determined by the
    * the main-thread gecko code. */
   std::unordered_map<ScrollableLayerGuid, ZoomConstraints, ScrollableLayerGuidHash> mZoomConstraints;
+
   /* A list of keyboard shortcuts to use for translating keyboard inputs into
    * keyboard actions. This is gathered on the main thread from XBL bindings.
    */

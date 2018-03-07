@@ -100,8 +100,11 @@ struct APZCTreeManager::TreeBuildingState {
 
   // This map is populated as we place APZCs into the new tree. Its purpose is
   // to facilitate re-using the same APZC for different layers that scroll
-  // together (and thus have the same ScrollableLayerGuid).
-  std::unordered_map<ScrollableLayerGuid, AsyncPanZoomController*, ScrollableLayerGuidHash> mApzcMap;
+  // together (and thus have the same ScrollableLayerGuid). After the tree
+  // build is complete this gets persisted as APZCTreeManager::mApzcMap. We can't
+  // just use that one directly because we might need to read from that one
+  // during the tree build process.
+  std::unordered_map<ScrollableLayerGuid, RefPtr<AsyncPanZoomController>, ScrollableLayerGuidHash> mApzcMap;
 
   // As the tree is traversed, the top element of this stack tracks whether
   // the parent scroll node has a perspective transform.
@@ -451,6 +454,12 @@ APZCTreeManager::UpdateHitTestingTreeImpl(uint64_t aRootLayerTreeId,
 
   // We do not support tree structures where the root node has siblings.
   MOZ_ASSERT(!(mRootNode && mRootNode->GetPrevSibling()));
+
+  // Update our mApzcMap to reflect the new APZC tree. Note that this also
+  // removes RefPtrs to APZC instances that used to be in mApzcMap but now
+  // are not part of the tree, and therefore allows those APZCs to be freed
+  // when we destroy the unused HTTNs below.
+  mApzcMap = Move(state.mApzcMap);
 
   for (size_t i = 0; i < state.mNodesToDestroy.Length(); i++) {
     APZCTM_LOG("Destroying node at %p with APZC %p\n",
@@ -854,9 +863,9 @@ APZCTreeManager::PrepareNodeForLayer(const ScrollNode& aLayer,
   // that is supposed to scroll together is split into multiple layers because of
   // e.g. non-scrolling content interleaved in z-index order.
   ScrollableLayerGuid guid(aLayersId, aMetrics);
-  auto insertResult = aState.mApzcMap.insert(std::make_pair(guid, static_cast<AsyncPanZoomController*>(nullptr)));
+  auto insertResult = aState.mApzcMap.insert(std::make_pair(guid, RefPtr<AsyncPanZoomController>(nullptr)));
   if (!insertResult.second) {
-    apzc = insertResult.first->second;
+    apzc = insertResult.first->second.get();
     PrintAPZCInfo(aLayer, apzc);
   }
   APZCTM_LOG("Found APZC %p for layer %p with identifiers %" PRId64 " %" PRId64 "\n", apzc, aLayer.GetLayer(), guid.mLayersId, guid.mScrollId);
@@ -2048,6 +2057,7 @@ APZCTreeManager::ClearTree()
     nodesToDestroy[i]->Destroy();
   }
   mRootNode = nullptr;
+  mApzcMap.clear();
 
   RefPtr<APZCTreeManager> self(this);
   NS_DispatchToMainThread(
