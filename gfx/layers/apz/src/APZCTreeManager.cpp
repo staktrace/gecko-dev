@@ -2273,9 +2273,8 @@ already_AddRefed<AsyncPanZoomController>
 APZCTreeManager::GetTargetAPZC(const ScrollableLayerGuid& aGuid)
 {
   RecursiveMutexAutoLock lock(mTreeLock);
-  RefPtr<HitTestingTreeNode> node = GetTargetNode(aGuid, nullptr);
-  MOZ_ASSERT(!node || node->GetApzc()); // any node returned must have an APZC
-  RefPtr<AsyncPanZoomController> apzc = node ? node->GetApzc() : nullptr;
+  auto it = mApzcMap.find(aGuid);
+  RefPtr<AsyncPanZoomController> apzc = (it == mApzcMap.end() ? nullptr : it->second);
   return apzc.forget();
 }
 
