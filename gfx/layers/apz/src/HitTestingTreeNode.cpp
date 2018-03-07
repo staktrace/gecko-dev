@@ -36,7 +36,6 @@ HitTestingTreeNode::HitTestingTreeNode(AsyncPanZoomController* aApzc,
 if (mIsPrimaryApzcHolder) {
     MOZ_ASSERT(mApzc);
   }
-  MOZ_ASSERT(!mApzc || mApzc->GetLayersId() == mLayersId);
 }
 
 void
@@ -47,7 +46,6 @@ HitTestingTreeNode::RecycleWith(AsyncPanZoomController* aApzc,
   Destroy(); // clear out tree pointers
   mApzc = aApzc;
   mLayersId = aLayersId;
-  MOZ_ASSERT(!mApzc || mApzc->GetLayersId() == mLayersId);
   // The caller is expected to call SetHitTestData to repopulate the hit-test
   // fields.
 }

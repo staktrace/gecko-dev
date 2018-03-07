@@ -292,10 +292,9 @@ APZCTreeManager::NotifyLayerTreeRemoved(uint64_t aLayersId)
 }
 
 AsyncPanZoomController*
-APZCTreeManager::NewAPZCInstance(uint64_t aLayersId,
-                                 GeckoContentController* aController)
+APZCTreeManager::NewAPZCInstance(GeckoContentController* aController)
 {
-  return new AsyncPanZoomController(aLayersId, this, mInputQueue,
+  return new AsyncPanZoomController(this, mInputQueue,
     aController, AsyncPanZoomController::USE_GESTURE_DETECTOR);
 }
 
@@ -862,7 +861,7 @@ APZCTreeManager::PrepareNodeForLayer(const ScrollNode& aLayer,
   // with the same FrameMetrics data. This is needed because in some cases content
   // that is supposed to scroll together is split into multiple layers because of
   // e.g. non-scrolling content interleaved in z-index order.
-  ScrollableLayerGuid guid(aLayersId, aMetrics);
+  ScrollableLayerGuid guid(aMetrics);
   auto insertResult = aState.mApzcMap.insert(std::make_pair(guid, RefPtr<AsyncPanZoomController>(nullptr)));
   if (!insertResult.second) {
     apzc = insertResult.first->second.get();
@@ -919,7 +918,7 @@ APZCTreeManager::PrepareNodeForLayer(const ScrollNode& aLayer,
     // a destroyed APZC and so we need to throw that out and make a new one.
     bool newApzc = (apzc == nullptr || apzc->IsDestroyed());
     if (newApzc) {
-      apzc = NewAPZCInstance(aLayersId, geckoContentController);
+      apzc = NewAPZCInstance(geckoContentController);
       apzc->SetCompositorController(aState.mCompositorController.get());
       if (crossProcessSharingController) {
         apzc->SetMetricsSharingController(crossProcessSharingController);

@@ -763,13 +763,11 @@ AsyncPanZoomController::InitializeGlobalState()
   gIsHighMemSystem = sysmem >= threshold;
 }
 
-AsyncPanZoomController::AsyncPanZoomController(uint64_t aLayersId,
-                                               APZCTreeManager* aTreeManager,
+AsyncPanZoomController::AsyncPanZoomController(APZCTreeManager* aTreeManager,
                                                const RefPtr<InputQueue>& aInputQueue,
                                                GeckoContentController* aGeckoContentController,
                                                GestureBehavior aGestures)
-  :  mLayersId(aLayersId),
-     mGeckoContentController(aGeckoContentController),
+  :  mGeckoContentController(aGeckoContentController),
      mRefPtrMonitor("RefPtrMonitor"),
      // mTreeManager must be initialized before GetFrameTime() is called
      mTreeManager(aTreeManager),
@@ -3786,7 +3784,6 @@ void AsyncPanZoomController::NotifyLayersUpdated(const ScrollMetadata& aScrollMe
   bool isDefault = mScrollMetadata.IsDefault();
 
   const FrameMetrics& aLayerMetrics = aScrollMetadata.GetMetrics();
-  MOZ_ASSERT(mLayersId == aLayerMetrics.GetLayersId());
 
   if ((aScrollMetadata == mLastContentPaintMetadata) && !isDefault) {
     // No new information here, skip it.
@@ -4383,7 +4380,13 @@ void AsyncPanZoomController::GetGuid(ScrollableLayerGuid* aGuidOut) const
 
 ScrollableLayerGuid AsyncPanZoomController::GetGuid() const
 {
-  return ScrollableLayerGuid(mLayersId, mFrameMetrics);
+  return ScrollableLayerGuid(mFrameMetrics);
+}
+
+uint64_t AsyncPanZoomController::GetLayersId() const
+{
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
+  return mFrameMetrics.GetLayersId();
 }
 
 void AsyncPanZoomController::UpdateSharedCompositorFrameMetrics()
@@ -4418,9 +4421,11 @@ void AsyncPanZoomController::ShareCompositorFrameMetrics()
 
     if (frame) {
 
+      uint64_t layersId;
       { // scope the monitor, only needed to copy the FrameMetrics.
         RecursiveMutexAutoLock lock(mRecursiveMutex);
         *frame = mFrameMetrics;
+        layersId = mFrameMetrics.GetLayersId();
       }
 
       // Get the process id of the content process
@@ -4437,7 +4442,7 @@ void AsyncPanZoomController::ShareCompositorFrameMetrics()
       // Send the shared memory handle and cross process handle to the content
       // process by an asynchronous ipc call. Include the APZC unique ID
       // so the content process know which APZC sent this shared FrameMetrics.
-      if (!mMetricsSharingController->StartSharingMetrics(mem, handle, mLayersId, mAPZCId)) {
+      if (!mMetricsSharingController->StartSharingMetrics(mem, handle, layersId, mAPZCId)) {
         APZC_LOG("%p failed to share FrameMetrics with content process.", this);
       }
     }

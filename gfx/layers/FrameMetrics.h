@@ -1071,8 +1071,8 @@ struct ScrollableLayerGuid {
   {
   }
 
-  ScrollableLayerGuid(uint64_t aLayersId, const FrameMetrics& aMetrics)
-    : mLayersId(aLayersId)
+  ScrollableLayerGuid(const FrameMetrics& aMetrics)
+    : mLayersId(aMetrics.GetLayersId())
     , mPresShellId(aMetrics.GetPresShellId())
     , mScrollId(aMetrics.GetScrollId())
   {

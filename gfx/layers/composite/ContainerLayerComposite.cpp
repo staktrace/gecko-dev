@@ -368,7 +368,7 @@ RenderMinimap(ContainerT* aContainer,
     // Retrieve the scrollable layer guid, which we'll use to get the
     // appropriate visibility information from the layer manager.
     MOZ_ASSERT(compositor->GetCompositorBridgeParent()); // we wouldn't have an APZSampler otherwise
-    ScrollableLayerGuid guid(compositor->GetCompositorBridgeParent()->RootLayerTreeId(), fm);
+    ScrollableLayerGuid guid(fm);
 
     // Get the approximately visible region.
     static CSSIntRegion emptyRegion;

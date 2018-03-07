@@ -168,8 +168,7 @@ public:
    */
   static ScreenCoord GetSecondTapTolerance();
 
-  AsyncPanZoomController(uint64_t aLayersId,
-                         APZCTreeManager* aTreeManager,
+  AsyncPanZoomController(APZCTreeManager* aTreeManager,
                          const RefPtr<InputQueue>& aInputQueue,
                          GeckoContentController* aController,
                          GestureBehavior aGestures = DEFAULT_GESTURES);
@@ -771,7 +770,6 @@ protected:
   // Common processing at the end of a touch block.
   void OnTouchEndOrCancel();
 
-  uint64_t mLayersId;
   RefPtr<CompositorController> mCompositorController;
   RefPtr<MetricsSharingController> mMetricsSharingController;
 
@@ -1143,7 +1141,7 @@ public:
    * layers id.
    */
   bool HasNoParentWithSameLayersId() const {
-    return !mParent || (mParent->mLayersId != mLayersId);
+    return !mParent || (mParent->GetLayersId() != GetLayersId());
   }
 
   bool IsRootForLayersId() const {
@@ -1351,10 +1349,7 @@ public:
     return mAsyncTransformAppliedToContent;
   }
 
-  uint64_t GetLayersId() const
-  {
-    return mLayersId;
-  }
+  uint64_t GetLayersId() const;
 
 private:
   // Extra offset to add to the async scroll position for testing
