@@ -391,6 +391,7 @@ nsDisplayRemote::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuild
     mFrame->GetContentRectRelativeToSelf(), mFrame->PresContext()->AppUnitsPerDevPixel());
   rect += mOffset;
 
+  printf_stderr("Creating reflayer for %" PRIx64 "\n", GetRemoteLayersId());
   aBuilder.PushIFrame(aSc.ToRelativeLayoutRect(rect),
       !BackfaceIsHidden(),
       mozilla::wr::AsPipelineId(GetRemoteLayersId()));

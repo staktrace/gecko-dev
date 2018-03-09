@@ -972,6 +972,7 @@ APZCTreeManager::PrepareNodeForLayer(const ScrollNode& aLayer,
             "parentScrollId", apzc->GetParent()->GetGuid().mScrollId);
       }
       if (aMetrics.IsRootContent()) {
+        //printf_stderr("%" PRIx64 ": Found root content\n", aLayersId);
         aState.mPaintLogger.LogTestData(aMetrics.GetScrollId(),
             "isRootContent", true);
       }

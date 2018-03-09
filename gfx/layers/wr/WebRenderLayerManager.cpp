@@ -257,11 +257,11 @@ WebRenderLayerManager::EndTransactionWithoutLayer(nsDisplayList* aDisplayList,
 
   AUTO_PROFILER_TRACING("Paint", "RenderLayers");
 
-#if DUMP_LISTS
+//#if DUMP_LISTS
   // Useful for debugging, it dumps the display list *before* we try to build
   // WR commands from it
-  if (XRE_IsContentProcess()) nsFrame::PrintDisplayList(aDisplayListBuilder, *aDisplayList);
-#endif
+  if (XRE_IsContentProcess()) printf_stderr("Child DL has %u items\n", aDisplayList->Count());
+//#endif
 
 #ifdef XP_WIN
   gfxDWriteFont::UpdateClearTypeUsage();
@@ -303,6 +303,8 @@ WebRenderLayerManager::EndTransactionWithoutLayer(nsDisplayList* aDisplayList,
   }
 
   mLatestTransactionId = mTransactionIdAllocator->GetTransactionId(/*aThrottle*/ true);
+  if (XRE_IsParentProcess()) printf_stderr("That was in parent transaction id %" PRIu64 "\n", mLatestTransactionId);
+  else printf_stderr("That was in child transaction id %" PRIu64 "\n", mLatestTransactionId);
   TimeStamp transactionStart = mTransactionIdAllocator->GetTransactionStart();
 
   for (const auto& key : mImageKeysToDelete) {

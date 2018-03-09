@@ -580,6 +580,8 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
     return IPC_OK();
   }
 
+  if (mWidget) printf_stderr("Parent got transaction %" PRIu64 "\n", aTransactionId);
+  else printf_stderr("Child %" PRIx64 " got transaction %" PRIu64 "\n", GetLayersId(), aTransactionId);
   AUTO_PROFILER_TRACING("Paint", "SetDisplayList");
   UpdateFwdTransactionId(aFwdTransactionId);
   AutoClearReadLocks clearLocks(mReadLocks);
