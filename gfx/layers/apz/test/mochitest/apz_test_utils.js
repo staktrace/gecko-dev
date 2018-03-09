@@ -318,21 +318,37 @@ function waitUntilApzStable() {
   }
 
   return new Promise(function(resolve, reject) {
-    SimpleTest.waitForFocus(function() {
-      waitForAllPaints(function() {
-        flushApzRepaints(async () => {
-          // We use this waitUntilApzStable function during test initialization
-          // and for those scenarios we want to flush the parent-process layer
-          // tree to the compositor and wait for that as well. That way we know
-          // that not only is the content-process layer tree ready in the compositor,
-          // the parent-process layer tree in the compositor has the appropriate
-          // RefLayer pointing to the content-process layer tree.
-          waitUntilApzStable.chromeHelper.sendAsyncMessage("apz-flush", null);
-          await waitUntilApzStable.chromeHelper.promiseOneMessage("apz-flush-done");
-          resolve();
-        });
+    // We use this waitUntilApzStable function during test initialization
+    // and for those scenarios we want to flush the parent-process layer
+    // tree to the compositor and wait for that as well. That way we know
+    // that not only is the content-process layer tree ready in the compositor,
+    // the parent-process layer tree in the compositor has the appropriate
+    // RefLayer pointing to the content-process layer tree.
+    waitUntilApzStable.chromeHelper.sendAsyncMessage("apz-flush", null);
+    waitUntilApzStable.chromeHelper.promiseOneMessage("apz-flush-done")
+      .then(SimpleTest.promiseFocus(window))
+      .then(() => {
+          var utils = SpecialPowers.getDOMWindowUtils(window);
+          if (!utils.isMozAfterPaintPending) {
+            window.requestAnimationFrame(() => {
+              dump("Child process: paint running, triggering APZ flush...\n");
+              window.setTimeout(flushApzRepaints, 0, resolve);
+            });
+            dump("Child process: forcing paint...\n");
+            var controlling = utils.isTestControllingRefreshes;
+            utils.advanceTimeAndRefresh(0);
+            if (!controlling) {
+              utils.restoreNormalRefresh();
+            }
+          } else {
+            dump("Child process: already has a paint pending, waiting for paints...\n");
+            waitForAllPaints(function() {
+              flushApzRepaints(function() {
+                resolve();
+              });
+            });
+          }
       });
-    }, window);
   });
 }
 
