@@ -19,7 +19,6 @@ class RemoteCompositorSession;
 
 class APZCTreeManagerChild
   : public IAPZCTreeManager
-  , public APZInputBridge
   , public PAPZCTreeManagerChild
 {
 public:
@@ -27,12 +26,6 @@ public:
 
   void SetCompositorSession(RemoteCompositorSession* aSession);
   void SetInputBridge(APZInputBridgeChild* aInputBridge);
-
-  nsEventStatus
-  ReceiveInputEvent(
-          InputData& aEvent,
-          ScrollableLayerGuid* aOutTargetGuid,
-          uint64_t* aOutInputBlockId) override;
 
   void
   SetKeyboardMap(const KeyboardMap& aKeyboardMap) override;
@@ -81,17 +74,6 @@ public:
 
   void
   SetLongTapEnabled(bool aTapGestureEnabled) override;
-
-  void
-  ProcessUnhandledEvent(
-          LayoutDeviceIntPoint* aRefPoint,
-          ScrollableLayerGuid*  aOutTargetGuid,
-          uint64_t*             aOutFocusSequenceNumber) override;
-
-  void
-  UpdateWheelTransaction(
-          LayoutDeviceIntPoint aRefPoint,
-          EventMessage aEventMessage) override;
 
   APZInputBridge*
   InputBridge() override;

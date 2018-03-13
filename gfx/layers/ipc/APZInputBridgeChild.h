@@ -7,19 +7,35 @@
 #ifndef mozilla_layers_APZInputBridgeChild_h
 #define mozilla_layers_APZInputBridgeChild_h
 
+#include "mozilla/layers/APZInputBridge.h"
 #include "mozilla/layers/PAPZInputBridgeChild.h"
 
 namespace mozilla {
 namespace layers {
 
 class APZInputBridgeChild : public PAPZInputBridgeChild
+                          , public APZInputBridge
 {
   NS_INLINE_DECL_REFCOUNTING(APZInputBridgeChild)
 
 public:
   explicit APZInputBridgeChild(const uint64_t& aLayersId) {}
 
+  nsEventStatus ReceiveInputEvent(
+      InputData& aEvent,
+      ScrollableLayerGuid* aOutTargetGuid,
+      uint64_t* aOutInputBlockId) override;
+
 protected:
+  void ProcessUnhandledEvent(
+      LayoutDeviceIntPoint* aRefPoint,
+      ScrollableLayerGuid* aOutTargetGuid,
+      uint64_t* aOutFocusSequenceNumber) override;
+
+  void UpdateWheelTransaction(
+      LayoutDeviceIntPoint aRefPoint,
+      EventMessage aEventMessage) override;
+
   virtual ~APZInputBridgeChild() {}
 };
 
