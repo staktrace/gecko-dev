@@ -1113,7 +1113,7 @@ struct ScrollableLayerGuid {
 
 template <int LogLevel>
 gfx::Log<LogLevel>& operator<<(gfx::Log<LogLevel>& log, const ScrollableLayerGuid& aGuid) {
-  return log << '(' << aGuid.mLayersId << ',' << aGuid.mPresShellId << ',' << aGuid.mScrollId << ')';
+  return log << '(' << uint64_t(aGuid.mLayersId) << ',' << aGuid.mPresShellId << ',' << aGuid.mScrollId << ')';
 }
 
 struct ZoomConstraints {

@@ -73,7 +73,7 @@ CrossProcessCompositorBridgeParent::AllocPLayerTransactionParent(
   const nsTArray<LayersBackend>&,
   const LayersId& aId)
 {
-  MOZ_ASSERT(aId != 0);
+  MOZ_ASSERT(aId.IsValid());
 
   // Check to see if this child process has access to this layer tree.
   if (!LayerTreeOwnerTracker::Get()->IsMapped(aId, OtherPid())) {
@@ -319,7 +319,7 @@ CrossProcessCompositorBridgeParent::ShadowLayersUpdated(
 {
   LayersId id = aLayerTree->GetId();
 
-  MOZ_ASSERT(id != 0);
+  MOZ_ASSERT(id.IsValid());
 
   CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(id);
@@ -399,7 +399,7 @@ void
 CrossProcessCompositorBridgeParent::ScheduleComposite(LayerTransactionParent* aLayerTree)
 {
   LayersId id = aLayerTree->GetId();
-  MOZ_ASSERT(id != 0);
+  MOZ_ASSERT(id.IsValid());
   CompositorBridgeParent* parent;
   { // scope lock
     MonitorAutoLock lock(*sIndirectLayerTreesLock);
@@ -414,7 +414,7 @@ void
 CrossProcessCompositorBridgeParent::NotifyClearCachedResources(LayerTransactionParent* aLayerTree)
 {
   LayersId id = aLayerTree->GetId();
-  MOZ_ASSERT(id != 0);
+  MOZ_ASSERT(id.IsValid());
 
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(id);
@@ -429,7 +429,7 @@ bool
 CrossProcessCompositorBridgeParent::SetTestSampleTime(const LayersId& aId,
                                                       const TimeStamp& aTime)
 {
-  MOZ_ASSERT(aId != 0);
+  MOZ_ASSERT(aId.IsValid());
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aId);
   if (!state) {
@@ -443,7 +443,7 @@ CrossProcessCompositorBridgeParent::SetTestSampleTime(const LayersId& aId,
 void
 CrossProcessCompositorBridgeParent::LeaveTestMode(const LayersId& aId)
 {
-  MOZ_ASSERT(aId != 0);
+  MOZ_ASSERT(aId.IsValid());
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aId);
   if (!state) {
@@ -459,7 +459,7 @@ CrossProcessCompositorBridgeParent::ApplyAsyncProperties(
     LayerTransactionParent* aLayerTree)
 {
   LayersId id = aLayerTree->GetId();
-  MOZ_ASSERT(id != 0);
+  MOZ_ASSERT(id.IsValid());
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(id);
   if (!state) {
@@ -476,7 +476,7 @@ CrossProcessCompositorBridgeParent::SetTestAsyncScrollOffset(
     const FrameMetrics::ViewID& aScrollId,
     const CSSPoint& aPoint)
 {
-  MOZ_ASSERT(aLayersId != 0);
+  MOZ_ASSERT(aLayersId.IsValid());
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aLayersId);
   if (!state) {
@@ -493,7 +493,7 @@ CrossProcessCompositorBridgeParent::SetTestAsyncZoom(
     const FrameMetrics::ViewID& aScrollId,
     const LayerToParentLayerScale& aZoom)
 {
-  MOZ_ASSERT(aLayersId != 0);
+  MOZ_ASSERT(aLayersId.IsValid());
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aLayersId);
   if (!state) {
@@ -507,7 +507,7 @@ CrossProcessCompositorBridgeParent::SetTestAsyncZoom(
 void
 CrossProcessCompositorBridgeParent::FlushApzRepaints(const LayersId& aLayersId)
 {
-  MOZ_ASSERT(aLayersId != 0);
+  MOZ_ASSERT(aLayersId.IsValid());
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aLayersId);
   if (!state) {
@@ -523,7 +523,7 @@ CrossProcessCompositorBridgeParent::GetAPZTestData(
   const LayersId& aLayersId,
   APZTestData* aOutData)
 {
-  MOZ_ASSERT(aLayersId != 0);
+  MOZ_ASSERT(aLayersId.IsValid());
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aLayersId);
   if (!state || !state->mParent) {
@@ -539,7 +539,7 @@ CrossProcessCompositorBridgeParent::SetConfirmedTargetAPZC(
   const uint64_t& aInputBlockId,
   const nsTArray<ScrollableLayerGuid>& aTargets)
 {
-  MOZ_ASSERT(aLayersId != 0);
+  MOZ_ASSERT(aLayersId.IsValid());
   const CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aLayersId);
   if (!state || !state->mParent) {
@@ -627,7 +627,7 @@ void
 CrossProcessCompositorBridgeParent::UpdatePaintTime(LayerTransactionParent* aLayerTree, const TimeDuration& aPaintTime)
 {
   LayersId id = aLayerTree->GetId();
-  MOZ_ASSERT(id != 0);
+  MOZ_ASSERT(id.IsValid());
 
   CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(id);
@@ -641,7 +641,7 @@ CrossProcessCompositorBridgeParent::UpdatePaintTime(LayerTransactionParent* aLay
 void
 CrossProcessCompositorBridgeParent::ObserveLayerUpdate(LayersId aLayersId, uint64_t aEpoch, bool aActive)
 {
-  MOZ_ASSERT(aLayersId != 0);
+  MOZ_ASSERT(aLayersId.IsValid());
 
   CompositorBridgeParent::LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aLayersId);

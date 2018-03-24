@@ -413,7 +413,7 @@ CompositorBridgeParent::Initialize()
 LayersId
 CompositorBridgeParent::RootLayerTreeId()
 {
-  MOZ_ASSERT(mRootLayerTreeID);
+  MOZ_ASSERT(mRootLayerTreeID.IsValid());
   return mRootLayerTreeID;
 }
 
@@ -1099,7 +1099,7 @@ CompositorBridgeParent::AllocPAPZCTreeManagerParent(const LayersId& aLayersId)
   // The mApzcTreeManager should have been created via RecvInitialize()
   MOZ_ASSERT(mApzcTreeManager);
   // The main process should pass in 0 because we assume mRootLayerTreeID
-  MOZ_ASSERT(aLayersId == 0);
+  MOZ_ASSERT(!aLayersId.IsValid());
 
   MonitorAutoLock lock(*sIndirectLayerTreesLock);
   CompositorBridgeParent::LayerTreeState& state = sIndirectLayerTrees[mRootLayerTreeID];
@@ -1132,7 +1132,7 @@ PAPZParent*
 CompositorBridgeParent::AllocPAPZParent(const LayersId& aLayersId)
 {
   // The main process should pass in 0 because we assume mRootLayerTreeID
-  MOZ_ASSERT(aLayersId == 0);
+  MOZ_ASSERT(!aLayersId.IsValid());
 
   RemoteContentController* controller = new RemoteContentController();
 
@@ -1358,7 +1358,7 @@ CompositorBridgeParent::SetTestAsyncScrollOffset(
     const CSSPoint& aPoint)
 {
   if (mApzSampler) {
-    MOZ_ASSERT(aLayersId != 0);
+    MOZ_ASSERT(aLayersId.IsValid());
     mApzSampler->SetTestAsyncScrollOffset(aLayersId, aScrollId, aPoint);
   }
 }
@@ -1370,7 +1370,7 @@ CompositorBridgeParent::SetTestAsyncZoom(
     const LayerToParentLayerScale& aZoom)
 {
   if (mApzSampler) {
-    MOZ_ASSERT(aLayersId != 0);
+    MOZ_ASSERT(aLayersId.IsValid());
     mApzSampler->SetTestAsyncZoom(aLayersId, aScrollId, aZoom);
   }
 }
@@ -1379,7 +1379,7 @@ void
 CompositorBridgeParent::FlushApzRepaints(const LayersId& aLayersId)
 {
   MOZ_ASSERT(mApzcTreeManager);
-  MOZ_ASSERT(aLayersId != 0);
+  MOZ_ASSERT(aLayersId.IsValid());
   RefPtr<CompositorBridgeParent> self = this;
   APZThreadUtils::RunOnControllerThread(NS_NewRunnableFunction(
     "layers::CompositorBridgeParent::FlushApzRepaints",
@@ -1391,7 +1391,7 @@ CompositorBridgeParent::GetAPZTestData(const LayersId& aLayersId,
                                        APZTestData* aOutData)
 {
   if (mApzSampler) {
-    MOZ_ASSERT(aLayersId != 0);
+    MOZ_ASSERT(aLayersId.IsValid());
     mApzSampler->GetAPZTestData(aLayersId, aOutData);
   }
 }
@@ -1548,7 +1548,7 @@ PLayerTransactionParent*
 CompositorBridgeParent::AllocPLayerTransactionParent(const nsTArray<LayersBackend>& aBackendHints,
                                                      const LayersId& aId)
 {
-  MOZ_ASSERT(aId == 0);
+  MOZ_ASSERT(!aId.IsValid());
 
   InitializeLayerManager(aBackendHints);
 
@@ -1745,7 +1745,7 @@ CompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::PipelineId& aPipel
   // child process invoking this codepath before it's ready
   MOZ_RELEASE_ASSERT(false);
 #endif
-  MOZ_ASSERT(wr::AsUint64(aPipelineId) == mRootLayerTreeID);
+  MOZ_ASSERT(wr::AsLayersId(aPipelineId) == mRootLayerTreeID);
   MOZ_ASSERT(!mWrBridge);
   MOZ_ASSERT(!mCompositor);
   MOZ_ASSERT(!mCompositorScheduler);

@@ -1000,7 +1000,7 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
       return;
     }
 
-    if (layersId == 0) { // if renderFrame is invalid.
+    if (!layersId.IsValid()) { // if renderFrame is invalid.
       renderFrame = nullptr;
     }
 
@@ -1460,7 +1460,7 @@ ContentChild::RecvReinitRendering(Endpoint<PCompositorManagerChild>&& aComposito
 
   // Zap all the old layer managers we have lying around.
   for (const auto& tabChild : tabs) {
-    if (tabChild->GetLayersId()) {
+    if (tabChild->GetLayersId().IsValid()) {
       tabChild->InvalidateLayers();
     }
   }
@@ -1482,7 +1482,7 @@ ContentChild::RecvReinitRendering(Endpoint<PCompositorManagerChild>&& aComposito
 
   // Establish new PLayerTransactions.
   for (const auto& tabChild : tabs) {
-    if (tabChild->GetLayersId()) {
+    if (tabChild->GetLayersId().IsValid()) {
       tabChild->ReinitRendering();
     }
   }
@@ -1507,7 +1507,7 @@ ContentChild::RecvReinitRenderingForDeviceReset()
 
   nsTArray<RefPtr<TabChild>> tabs = TabChild::GetAll();
   for (const auto& tabChild : tabs) {
-    if (tabChild->GetLayersId()) {
+    if (tabChild->GetLayersId().IsValid()) {
       tabChild->ReinitRenderingForDeviceReset();
     }
   }

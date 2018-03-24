@@ -342,9 +342,9 @@ mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvInvalidateLayers(const LayersId& aLayersId)
 {
   if (mLayerManager) {
-    MOZ_ASSERT(aLayersId == 0);
+    MOZ_ASSERT(!aLayersId.IsValid());
     FrameLayerBuilder::InvalidateAllLayers(mLayerManager);
-  } else if (aLayersId != 0) {
+  } else if (aLayersId.IsValid()) {
     if (dom::TabChild* child = dom::TabChild::GetFrom(aLayersId)) {
       child->InvalidateLayers();
     }
@@ -536,13 +536,13 @@ CompositorBridgeChild::RecvDidComposite(const LayersId& aId,
   AutoTArray<RefPtr<TextureClientPool>,2> texturePools = mTexturePools;
 
   if (mLayerManager) {
-    MOZ_ASSERT(aId == 0);
+    MOZ_ASSERT(!aId.IsValid());
     MOZ_ASSERT(mLayerManager->GetBackendType() == LayersBackend::LAYERS_CLIENT ||
                mLayerManager->GetBackendType() == LayersBackend::LAYERS_WR);
     // Hold a reference to keep LayerManager alive. See Bug 1242668.
     RefPtr<LayerManager> m = mLayerManager;
     m->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
-  } else if (aId != 0) {
+  } else if (aId.IsValid()) {
     RefPtr<dom::TabChild> child = dom::TabChild::GetFrom(aId);
     if (child) {
       child->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
@@ -875,7 +875,7 @@ CompositorBridgeChild::RecvObserveLayerUpdate(const LayersId& aLayersId,
 {
   // This message is sent via the window compositor, not the tab compositor -
   // however it still has a layers id.
-  MOZ_ASSERT(aLayersId);
+  MOZ_ASSERT(aLayersId.IsValid());
   MOZ_ASSERT(XRE_IsParentProcess());
 
   if (RefPtr<dom::TabParent> tab = dom::TabParent::GetTabParentFromLayersId(aLayersId)) {
@@ -1055,7 +1055,7 @@ CompositorBridgeChild::AllocPAPZCTreeManagerChild(const LayersId& aLayersId)
 {
   APZCTreeManagerChild* child = new APZCTreeManagerChild();
   child->AddRef();
-  if (aLayersId != 0) {
+  if (aLayersId.IsValid()) {
     TabChild* tabChild = TabChild::GetFrom(aLayersId);
     if (tabChild) {
       SetEventTargetForActor(

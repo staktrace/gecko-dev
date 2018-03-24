@@ -2638,7 +2638,7 @@ public:
    */
   void SetReferentId(LayersId aId)
   {
-    MOZ_ASSERT(aId != 0);
+    MOZ_ASSERT(aId.IsValid());
     if (mId != aId) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ReferentId", this));
       mId = aId;

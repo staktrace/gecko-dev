@@ -193,7 +193,7 @@ TabParent::GetTabParentFromLayersId(layers::LayersId aLayersId)
   if (!sLayerToTabParentTable) {
     return nullptr;
   }
-  return sLayerToTabParentTable->Get(aLayersId);
+  return sLayerToTabParentTable->Get(uint64_t(aLayersId));
 }
 
 void
@@ -202,7 +202,7 @@ TabParent::AddTabParentToTable(layers::LayersId aLayersId, TabParent* aTabParent
   if (!sLayerToTabParentTable) {
     sLayerToTabParentTable = new LayerToTabParentTable();
   }
-  sLayerToTabParentTable->Put(aLayersId, aTabParent);
+  sLayerToTabParentTable->Put(uint64_t(aLayersId), aTabParent);
 }
 
 void
@@ -211,7 +211,7 @@ TabParent::RemoveTabParentFromTable(layers::LayersId aLayersId)
   if (!sLayerToTabParentTable) {
     return;
   }
-  sLayerToTabParentTable->Remove(aLayersId);
+  sLayerToTabParentTable->Remove(uint64_t(aLayersId));
   if (sLayerToTabParentTable->Count() == 0) {
     delete sLayerToTabParentTable;
     sLayerToTabParentTable = nullptr;

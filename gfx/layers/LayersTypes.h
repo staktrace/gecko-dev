@@ -50,8 +50,12 @@ class TextureHost;
 struct LayersId {
   uint64_t mId;
 
-  // Allow implicitly downgrading to a uint64_t for now
-  operator uint64_t() const
+  bool IsValid() const {
+    return mId != 0;
+  }
+
+  // Allow explicit cast to a uint64_t for now
+  explicit operator uint64_t() const
   {
     return mId;
   }
@@ -66,6 +70,11 @@ struct LayersId {
   bool operator==(const LayersId& aOther) const
   {
     return mId == aOther.mId;
+  }
+
+  bool operator!=(const LayersId& aOther) const
+  {
+    return !(*this == aOther);
   }
 
   // Helper operators that allow this class to be used as a key in

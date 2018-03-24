@@ -1085,11 +1085,11 @@ TabChild::DestroyWindow()
     }
 
 
-    if (mLayersId != 0) {
+    if (mLayersId.IsValid()) {
       StaticMutexAutoLock lock(sTabChildrenMutex);
 
       MOZ_ASSERT(sTabChildren);
-      sTabChildren->Remove(mLayersId);
+      sTabChildren->Remove(uint64_t(mLayersId));
       if (!sTabChildren->Count()) {
         delete sTabChildren;
         sTabChildren = nullptr;
@@ -2779,7 +2779,7 @@ TabChild::InitRenderingState(const TextureFactoryIdentifier& aTextureFactoryIden
       return;
     }
 
-    MOZ_ASSERT(aLayersId != 0);
+    MOZ_ASSERT(aLayersId.IsValid());
     mTextureFactoryIdentifier = aTextureFactoryIdentifier;
 
     // Pushing layers transactions directly to a separate
@@ -2794,14 +2794,14 @@ TabChild::InitRenderingState(const TextureFactoryIdentifier& aTextureFactoryIden
     mCompositorOptions = Some(aCompositorOptions);
 
     mRemoteFrame = static_cast<RenderFrameChild*>(aRenderFrame);
-    if (aLayersId != 0) {
+    if (aLayersId.IsValid()) {
       StaticMutexAutoLock lock(sTabChildrenMutex);
 
       if (!sTabChildren) {
         sTabChildren = new TabChildMap;
       }
-      MOZ_ASSERT(!sTabChildren->Get(aLayersId));
-      sTabChildren->Put(aLayersId, this);
+      MOZ_ASSERT(!sTabChildren->Get(uint64_t(aLayersId)));
+      sTabChildren->Put(uint64_t(aLayersId), this);
       mLayersId = aLayersId;
     }
 
@@ -3112,7 +3112,7 @@ TabChild::GetFrom(layers::LayersId aLayersId)
   if (!sTabChildren) {
     return nullptr;
   }
-  return sTabChildren->Get(aLayersId);
+  return sTabChildren->Get(uint64_t(aLayersId));
 }
 
 void
@@ -3176,7 +3176,7 @@ TabChild::InvalidateLayers()
 void
 TabChild::ReinitRendering()
 {
-  MOZ_ASSERT(mLayersId);
+  MOZ_ASSERT(mLayersId.IsValid());
 
   // Before we establish a new PLayerTransaction, we must connect our layer tree
   // id, CompositorBridge, and the widget compositor all together again.
