@@ -48,7 +48,7 @@ namespace layers {
 LayerTransactionParent::LayerTransactionParent(HostLayerManager* aManager,
                                                CompositorBridgeParentBase* aBridge,
                                                CompositorAnimationStorage* aAnimStorage,
-                                               uint64_t aId)
+                                               LayersId aId)
   : mLayerManager(aManager)
   , mCompositorBridge(aBridge)
   , mAnimStorage(aAnimStorage)

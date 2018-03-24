@@ -92,7 +92,7 @@ GetLayerManager(nsFrameLoader* aFrameLoader)
 }
 
 RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader)
-  : mLayersId(0)
+  : mLayersId{0}
   , mLayersConnected(false)
   , mFrameLoader(aFrameLoader)
   , mFrameLoaderDestroyed(false)
@@ -410,7 +410,7 @@ nsDisplayRemote::UpdateScrollData(mozilla::layers::WebRenderScrollData* aData,
   return true;
 }
 
-uint64_t
+LayersId
 nsDisplayRemote::GetRemoteLayersId() const
 {
   return mRemoteFrame->GetLayersId();

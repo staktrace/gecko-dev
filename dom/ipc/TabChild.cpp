@@ -404,7 +404,7 @@ TabChild::TabChild(nsIContentChild* aManager,
   , mChromeFlags(aChromeFlags)
   , mMaxTouchPoints(0)
   , mActiveSuppressDisplayport(0)
-  , mLayersId(0)
+  , mLayersId{0}
   , mBeforeUnloadListeners(0)
   , mDidFakeShow(false)
   , mNotified(false)
@@ -1094,7 +1094,7 @@ TabChild::DestroyWindow()
         delete sTabChildren;
         sTabChildren = nullptr;
       }
-      mLayersId = 0;
+      mLayersId = layers::LayersId{0};
     }
 }
 
@@ -1176,7 +1176,7 @@ TabChild::RecvLoadURL(const nsCString& aURI,
 
 void
 TabChild::DoFakeShow(const TextureFactoryIdentifier& aTextureFactoryIdentifier,
-                     const uint64_t& aLayersId,
+                     const layers::LayersId& aLayersId,
                      const CompositorOptions& aCompositorOptions,
                      PRenderFrameChild* aRenderFrame, const ShowInfo& aShowInfo)
 {
@@ -1272,7 +1272,7 @@ TabChild::RecvShow(const ScreenIntSize& aSize,
 
 mozilla::ipc::IPCResult
 TabChild::RecvInitRendering(const TextureFactoryIdentifier& aTextureFactoryIdentifier,
-                            const uint64_t& aLayersId,
+                            const layers::LayersId& aLayersId,
                             const CompositorOptions& aCompositorOptions,
                             const bool& aLayersConnected,
                             PRenderFrameChild* aRenderFrame)
@@ -2767,7 +2767,7 @@ TabChild::InitTabChildGlobal()
 
 void
 TabChild::InitRenderingState(const TextureFactoryIdentifier& aTextureFactoryIdentifier,
-                             const uint64_t& aLayersId,
+                             const layers::LayersId& aLayersId,
                              const CompositorOptions& aCompositorOptions,
                              PRenderFrameChild* aRenderFrame)
 {
@@ -2850,7 +2850,7 @@ TabChild::CreateRemoteLayerManager(mozilla::layers::PCompositorBridgeChild* aCom
     });
   } else {
     nsTArray<LayersBackend> ignored;
-    PLayerTransactionChild* shadowManager = aCompositorChild->SendPLayerTransactionConstructor(ignored, LayersId());
+    PLayerTransactionChild* shadowManager = aCompositorChild->SendPLayerTransactionConstructor(ignored, GetLayersId());
     if (shadowManager &&
         shadowManager->SendGetTextureFactoryIdentifier(&mTextureFactoryIdentifier) &&
         mTextureFactoryIdentifier.mParentBackend != LayersBackend::LAYERS_NONE)
@@ -3106,7 +3106,7 @@ TabChild::GetFrom(nsIPresShell* aPresShell)
 }
 
 TabChild*
-TabChild::GetFrom(uint64_t aLayersId)
+TabChild::GetFrom(layers::LayersId aLayersId)
 {
   StaticMutexAutoLock lock(sTabChildrenMutex);
   if (!sTabChildren) {
