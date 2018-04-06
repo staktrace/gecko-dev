@@ -102,6 +102,7 @@ public:
   virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override;
 
   virtual void SetTransactionIdAllocator(TransactionIdAllocator* aAllocator) override;
+  virtual uint64_t GetLastTransactionId() override;
 
   virtual void AddDidCompositeObserver(DidCompositeObserver* aObserver) override;
   virtual void RemoveDidCompositeObserver(DidCompositeObserver* aObserver) override;
