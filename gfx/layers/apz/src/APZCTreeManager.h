@@ -732,15 +732,19 @@ private:
   mutable mozilla::RecursiveMutex mTreeLock;
   RefPtr<HitTestingTreeNode> mRootNode;
 
-  /* A map for quick access to get APZC instances by guid, without having to
-   * acquire the tree lock. mMapLock must be acquired while accessing or
-   * modifying mApzcMap.
+  /* Maps for quick access to get APZC instances by guid, and the scroll thumb
+   * nodes and their targets, without having to acquire the tree lock. This is
+   * useful for sampling on the sampler thread, which may not be allowed to pick
+   * up the tree lock. mMapLock must be acquired while accessing or modifying
+   * mApzcMap or mScrollThumbTargets.
    */
   mutable mozilla::Mutex mMapLock;
   std::unordered_map<ScrollableLayerGuid,
                      AsyncPanZoomController*,
                      ScrollableLayerGuid::HashIgnoringPresShellFn,
                      ScrollableLayerGuid::EqualIgnoringPresShellFn> mApzcMap;
+  std::unordered_map<HitTestingTreeNode*,
+                     std::pair<HitTestingTreeNode*,bool>> mScrollThumbTargets;
 
   /* Holds the zoom constraints for scrollable layers, as determined by the
    * the main-thread gecko code. This can only be accessed on the updater
