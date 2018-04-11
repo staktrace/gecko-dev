@@ -229,6 +229,7 @@ APZSampler::GetSampler(const wr::WrWindowId& aWindowId)
 void
 apz_register_sampler(mozilla::wr::WrWindowId aWindowId)
 {
+  mozilla::layers::APZSampler::SetSamplerThread(aWindowId);
 }
 
 void
