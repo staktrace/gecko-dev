@@ -27,6 +27,7 @@ APZSampler::APZSampler(const RefPtr<APZCTreeManager>& aApz)
 #ifdef DEBUG
   , mSamplerThreadQueried(false)
 #endif
+  , mSampleTimeLock("APZSampler::mSampleTimeLock")
 {
   MOZ_ASSERT(aApz);
   mApz->SetSampler(this);
@@ -61,13 +62,36 @@ APZSampler::SetSamplerThread(const wr::WrWindowId& aWindowId)
   }
 }
 
-bool
-APZSampler::PushStateToWR(wr::TransactionBuilder& aTxn,
-                          const TimeStamp& aSampleTime)
+/*static*/ void
+APZSampler::SampleForWebRender(const wr::WrWindowId& aWindowId,
+                               wr::Transaction* aTransaction)
 {
-  // This function will be removed eventually since we'll have WR pull
-  // the transforms from APZ instead.
-  return mApz->PushStateToWR(aTxn, aSampleTime);
+  if (RefPtr<APZSampler> sampler = GetSampler(aWindowId)) {
+    wr::TransactionWrapper txn(aTransaction);
+    sampler->SampleForWebRender(txn);
+  }
+}
+
+void
+APZSampler::PushSampleTime(const TimeStamp& aSampleTime)
+{
+  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
+  MutexAutoLock lock(mSampleTimeLock);
+  mSampleTimes.push_back(aSampleTime);
+}
+
+void
+APZSampler::SampleForWebRender(wr::TransactionWrapper& aTxn)
+{
+  AssertOnSamplerThread();
+  TimeStamp sampleTime;
+  { // scope lock
+    MutexAutoLock lock(mSampleTimeLock);
+    MOZ_ASSERT(!mSampleTimes.empty());
+    sampleTime = mSampleTimes.front();
+    mSampleTimes.pop_front();
+  }
+  mApz->SampleForWebRender(aTxn, sampleTime);
 }
 
 bool
@@ -235,6 +259,7 @@ void
 apz_sample_transforms(mozilla::wr::WrWindowId aWindowId,
                       mozilla::wr::Transaction *aTransaction)
 {
+  mozilla::layers::APZSampler::SampleForWebRender(aWindowId, aTransaction);
 }
 
 void

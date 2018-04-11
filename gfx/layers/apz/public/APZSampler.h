@@ -20,7 +20,8 @@ namespace mozilla {
 class TimeStamp;
 
 namespace wr {
-class TransactionBuilder;
+struct Transaction;
+class TransactionWrapper;
 struct WrTransformProperty;
 struct WrWindowId;
 } // namespace wr
@@ -51,9 +52,11 @@ public:
    * which thread it is.
    */
   static void SetSamplerThread(const wr::WrWindowId& aWindowId);
+  static void SampleForWebRender(const wr::WrWindowId& aWindowId,
+                                 wr::Transaction* aTxn);
 
-  bool PushStateToWR(wr::TransactionBuilder& aTxn,
-                     const TimeStamp& aSampleTime);
+  void PushSampleTime(const TimeStamp& aSampleTime);
+  void SampleForWebRender(wr::TransactionWrapper& aTxn);
 
   bool SampleAnimations(const LayerMetricsWrapper& aLayer,
                         const TimeStamp& aSampleTime);
@@ -102,6 +105,8 @@ protected:
   bool UsingWebRenderSamplerThread() const;
   static already_AddRefed<APZSampler> GetSampler(const wr::WrWindowId& aWindowId);
 
+  TimeStamp NextSampleTime();
+
 private:
   RefPtr<APZCTreeManager> mApz;
 
@@ -125,6 +130,8 @@ private:
   mutable bool mSamplerThreadQueried;
 #endif
 
+  Mutex mSampleTimeLock;
+  std::deque<TimeStamp> mSampleTimes;
 };
 
 } // namespace layers
