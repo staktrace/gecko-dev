@@ -53,8 +53,7 @@ public:
   static void SetSamplerThread(const wr::WrWindowId& aWindowId);
 
   bool PushStateToWR(wr::TransactionBuilder& aTxn,
-                     const TimeStamp& aSampleTime,
-                     nsTArray<wr::WrTransformProperty>& aTransformArray);
+                     const TimeStamp& aSampleTime);
 
   bool SampleAnimations(const LayerMetricsWrapper& aLayer,
                         const TimeStamp& aSampleTime);

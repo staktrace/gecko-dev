@@ -533,8 +533,7 @@ WebRenderBridgeParent::UpdateAPZScrollData(const wr::Epoch& aEpoch,
 }
 
 bool
-WebRenderBridgeParent::PushAPZStateToWR(wr::TransactionBuilder& aTxn,
-                                        nsTArray<wr::WrTransformProperty>& aTransformArray)
+WebRenderBridgeParent::PushAPZStateToWR(wr::TransactionBuilder& aTxn)
 {
   CompositorBridgeParent* cbp = GetRootCompositorBridgeParent();
   if (!cbp) {
@@ -549,7 +548,7 @@ WebRenderBridgeParent::PushAPZStateToWR(wr::TransactionBuilder& aTxn,
     if (frameInterval != TimeDuration::Forever()) {
       animationTime += frameInterval;
     }
-    return apz->PushStateToWR(aTxn, animationTime, aTransformArray);
+    return apz->PushStateToWR(aTxn, animationTime);
   }
   return false;
 }
@@ -1211,6 +1210,8 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
     return;
   }
 
+  wr::TransactionBuilder txn;
+
   nsTArray<wr::WrOpacityProperty> opacityArray;
   nsTArray<wr::WrTransformProperty> transformArray;
 
@@ -1218,10 +1219,14 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
   if (!transformArray.IsEmpty() || !opacityArray.IsEmpty()) {
     ScheduleGenerateFrame();
   }
+  // We do this even if the arrays are empty, because it will clear out any
+  // previous properties store on the WR side, which is desirable. Also, we
+  // must do this before the PushAPZStateToWR call which will append more
+  // properties, If we did this after that call, this would clobber those
+  // properties.
+  txn.UpdateDynamicProperties(opacityArray, transformArray);
 
-  wr::TransactionBuilder txn;
-
-  if (PushAPZStateToWR(txn, transformArray)) {
+  if (PushAPZStateToWR(txn)) {
     ScheduleGenerateFrame();
   }
 
@@ -1231,10 +1236,6 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
   auto startTime = TimeStamp::Now();
   mApi->SetFrameStartTime(startTime);
 #endif
-
-  if (!transformArray.IsEmpty() || !opacityArray.IsEmpty()) {
-    txn.UpdateDynamicProperties(opacityArray, transformArray);
-  }
 
   txn.GenerateFrame();
 
