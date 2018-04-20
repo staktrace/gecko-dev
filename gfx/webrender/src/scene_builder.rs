@@ -2,12 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::{DocumentId, Epoch, PipelineId, ApiMsg, FrameMsg, ResourceUpdates};
+use api::{DocumentId, PipelineId, ApiMsg, FrameMsg, ResourceUpdates};
 use api::channel::MsgSender;
 use display_list_flattener::build_scene;
 use frame_builder::{FrameBuilderConfig, FrameBuilder};
 use clip_scroll_tree::ClipScrollTree;
-use internal_types::{FastHashMap, FastHashSet};
+use internal_types::FastHashSet;
 use resource_cache::{FontInstanceMap, TiledImageMap};
 use render_backend::DocumentView;
 use renderer::{PipelineInfo, SceneBuilderHooks};
@@ -22,7 +22,6 @@ pub enum SceneBuilderRequest {
         resource_updates: ResourceUpdates,
         frame_ops: Vec<FrameMsg>,
         render: bool,
-        current_epochs: FastHashMap<PipelineId, Epoch>,
     },
     WakeUp,
     Stop
@@ -36,7 +35,7 @@ pub enum SceneBuilderResult {
         resource_updates: ResourceUpdates,
         frame_ops: Vec<FrameMsg>,
         render: bool,
-        result_tx: Sender<SceneSwapResult>,
+        result_tx: Option<Sender<SceneSwapResult>>,
     },
     Stopped,
 }
@@ -131,29 +130,36 @@ impl SceneBuilder {
                 resource_updates,
                 frame_ops,
                 render,
-                current_epochs,
             } => {
                 let built_scene = scene.map(|request|{
                     build_scene(&self.config, request)
                 });
-                let pipeline_info = if let Some(ref built) = built_scene {
-                    PipelineInfo {
-                        epochs: built.scene.pipeline_epochs.clone(),
-                        removed_pipelines: built.removed_pipelines.clone(),
-                    }
+
+                // We only need the pipeline info (and the result channel below)
+                // if we have a hook callback and if this transaction actually
+                // built a new scene. In other cases pipeline_info will stay
+                // None and we can avoid some overhead.
+                let pipeline_info = if self.hooks.is_some() {
+                    built_scene.as_ref().map(|ref built| {
+                        PipelineInfo {
+                            epochs: built.scene.pipeline_epochs.clone(),
+                            removed_pipelines: built.removed_pipelines.clone(),
+                        }
+                    })
                 } else {
-                    PipelineInfo {
-                        epochs: current_epochs,
-                        removed_pipelines: vec![],
-                    }
+                    None
                 };
 
                 // TODO: pre-rasterization.
 
-                if let Some(ref hooks) = self.hooks {
-                    hooks.pre_scene_swap();
-                }
-                let (result_tx, result_rx) = channel();
+                let (result_tx, result_rx) = if pipeline_info.is_some() {
+                    self.hooks.as_ref().unwrap().pre_scene_swap();
+                    let (tx, rx) = channel();
+                    (Some(tx), Some(rx))
+                } else {
+                    (None, None)
+                };
+
                 self.tx.send(SceneBuilderResult::Transaction {
                     document_id,
                     built_scene,
@@ -165,10 +171,10 @@ impl SceneBuilder {
 
                 let _ = self.api_tx.send(ApiMsg::WakeUp);
 
-                // Block until the swap is done, then invoke the hook
-                let _ = result_rx.recv();
-                if let Some(ref hooks) = self.hooks {
-                    hooks.post_scene_swap(pipeline_info);
+                if let Some(pipeline_info) = pipeline_info {
+                    // Block until the swap is done, then invoke the hook
+                    let _ = result_rx.unwrap().recv();
+                    self.hooks.as_ref().unwrap().post_scene_swap(pipeline_info);
                 }
             }
             SceneBuilderRequest::Stop => {
