@@ -857,7 +857,7 @@ mozilla::ipc::IPCResult WebRenderBridgeParent::RecvUpdateResources(
 }
 
 mozilla::ipc::IPCResult WebRenderBridgeParent::RecvDeleteCompositorAnimations(
-    nsTArray<uint64_t>&& aIds) {
+    nsTArray<AnimationId>&& aIds) {
   if (mDestroyed) {
     return IPC_OK();
   }

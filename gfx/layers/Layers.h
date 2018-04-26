@@ -1476,7 +1476,7 @@ class Layer {
   // units and must be converted to device pixels by the compositor.
   // Besides, this should only be called on the compositor thread.
   AnimationArray& GetAnimations() { return mAnimationInfo.GetAnimations(); }
-  uint64_t GetCompositorAnimationsId() {
+  AnimationId GetCompositorAnimationsId() {
     return mAnimationInfo.GetCompositorAnimationsId();
   }
   nsTArray<PropertyAnimationGroup>& GetPropertyAnimationGroups() {

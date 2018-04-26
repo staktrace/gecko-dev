@@ -26,6 +26,7 @@ using mozilla::layers::LayerHandle from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::CompositableHandle from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::LayersObserverEpoch from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::TransactionId from "mozilla/layers/LayersTypes.h";
+using mozilla::layers::AnimationId from "mozilla/layers/AnimationInfo.h";
 
 /**
  * The layers protocol is spoken between thread contexts that manage
@@ -78,7 +79,7 @@ parent:
   sync LeaveTestMode();
 
   // Returns |OMTAValue| applied to the layer.
-  sync GetAnimationValue(uint64_t aCompositorAnimationId) returns (OMTAValue value);
+  sync GetAnimationValue(AnimationId aCompositorAnimationId) returns (OMTAValue value);
 
   // Returns the value of the transform applied to the layer by animation and
   // APZC.

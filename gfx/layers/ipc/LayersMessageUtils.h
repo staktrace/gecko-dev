@@ -19,6 +19,7 @@
 #include "mozilla/ServoBindings.h"
 #include "mozilla/ipc/ByteBuf.h"
 #include "mozilla/layers/APZInputBridge.h"
+#include "mozilla/layers/AnimationInfo.h"
 #include "mozilla/layers/AsyncDragMetrics.h"
 #include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/layers/CompositorTypes.h"
@@ -92,6 +93,11 @@ struct ParamTraits<mozilla::layers::MatrixMessage> {
 template <>
 struct ParamTraits<mozilla::layers::LayersObserverEpoch>
     : public PlainOldDataSerializer<mozilla::layers::LayersObserverEpoch> {};
+
+template <>
+struct ParamTraits<mozilla::layers::AnimationId>
+  : public PlainOldDataSerializer<mozilla::layers::AnimationId>
+{};
 
 template <>
 struct ParamTraits<mozilla::layers::LayersBackend>

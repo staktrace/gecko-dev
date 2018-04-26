@@ -43,6 +43,11 @@ class LayerManager;
 struct CompositorAnimationData;
 struct PropertyAnimationGroup;
 
+struct AnimationId
+{
+  uint64_t mId;
+};
+
 class AnimationInfo final {
   typedef nsTArray<Animation> AnimationArray;
 
@@ -81,7 +86,7 @@ class AnimationInfo final {
   bool StartPendingAnimations(const TimeStamp& aReadyTime);
   void TransferMutatedFlagToLayer(Layer* aLayer);
 
-  uint64_t GetCompositorAnimationsId() { return mCompositorAnimationsId; }
+  AnimationId GetCompositorAnimationsId() { return mCompositorAnimationsId; }
   // Note: We don't set mAnimations on the compositor thread, so this will
   // always return an empty array on the compositor thread.
   AnimationArray& GetAnimations() { return mAnimations; }
@@ -153,7 +158,7 @@ class AnimationInfo final {
   AnimationArray mAnimations;
   UniquePtr<AnimationArray> mPendingAnimations;
 
-  uint64_t mCompositorAnimationsId;
+  AnimationId mCompositorAnimationsId;
   // The extracted data produced by AnimationHelper::ExtractAnimations().
   AnimationStorageData mStorageData;
   // If this layer is used for OMTA, then this counter is used to ensure we

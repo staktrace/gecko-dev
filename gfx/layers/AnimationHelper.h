@@ -125,7 +125,7 @@ class AnimationHelper {
    * Each layer on the content side calls this when it gets new animation
    * data.
    */
-  static uint64_t GetNextCompositorAnimationsId();
+  static AnimationId GetNextCompositorAnimationsId();
 
   /**
    * Convert an array of animation values into a matrix given the corresponding
