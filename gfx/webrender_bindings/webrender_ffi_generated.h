@@ -1340,7 +1340,9 @@ void wr_dp_push_stacking_context(WrState *aState,
                                  const WrFilterOp *aFilters,
                                  uintptr_t aFilterCount,
                                  bool aIsBackfaceVisible,
-                                 GlyphRasterSpace aGlyphRasterSpace)
+                                 GlyphRasterSpace aGlyphRasterSpace,
+                                 bool *aOutIsReferenceFrame,
+                                 uintptr_t *aOutReferenceFrameId)
 WR_FUNC;
 
 WR_INLINE
