@@ -46,11 +46,14 @@ body { padding: 50px }
 document.getElementById("parent").addEventListener("animationiteration", IterationListener);
 
 function IterationListener(event) {
-  setTimeout(RemoveReftestWait, 0);
+  window.addEventListener("MozAfterPaint", () => {
+    requestAnimationFrame(RemoveReftestWait);
+  }, { once: true });
 }
 
 function RemoveReftestWait() {
   document.documentElement.classList.remove("reftest-wait");
+  document.documentElement.classList.add("reftest-ignore-pending-paints");
 }
 
 </script>
