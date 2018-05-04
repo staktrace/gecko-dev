@@ -6418,7 +6418,7 @@ nsLayoutUtils::GetImageRenderingForFrame(nsIFrame* aForFrame)
   case NS_STYLE_IMAGE_RENDERING_OPTIMIZEQUALITY:
     return wr::ImageRendering::Auto;
   case NS_STYLE_IMAGE_RENDERING_CRISPEDGES:
-    return wr::ImageRendering::Pixelated;
+    return wr::ImageRendering::CrispEdges;
   default:
     return wr::ImageRendering::Auto;
   }
