@@ -468,10 +468,10 @@ nsImageBoxFrame::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuild
   wr::LayoutRect fill = wr::ToRoundedLayoutRect(fillRect);
 
   LayoutDeviceSize gapSize(0, 0);
-  SamplingFilter sampleFilter = nsLayoutUtils::GetSamplingFilterForFrame(aItem->Frame());
+  wr::ImageRendering imageRendering = nsLayoutUtils::GetImageRenderingForFrame(aItem->Frame());
   aBuilder.PushImage(fill, fill, !BackfaceIsHidden(),
                      wr::ToLayoutSize(fillRect.Size()), wr::ToLayoutSize(gapSize),
-                     wr::ToImageRendering(sampleFilter), key.value());
+                     imageRendering, key.value());
 
   return ImgDrawResult::SUCCESS;
 }

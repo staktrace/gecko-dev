@@ -6402,6 +6402,28 @@ nsLayoutUtils::GetSamplingFilterForFrame(nsIFrame* aForFrame)
   }
 }
 
+wr::ImageRendering
+nsLayoutUtils::GetImageRenderingForFrame(nsIFrame* aForFrame)
+{
+  ComputedStyle *sc;
+  if (nsCSSRendering::IsCanvasFrame(aForFrame)) {
+    nsCSSRendering::FindBackground(aForFrame, &sc);
+  } else {
+    sc = aForFrame->Style();
+  }
+
+  switch (sc->StyleVisibility()->mImageRendering) {
+  case NS_STYLE_IMAGE_RENDERING_OPTIMIZESPEED:
+    return wr::ImageRendering::Pixelated;
+  case NS_STYLE_IMAGE_RENDERING_OPTIMIZEQUALITY:
+    return wr::ImageRendering::Auto;
+  case NS_STYLE_IMAGE_RENDERING_CRISPEDGES:
+    return wr::ImageRendering::Pixelated;
+  default:
+    return wr::ImageRendering::Auto;
+  }
+}
+
 /**
  * Given an image being drawn into an appunit coordinate system, and
  * a point in that coordinate system, map the point back into image

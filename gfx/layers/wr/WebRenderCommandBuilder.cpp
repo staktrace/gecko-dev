@@ -648,10 +648,10 @@ struct DIGroup
   {
     wr::LayoutRect dest = wr::ToLayoutRect(bounds);
     GP("PushImage: %f %f %f %f\n", dest.origin.x, dest.origin.y, dest.size.width, dest.size.height);
-    gfx::SamplingFilter sampleFilter = gfx::SamplingFilter::LINEAR; //nsLayoutUtils::GetSamplingFilterForFrame(aItem->Frame());
+    wr::ImageRendering imageRendering = wr::ImageRendering::Auto; //nsLayoutUtils::GetImageRenderingForFrame(aItem->Frame());
     bool backfaceHidden = false;
     aBuilder.PushImage(dest, dest, !backfaceHidden,
-                       wr::ToImageRendering(sampleFilter),
+                       imageRendering,
                        mKey.value());
   }
 
@@ -1430,8 +1430,8 @@ WebRenderCommandBuilder::PushImage(nsDisplayItem* aItem,
   }
 
   auto r = wr::ToRoundedLayoutRect(aRect);
-  gfx::SamplingFilter sampleFilter = nsLayoutUtils::GetSamplingFilterForFrame(aItem->Frame());
-  aBuilder.PushImage(r, r, !aItem->BackfaceIsHidden(), wr::ToImageRendering(sampleFilter), key.value());
+  wr::ImageRendering imageRendering = nsLayoutUtils::GetImageRenderingForFrame(aItem->Frame());
+  aBuilder.PushImage(r, r, !aItem->BackfaceIsHidden(), imageRendering, key.value());
 
   return true;
 }
@@ -1812,11 +1812,11 @@ WebRenderCommandBuilder::PushItemAsImage(nsDisplayItem* aItem,
   }
 
   wr::LayoutRect dest = wr::ToRoundedLayoutRect(imageRect);
-  gfx::SamplingFilter sampleFilter = nsLayoutUtils::GetSamplingFilterForFrame(aItem->Frame());
+  wr::ImageRendering imageRendering = nsLayoutUtils::GetImageRenderingForFrame(aItem->Frame());
   aBuilder.PushImage(dest,
                      dest,
                      !aItem->BackfaceIsHidden(),
-                     wr::ToImageRendering(sampleFilter),
+                     imageRendering,
                      fallbackData->GetKey().value());
   return true;
 }

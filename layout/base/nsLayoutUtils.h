@@ -1743,9 +1743,10 @@ public:
   static nsIFrame* GetClosestLayer(nsIFrame* aFrame);
 
   /**
-   * Gets the graphics sampling filter for the frame
+   * Gets the graphics sampling filter for the frame.
    */
   static SamplingFilter GetSamplingFilterForFrame(nsIFrame* aFrame);
+  static mozilla::wr::ImageRendering GetImageRenderingForFrame(nsIFrame* aFrame);
 
   static inline void InitDashPattern(StrokeOptions& aStrokeOptions,
                                      uint8_t aBorderStyle) {
