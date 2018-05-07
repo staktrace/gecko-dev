@@ -651,6 +651,7 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
     txn.SetDisplayList(clearColor, wrEpoch, LayerSize(aSize.width, aSize.height),
                        mPipelineId, aContentSize,
                        dlDesc, dlData);
+    mAsyncImageManager->ApplyAsyncImages(txn);
 
     mApi->SendTransaction(txn);
 
