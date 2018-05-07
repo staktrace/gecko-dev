@@ -188,6 +188,7 @@ public:
         LayoutDeviceRect scBounds(LayoutDevicePoint(0, 0), bounds.Size());
         wr::ImageRendering filter = wr::ToImageRendering(nsLayoutUtils::GetSamplingFilterForFrame(mFrame));
         wr::MixBlendMode mixBlendMode = wr::MixBlendMode::Normal;
+        if (XRE_IsContentProcess()) printf_stderr("UpdateAsyncImagePipeline(PipelineId(%u, %u))\n", data->GetPipelineId()->mNamespace, data->GetPipelineId()->mHandle);
         aManager->WrBridge()->AddWebRenderParentCommand(OpUpdateAsyncImagePipeline(data->GetPipelineId().value(),
                                                                                    scBounds,
                                                                                    scTransform,

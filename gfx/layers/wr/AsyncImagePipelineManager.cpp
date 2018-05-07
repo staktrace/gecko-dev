@@ -351,6 +351,7 @@ AsyncImagePipelineManager::ApplyAsyncImages(wr::TransactionBuilder& aTxn)
     wr::BuiltDisplayList dl;
     wr::LayoutSize builderContentSize;
     builder.Finalize(builderContentSize, dl);
+    printf_stderr("AsyncImagePipelineManager setting DL for PipelineId(%u, %u)\n", pipelineId.mNamespace, pipelineId.mHandle);
     aTxn.SetDisplayList(gfx::Color(0.f, 0.f, 0.f, 0.f),
                         epoch,
                         LayerSize(pipeline->mScBounds.Width(), pipeline->mScBounds.Height()),

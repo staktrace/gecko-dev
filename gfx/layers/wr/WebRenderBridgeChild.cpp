@@ -190,6 +190,7 @@ void
 WebRenderBridgeChild::AddPipelineIdForAsyncCompositable(const wr::PipelineId& aPipelineId,
                                                         const CompositableHandle& aHandle)
 {
+  if (XRE_IsContentProcess()) printf_stderr("AddPipelineIdForCompositable(PipelineId(%u, %u))\n", aPipelineId.mNamespace, aPipelineId.mHandle);
   AddWebRenderParentCommand(
     OpAddPipelineIdForCompositable(aPipelineId, aHandle, /* isAsync */ true));
 }
@@ -198,6 +199,7 @@ void
 WebRenderBridgeChild::AddPipelineIdForCompositable(const wr::PipelineId& aPipelineId,
                                                    const CompositableHandle& aHandle)
 {
+  if (XRE_IsContentProcess()) printf_stderr("AddPipelineIdForCompositable(PipelineId(%u, %u))\n", aPipelineId.mNamespace, aPipelineId.mHandle);
   AddWebRenderParentCommand(
     OpAddPipelineIdForCompositable(aPipelineId, aHandle, /* isAsync */ false));
 }
@@ -205,6 +207,7 @@ WebRenderBridgeChild::AddPipelineIdForCompositable(const wr::PipelineId& aPipeli
 void
 WebRenderBridgeChild::RemovePipelineIdForCompositable(const wr::PipelineId& aPipelineId)
 {
+  if (XRE_IsContentProcess()) printf_stderr("RemovePipelineIdForCompositable(PipelineId(%u, %u))\n", aPipelineId.mNamespace, aPipelineId.mHandle);
   AddWebRenderParentCommand(
     OpRemovePipelineIdForCompositable(aPipelineId));
 }
