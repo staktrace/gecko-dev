@@ -121,6 +121,7 @@ NS_IMPL_RELEASE(nsSMILAnimationController)
 void
 nsSMILAnimationController::WillRefresh(mozilla::TimeStamp aTime)
 {
+  if (XRE_IsParentProcess()) printf_stderr("nsSMILAnimationController got WillRefresh\n");
   // Although we never expect aTime to go backwards, when we initialise the
   // animation controller, if we can't get hold of a refresh driver we
   // initialise mCurrentSampleTime to Now(). It may be possible that after

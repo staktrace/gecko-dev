@@ -458,7 +458,7 @@ function plIdleCallbackSet() {
 }
 
 function plIdleCallbackReceived() {
-  isIdleCallbackPending = false;
+  //isIdleCallbackPending = false;
 }
 
 function waitForFNBPaint() {

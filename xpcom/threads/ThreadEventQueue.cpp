@@ -99,6 +99,7 @@ ThreadEventQueue<InnerQueueT>::PutEventInternal(already_AddRefed<nsIRunnable>&& 
       }
     }
 
+    //if (XRE_IsParentProcess() && aPriority == EventPriority::Idle) printf_stderr("ThreadEventQueue::PutEvent %p sink %p\n", event.get(), aSink);
     MutexAutoLock lock(mLock);
 
     if (mEventsAreDoomed) {

@@ -1755,6 +1755,7 @@ public:
   }
 
   virtual void WillRefresh(mozilla::TimeStamp aTime) override {
+  if (XRE_IsParentProcess()) printf_stderr("nsGfxScrollFrame1 got WillRefresh\n");
     mozilla::TimeDuration deltaTime = aTime - mLastRefreshTime;
     mLastRefreshTime = aTime;
 
@@ -1893,6 +1894,7 @@ public:
   }
 
   virtual void WillRefresh(mozilla::TimeStamp aTime) override {
+  if (XRE_IsParentProcess()) printf_stderr("nsGfxScrollFrame2 got WillRefresh\n");
     // The callback may release "this".
     // We don't access members after returning, so no need for KungFuDeathGrip.
     ScrollFrameHelper::AsyncScrollCallback(mCallee, aTime);

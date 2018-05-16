@@ -157,7 +157,7 @@ public:
 
   virtual void AddRefreshDriver(nsRefreshDriver* aDriver)
   {
-    LOG("[%p] AddRefreshDriver %p", this, aDriver);
+    if (XRE_IsParentProcess()) printf_stderr("[%p] AddRefreshDriver %p\n", this, aDriver);
 
     bool startTimer = mContentRefreshDrivers.IsEmpty() && mRootRefreshDrivers.IsEmpty();
     if (IsRootRefreshDriver(aDriver)) {
@@ -175,7 +175,7 @@ public:
 
   virtual void RemoveRefreshDriver(nsRefreshDriver* aDriver)
   {
-    LOG("[%p] RemoveRefreshDriver %p", this, aDriver);
+    if (XRE_IsParentProcess()) printf_stderr("[%p] RemoveRefreshDriver %p\n", this, aDriver);
 
     if (IsRootRefreshDriver(aDriver)) {
       NS_ASSERTION(mRootRefreshDrivers.Contains(aDriver), "RemoveRefreshDriver for a refresh driver that's not in the root refresh list!");
@@ -203,6 +203,12 @@ public:
     bool stopTimer = mContentRefreshDrivers.IsEmpty() && mRootRefreshDrivers.IsEmpty();
     if (stopTimer) {
       StopTimer();
+    } else if (XRE_IsParentProcess()) {
+      printf_stderr("%p Still have driver %zu/%zu %p\n", this,
+        mContentRefreshDrivers.Length(), mRootRefreshDrivers.Length(),
+        mContentRefreshDrivers.IsEmpty()
+          ? mRootRefreshDrivers[0].get()
+          : mContentRefreshDrivers[0].get());
     }
   }
 
@@ -246,6 +252,7 @@ public:
     TimeDuration refreshRate = GetTimerRate();
     TimeStamp idleEnd = mostRecentRefresh + refreshRate;
 
+    if (XRE_IsParentProcess()) printf_stderr("%p Most recent refresh was %f ms ago, rate %f\n", this, (TimeStamp::Now() - mostRecentRefresh).ToMilliseconds(), refreshRate.ToMilliseconds());
     if (idleEnd +
           refreshRate * nsLayoutUtils::QuiescentFramesBeforeIdlePeriod() <
         TimeStamp::Now()) {
@@ -317,6 +324,7 @@ protected:
   {
     ScheduleNextTick(now);
 
+    if (XRE_IsParentProcess()) printf_stderr("Ticking driver timer %p\n", this);
     mLastFireEpoch = jsnow;
     mLastFireTime = now;
     mLastFireSkipped = false;
@@ -417,6 +425,7 @@ protected:
 
   void StopTimer() override
   {
+    if (XRE_IsParentProcess()) printf_stderr("%p stopping\n", this);
     mTimer->Cancel();
   }
 
@@ -1366,6 +1375,7 @@ nsRefreshDriver::EnsureTimerStarted(EnsureTimerStartedFlags aFlags)
 
   if (IsFrozen() || !mPresContext) {
     // If we don't want to start it now, or we've been disconnected.
+    if (XRE_IsParentProcess()) printf_stderr("%p stopping for disconnect\n", mActiveTimer);
     StopTimer();
     return;
   }
@@ -1819,6 +1829,7 @@ nsRefreshDriver::Tick(int64_t aNowEpoch, TimeStamp aNowTime)
     // We're currently suspended waiting for earlier Tick's to
     // be completed (on the Compositor). Mark that we missed the paint
     // and keep waiting.
+    if (XRE_IsParentProcess()) printf_stderr("%p waiting for paint %d(%" PRIu64 ") %d\n", this, mWaitingForTransaction, uint64_t(mPendingTransaction), mSkippedPaints);
     return;
   }
   mMostRecentTick = aNowTime;
@@ -1839,8 +1850,18 @@ nsRefreshDriver::Tick(int64_t aNowEpoch, TimeStamp aNowTime)
     // situation we don't want to thrash our timer.  So instead we
     // wait until we get a Notify() call when we have no observers
     // before stopping the timer.
+    if (XRE_IsParentProcess()) printf_stderr("%p no observers %d\n", this, !presShell);
     StopTimer();
     return;
+  } else {
+    if (XRE_IsParentProcess()) printf_stderr("%p have observers %d %d %d\n", this, HasObservers(), HasImageRequests(), !mScrollEvents.IsEmpty());
+if (XRE_IsParentProcess() && HasObservers()) printf_stderr("%zu %zu %zu %zu flushPending %d styleflush %zu layoutflush %zu animationevent %zu resize %zu pending %zu framerequest %zu throttled frame %zu early runners %zu\n",
+  mObservers[0].Length(), mObservers[1].Length(), mObservers[2].Length(), mObservers[3].Length(),
+mViewManagerFlushIsPending, mStyleFlushObservers.Length(),
+mLayoutFlushObservers.Length(), mAnimationEventFlushObservers.Length(),
+mResizeEventFlushObservers.Length(), mPendingEvents.Length(),
+mFrameRequestCallbackDocs.Length(), mThrottledFrameRequestCallbackDocs.Length(),
+mEarlyRunners.Length());
   }
 
   mResizeSuppressed = false;
@@ -2136,6 +2157,7 @@ nsRefreshDriver::BeginRefreshingImages(RequestTable& aEntries,
 void
 nsRefreshDriver::Freeze()
 {
+  if (XRE_IsParentProcess()) printf_stderr("%p freeze\n", mActiveTimer);
   StopTimer();
   mFreezeCount++;
 }
@@ -2248,6 +2270,7 @@ nsRefreshDriver::NotifyTransactionCompleted(mozilla::layers::TransactionId aTran
 void
 nsRefreshDriver::WillRefresh(mozilla::TimeStamp aTime)
 {
+  if (XRE_IsParentProcess()) printf_stderr("childRefreshDriver got WillRefresh\n");
   mRootRefresh->RemoveRefreshObserver(this, FlushType::Style);
   mRootRefresh = nullptr;
   if (mSkippedPaints) {
@@ -2445,6 +2468,7 @@ nsRefreshDriver::Disconnect()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  if (XRE_IsParentProcess()) printf_stderr("%p disconnect\n", mActiveTimer);
   StopTimer();
 
   if (mPresContext) {

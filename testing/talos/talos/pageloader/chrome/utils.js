@@ -5,12 +5,14 @@ var idleCallbackHandle;
 
 
 function _idleCallbackHandler() {
+  dump('staktrace: got idle callback (' + idleCallbackHandle + ')\n');
   content.window.cancelIdleCallback(idleCallbackHandle);
   sendAsyncMessage("PageLoader:IdleCallbackReceived", {});
 }
 
 function setIdleCallback() {
   idleCallbackHandle = content.window.requestIdleCallback(_idleCallbackHandler);
+  dump('staktrace: registered for idle callback ' + idleCallbackHandle + '\n');
   sendAsyncMessage("PageLoader:IdleCallbackSet", {});
 }
 

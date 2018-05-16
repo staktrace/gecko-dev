@@ -655,6 +655,7 @@ nsGlobalWindowInner::ScheduleIdleRequestDispatch()
     mIdleRequestExecutor = new IdleRequestExecutor(this);
   }
 
+  if (XRE_IsParentProcess()) printf_stderr("%p has idle runnable %p\n", this, mIdleRequestExecutor.get());
   mIdleRequestExecutor->MaybeDispatch();
 }
 
@@ -711,6 +712,7 @@ nsGlobalWindowInner::ExecuteIdleRequest(TimeStamp aDeadline)
     return NS_OK;
   }
 
+if (XRE_IsParentProcess()) printf_stderr("%p ExecuteIdleRequest with pending callbacks\n", this);
   // If the request that we're trying to execute has been queued
   // during the current idle period, then dispatch it again at the end
   // of the idle period.
@@ -788,6 +790,7 @@ nsGlobalWindowInner::RequestIdleCallback(JSContext* aCx,
   }
 
   uint32_t handle = mIdleRequestCallbackCounter++;
+if (XRE_IsParentProcess()) printf_stderr("%p RequestIdleCallback %u\n", this, handle);
 
   RefPtr<IdleRequest> request =
     new IdleRequest(&aCallback, handle);

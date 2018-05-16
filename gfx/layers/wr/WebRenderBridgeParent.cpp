@@ -614,6 +614,7 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
                                           const TimeStamp& aTxnStartTime,
                                           const TimeStamp& aFwdTime)
 {
+  if (mWidget) printf_stderr("layers id %" PRIx64 " got transaction id %" PRIu64 "\n", uint64_t(GetLayersId()), uint64_t(aTransactionId));
   if (mDestroyed) {
     for (const auto& op : aToDestroy) {
       DestroyActor(op);
@@ -710,6 +711,7 @@ WebRenderBridgeParent::RecvEmptyTransaction(const FocusTarget& aFocusTarget,
                                             const TimeStamp& aTxnStartTime,
                                             const TimeStamp& aFwdTime)
 {
+  if (mWidget) printf_stderr("layers id %" PRIx64 " got empty transaction id %" PRIu64 "\n", uint64_t(GetLayersId()), uint64_t(aTransactionId));
   if (mDestroyed) {
     for (const auto& op : aToDestroy) {
       DestroyActor(op);

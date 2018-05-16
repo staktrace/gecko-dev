@@ -2167,6 +2167,7 @@ CompositorBridgeParent::NotifyPipelineRendered(const wr::PipelineId& aPipelineId
 
     if (!mPaused) {
       TransactionId transactionId = mWrBridge->FlushTransactionIdsForEpoch(aEpoch, aCompositeEnd);
+      printf_stderr("DidComposite layers id %" PRIx64 ", transaction %" PRIu64 "\n", uint64_t(mRootLayerTreeID), uint64_t(transactionId));
       Unused << SendDidComposite(LayersId{0}, transactionId, aCompositeStart, aCompositeEnd);
 
       nsTArray<ImageCompositeNotificationInfo> notifications;

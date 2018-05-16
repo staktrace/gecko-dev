@@ -36,8 +36,8 @@ MainThreadIdlePeriod::GetIdlePeriodHint(TimeStamp* aIdleDeadline)
   TimeStamp currentGuess =
     now + TimeDuration::FromMilliseconds(kLongIdlePeriodMS);
 
-  currentGuess = nsRefreshDriver::GetIdleDeadlineHint(currentGuess);
-  currentGuess = NS_GetTimerDeadlineHintOnCurrentThread(currentGuess, kMaxTimerThreadBound);
+  TimeStamp rdCurrentGuess = nsRefreshDriver::GetIdleDeadlineHint(currentGuess);
+  currentGuess = NS_GetTimerDeadlineHintOnCurrentThread(rdCurrentGuess, kMaxTimerThreadBound);
 
   // If the idle period is too small, then just return a null time
   // to indicate we are busy. Otherwise return the actual deadline.
@@ -46,6 +46,9 @@ MainThreadIdlePeriod::GetIdlePeriodHint(TimeStamp* aIdleDeadline)
   bool busySoon = currentGuess.IsNull() ||
                   (now >= (currentGuess - minIdlePeriod)) ||
                   currentGuess < mLastIdleDeadline;
+if (XRE_IsParentProcess() && busySoon) printf_stderr("busysoon: no guess: %d, next tick in %fms, timer deadline in %fms %d\n",
+  currentGuess.IsNull(), (rdCurrentGuess - now).ToMilliseconds(),
+  (currentGuess - now).ToMilliseconds(), currentGuess < mLastIdleDeadline);
 
   if (!busySoon) {
     *aIdleDeadline = mLastIdleDeadline = currentGuess;

@@ -54,6 +54,7 @@ PrioritizedEventQueue<InnerQueueT>::PutEvent(already_AddRefed<nsIRunnable>&& aEv
     mNormalQueue->PutEvent(event.forget(), priority, aProofOfLock);
     break;
   case EventPriority::Idle:
+    if (XRE_IsParentProcess()) printf_stderr("Adding idle event %p to queue %p\n", event.get(), mIdleQueue.get());
     mIdleQueue->PutEvent(event.forget(), priority, aProofOfLock);
     break;
   case EventPriority::Count:
@@ -84,6 +85,7 @@ PrioritizedEventQueue<InnerQueueT>::GetIdleDeadline()
     MutexAutoUnlock unlock(*mMutex);
     mIdlePeriod->GetIdlePeriodHint(&idleDeadline);
   }
+  if (XRE_IsParentProcess() && !idleDeadline) printf_stderr("idleDeadline came back zero\n");
 
   // If HasPendingEvents() has been called and it has returned true because of
   // pending idle events, there is a risk that we may decide here that we aren't
@@ -230,11 +232,13 @@ PrioritizedEventQueue<InnerQueueT>::GetEvent(EventPriority* aPriority,
 
   TimeStamp idleDeadline = GetIdleDeadline();
   if (!idleDeadline) {
+    if (XRE_IsParentProcess()) printf_stderr("no idle deadline for queue %p\n", mIdleQueue.get());
     return nullptr;
   }
 
   nsCOMPtr<nsIRunnable> event = mIdleQueue->GetEvent(aPriority, aProofOfLock);
   if (event) {
+    if (XRE_IsParentProcess()) printf_stderr("Running idle event %p\n", event.get());
     nsCOMPtr<nsIIdleRunnable> idleEvent = do_QueryInterface(event);
     if (idleEvent) {
       idleEvent->SetDeadline(idleDeadline);

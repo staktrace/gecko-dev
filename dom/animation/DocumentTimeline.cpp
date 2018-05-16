@@ -150,6 +150,7 @@ DocumentTimeline::NotifyAnimationUpdated(Animation& aAnimation)
 void
 DocumentTimeline::WillRefresh(mozilla::TimeStamp aTime)
 {
+  if (XRE_IsParentProcess()) printf_stderr("DocumentTimeline got WillRefresh\n");
   MOZ_ASSERT(mIsObservingRefreshDriver);
   MOZ_ASSERT(GetRefreshDriver(),
              "Should be able to reach refresh driver from within WillRefresh");
