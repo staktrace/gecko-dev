@@ -236,6 +236,7 @@ public:
                                              GdkEventProperty *aEvent);
 #if GTK_CHECK_VERSION(3,4,0)
     gboolean           OnTouchEvent(GdkEventTouch* aEvent);
+    bool               IsHandlingTouchSequence(GdkEventSequence* aSequence);
 #endif
 
     virtual already_AddRefed<mozilla::gfx::DrawTarget>

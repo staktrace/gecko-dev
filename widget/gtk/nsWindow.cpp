@@ -3505,7 +3505,23 @@ nsWindow::OnDragDataReceivedEvent(GtkWidget *aWidget,
 gboolean
 nsWindow::OnTouchEvent(GdkEventTouch* aEvent)
 {
+    printf_stderr("GTKWIDGET: target window is %p of type %d and handling touch: %d\n",
+            this, mWindowType, mHandleTouchEvent);
+
     if (!mHandleTouchEvent) {
+        // If a popup window was spawned (e.g. as the result of a long-press)
+        // and touch events got diverted to that window within a touch sequence,
+        // ensure the touch event gets sent to the original window instead.
+        if (mWindowType == eWindowType_popup) {
+            if (GtkWindow* toplevel = gtk_window_get_transient_for(GTK_WINDOW(mShell))) {
+                nsWindow* topWindow = get_window_for_gdk_window(gtk_widget_get_window(GTK_WIDGET(toplevel)));
+                if (topWindow && topWindow->IsHandlingTouchSequence(aEvent->sequence)) {
+                    printf_stderr("GTKWIDGET: bouncing event to parent\n");
+                    return topWindow->OnTouchEvent(aEvent);
+                }
+            }
+        }
+
         return FALSE;
     }
 
@@ -6066,12 +6082,20 @@ touch_event_cb(GtkWidget* aWidget, GdkEventTouch* aEvent)
 {
     UpdateLastInputEventTime(aEvent);
 
+    printf_stderr("GTKWIDGET: got touch event of type %d with window %p and widget %p\n",
+            aEvent->type, aEvent->window, aWidget);
     nsWindow* window = GetFirstNSWindowForGDKWindow(aEvent->window);
     if (!window) {
         return FALSE;
     }
 
     return window->OnTouchEvent(aEvent);
+}
+
+bool
+nsWindow::IsHandlingTouchSequence(GdkEventSequence* aSequence)
+{
+    return mHandleTouchEvent && mTouches.Contains(aSequence);
 }
 #endif
 
