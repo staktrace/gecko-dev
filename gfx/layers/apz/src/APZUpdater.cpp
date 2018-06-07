@@ -16,12 +16,13 @@
 #include "mozilla/layers/WebRenderScrollDataWrapper.h"
 #include "mozilla/webrender/WebRenderAPI.h"
 
+static int childUpdate = 0;
+
 namespace mozilla {
 namespace layers {
 
 StaticMutex APZUpdater::sWindowIdLock;
 StaticAutoPtr<std::unordered_map<uint64_t, APZUpdater*>> APZUpdater::sWindowIdMap;
-
 
 APZUpdater::APZUpdater(const RefPtr<APZCTreeManager>& aApz,
                        bool aIsUsingWebRender)
@@ -197,6 +198,9 @@ APZUpdater::UpdateScrollDataAndTreeState(LayersId aRootLayerTreeId,
                                          const wr::Epoch& aEpoch,
                                          WebRenderScrollData&& aScrollData)
 {
+  if (aRootLayerTreeId != aOriginatingLayersId) {
+    childUpdate++;
+  }
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
   RefPtr<APZUpdater> self = this;
   // Insert an epoch requirement update into the queue, so that
@@ -564,6 +568,10 @@ apz_register_updater(mozilla::wr::WrWindowId aWindowId)
 void
 apz_pre_scene_swap(mozilla::wr::WrWindowId aWindowId)
 {
+  if (childUpdate == atoi(getenv("TEST_NUM"))) {
+    printf_stderr("Sleeping...\n");
+    Sleep(100);
+  }
   // This should never get called unless async scene building is enabled.
   MOZ_ASSERT(gfxPrefs::WebRenderAsyncSceneBuild());
   mozilla::layers::APZUpdater::PrepareForSceneSwap(aWindowId);

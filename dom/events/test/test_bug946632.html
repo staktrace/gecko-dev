@@ -143,9 +143,12 @@ function nextTest()
   reset();
 
   waitForApzFlushedRepaints(function() {
+  //window.waitForAllPaintsFlushed(function() {
+    dump("flush complete\n");
     prepare(test.check);
 
     sendWheelAndPaint(input, 8, 6, test.event, function() {
+      dump("send wheel complete\n");
       // Do nothing - we wait for the scroll event.
     });
   });

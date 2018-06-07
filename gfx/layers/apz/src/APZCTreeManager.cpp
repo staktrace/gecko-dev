@@ -45,8 +45,8 @@
 #include "GestureEventListener.h"       // for GestureEventListener::setLongTapEnabled
 #include "UnitTransforms.h"             // for ViewAs
 
-#define ENABLE_APZCTM_LOGGING 0
-// #define ENABLE_APZCTM_LOGGING 1
+// #define ENABLE_APZCTM_LOGGING 0
+#define ENABLE_APZCTM_LOGGING 1
 
 #if ENABLE_APZCTM_LOGGING
 #  define APZCTM_LOG(...) printf_stderr("APZCTM: " __VA_ARGS__)

@@ -14,8 +14,8 @@
 #include "OverscrollHandoffState.h"
 #include "QueuedInput.h"
 
-#define INPQ_LOG(...)
-// #define INPQ_LOG(...) printf_stderr("INPQ: " __VA_ARGS__)
+// #define INPQ_LOG(...)
+#define INPQ_LOG(...) printf_stderr("INPQ: " __VA_ARGS__)
 
 namespace mozilla {
 namespace layers {
@@ -757,9 +757,10 @@ InputQueue::ProcessQueue() {
       break;
     }
 
-    INPQ_LOG("processing input from block %p; preventDefault %d shouldDropEvents %d target %p\n",
+    INPQ_LOG("processing input from block %p; preventDefault %d shouldDropEvents %d target %s\n",
         curBlock, cancelable && cancelable->IsDefaultPrevented(),
-        curBlock->ShouldDropEvents(), curBlock->GetTargetApzc().get());
+        curBlock->ShouldDropEvents(),
+Stringify(curBlock->GetTargetApzc()->GetGuid()).c_str());
     RefPtr<AsyncPanZoomController> target = curBlock->GetTargetApzc();
     // target may be null here if the initial target was unconfirmed and then
     // we later got a confirmed null target. in that case drop the events.
