@@ -6517,6 +6517,17 @@ nsDisplayOpacity::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuil
 {
   float* opacityForSC = &mOpacity;
 
+  bool snap;
+  nsRect visibleBounds = GetBounds(aDisplayListBuilder, &snap);
+  const DisplayItemClip& itemClip = GetClip();
+  if (itemClip.HasClip()) {
+    visibleBounds.IntersectRect(visibleBounds, itemClip.GetClipRect());
+  }
+  visibleBounds.IntersectRect(visibleBounds, GetBuildingRect());
+  if (visibleBounds.IsEmpty()) {
+    return true;
+  }
+
   RefPtr<WebRenderAnimationData> animationData = aManager->CommandBuilder().CreateOrRecycleWebRenderUserData<WebRenderAnimationData>(this);
   AnimationInfo& animationInfo = animationData->GetAnimationInfo();
   AddAnimationsForProperty(Frame(), aDisplayListBuilder,
