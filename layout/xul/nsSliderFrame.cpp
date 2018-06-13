@@ -1132,6 +1132,8 @@ nsSliderFrame::StartAPZDrag(WidgetGUIEvent* aEvent)
   // that case).
   mScrollingWithAPZ = true;
 
+  InputAPZContext::SetStartedAsyncScrollbarDrag();
+
   // When we start an APZ drag, we wont get mouse events for the drag.
   // APZ will consume them all and only notify us of the new scroll position.
   bool waitForRefresh = InputAPZContext::HavePendingLayerization();

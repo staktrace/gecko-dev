@@ -14,6 +14,7 @@ uint64_t InputAPZContext::sBlockId = 0;
 nsEventStatus InputAPZContext::sApzResponse = nsEventStatus_eIgnore;
 bool InputAPZContext::sPendingLayerization = false;
 bool InputAPZContext::sRoutedToChildProcess = false;
+bool InputAPZContext::sStartedAsyncScrollbarDrag = false;
 
 /*static*/ ScrollableLayerGuid
 InputAPZContext::GetTargetLayerGuid()
@@ -45,6 +46,12 @@ InputAPZContext::WasRoutedToChildProcess()
   return sRoutedToChildProcess;
 }
 
+/*static*/ bool
+InputAPZContext::StartedAsyncScrollbarDrag()
+{
+  return sStartedAsyncScrollbarDrag;
+}
+
 InputAPZContext::InputAPZContext(const ScrollableLayerGuid& aGuid,
                                  const uint64_t& aBlockId,
                                  const nsEventStatus& aApzResponse,
@@ -54,12 +61,14 @@ InputAPZContext::InputAPZContext(const ScrollableLayerGuid& aGuid,
   , mOldApzResponse(sApzResponse)
   , mOldPendingLayerization(sPendingLayerization)
   , mOldRoutedToChildProcess(sRoutedToChildProcess)
+  , mOldStartedAsyncScrollbarDrag(sStartedAsyncScrollbarDrag)
 {
   sGuid = aGuid;
   sBlockId = aBlockId;
   sApzResponse = aApzResponse;
   sPendingLayerization = aPendingLayerization;
   sRoutedToChildProcess = false;
+  sStartedAsyncScrollbarDrag = false;
 }
 
 InputAPZContext::~InputAPZContext()
@@ -69,12 +78,19 @@ InputAPZContext::~InputAPZContext()
   sApzResponse = mOldApzResponse;
   sPendingLayerization = mOldPendingLayerization;
   sRoutedToChildProcess = mOldRoutedToChildProcess;
+  sStartedAsyncScrollbarDrag = mOldStartedAsyncScrollbarDrag;
 }
 
 /*static*/ void
 InputAPZContext::SetRoutedToChildProcess()
 {
   sRoutedToChildProcess = true;
+}
+
+/*static*/ void
+InputAPZContext::SetStartedAsyncScrollbarDrag()
+{
+  sStartedAsyncScrollbarDrag = true;
 }
 
 } // namespace layers

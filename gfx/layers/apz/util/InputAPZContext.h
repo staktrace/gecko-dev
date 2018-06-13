@@ -35,6 +35,7 @@ private:
 
   // State that is set in deeper code and propagated upwards.
   static bool sRoutedToChildProcess;
+  static bool sStartedAsyncScrollbarDrag;
 
 public:
   // Functions to access downwards-propagated data
@@ -45,6 +46,7 @@ public:
 
   // Functions to access upwards-propagated data
   static bool WasRoutedToChildProcess();
+  static bool StartedAsyncScrollbarDrag();
 
   // Constructor sets the data to be propagated downwards
   InputAPZContext(const ScrollableLayerGuid& aGuid,
@@ -55,6 +57,7 @@ public:
 
   // Functions to set data to be propagated upwards
   static void SetRoutedToChildProcess();
+  static void SetStartedAsyncScrollbarDrag();
 
 private:
   ScrollableLayerGuid mOldGuid;
@@ -63,6 +66,7 @@ private:
   bool mOldPendingLayerization;
 
   bool mOldRoutedToChildProcess;
+  bool mOldStartedAsyncScrollbarDrag;
 };
 
 } // namespace layers
