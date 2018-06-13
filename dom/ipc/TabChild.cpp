@@ -1736,7 +1736,8 @@ TabChild::HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
   DispatchWidgetEventViaAPZ(localEvent);
 
   if (aInputBlockId && aEvent.mFlags.mHandledByAPZ) {
-    mAPZEventState->ProcessMouseEvent(aEvent, aGuid, aInputBlockId);
+    mAPZEventState->ProcessMouseEvent(aEvent, aGuid, aInputBlockId,
+        InputAPZContext::StartedAsyncScrollbarDrag());
   }
 }
 

@@ -1109,7 +1109,8 @@ nsBaseWidget::ProcessUntransformedAPZEvent(WidgetInputEvent* aEvent,
       MOZ_ASSERT(mouseEvent->mFlags.mHandledByAPZ);
       APZCCallbackHelper::SendSetTargetAPZCNotification(this, GetDocument(),
           *(original->AsMouseEvent()), aGuid, aInputBlockId);
-      mAPZEventState->ProcessMouseEvent(*mouseEvent, aGuid, aInputBlockId);
+      mAPZEventState->ProcessMouseEvent(*mouseEvent, aGuid, aInputBlockId,
+          InputAPZContext::StartedAsyncScrollbarDrag());
     }
   }
 

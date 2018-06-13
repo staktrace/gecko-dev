@@ -1833,11 +1833,13 @@ APZCTreeManager::SetupScrollbarDrag(MouseInput& aMouseInput,
                            ? thumbTransform._41 : thumbTransform._42);
     dragStart -= thumbStart;
 
-    // Content can't prevent scrollbar dragging with preventDefault(),
-    // so we don't need to wait for a content response. It's important
-    // to do this before calling ConfirmDragBlock() since that can
-    // potentially process and consume the block.
-    dragBlock->SetContentResponse(false);
+    // For drag blocks we've repurposed the content response to indicate
+    // whether the block starts a scrollbar drag. In this case it does,
+    // so we pass true here. This has no real effect in this case because
+    // this flag only determines if the drag block will wait for the drag
+    // metrics before processing its events, and we're going to give it the
+    // drag metrics just below so it will never need to wait anyway.
+    dragBlock->SetContentResponse(true);
 
     mInputQueue->ConfirmDragBlock(
         dragBlockId, aApzc,

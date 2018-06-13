@@ -416,15 +416,17 @@ APZEventState::ProcessWheelEvent(const WidgetWheelEvent& aEvent,
 void
 APZEventState::ProcessMouseEvent(const WidgetMouseEvent& aEvent,
                                  const ScrollableLayerGuid& aGuid,
-                                 uint64_t aInputBlockId)
+                                 uint64_t aInputBlockId,
+                                 bool aStartedAsyncScrollbarDrag)
 {
-  // If we get here and the drag block has not been confirmed by the code in
-  // nsSliderFrame, then no scrollbar reacted to the event thus APZC will
-  // ignore this drag block. We can send defaultPrevented as either true or
-  // false, it doesn't matter, because APZ won't have the scrollbar metrics
-  // anyway, and will know to drop the block.
-  bool defaultPrevented = false;
-  mContentReceivedInputBlockCallback(aGuid, aInputBlockId, defaultPrevented);
+  // We're going to cheat and stuff the |aStartedAsyncScrollbarDrag| value
+  // into the defaultPrevented flag. The defaultPrevented flag isn't useful
+  // for mouse events, so we're repurposing it to tell APZ if this event
+  // started a scrollbar drag, in which case APZ must not process the input
+  // block until it has the async drag metrics. The drag metrics may already
+  // have been sent, or they might only get sent after a repaint.
+  mContentReceivedInputBlockCallback(
+      aGuid, aInputBlockId, aStartedAsyncScrollbarDrag);
 }
 
 void

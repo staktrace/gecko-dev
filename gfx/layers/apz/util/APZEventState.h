@@ -76,7 +76,8 @@ public:
                          uint64_t aInputBlockId);
   void ProcessMouseEvent(const WidgetMouseEvent& aEvent,
                          const ScrollableLayerGuid& aGuid,
-                         uint64_t aInputBlockId);
+                         uint64_t aInputBlockId,
+                         bool aStartedAsyncScrollbarDrag);
   void ProcessAPZStateChange(ViewID aViewId,
                              APZStateChange aChange,
                              int aArg);

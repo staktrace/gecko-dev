@@ -291,6 +291,7 @@ DragBlockState::DragBlockState(const RefPtr<AsyncPanZoomController>& aTargetApzc
                                TargetConfirmationFlags aFlags,
                                const MouseInput& aInitialEvent)
   : CancelableBlockState(aTargetApzc, aFlags)
+  , mStartedAsyncScrollbarDrag(false)
   , mReceivedMouseUp(false)
 {
 }
@@ -317,6 +318,16 @@ void
 DragBlockState::SetDragMetrics(const AsyncDragMetrics& aDragMetrics)
 {
   mDragMetrics = aDragMetrics;
+}
+
+bool
+DragBlockState::SetContentResponse(bool aStartedAsyncScrollbarDrag)
+{
+  // For mouse events we've repurposed the argument (which normally indicates
+  // if content called preventDefault() on the event) to instead indicate if
+  // the event started an async scrollbar drag.
+  mStartedAsyncScrollbarDrag |= aStartedAsyncScrollbarDrag;
+  return CancelableBlockState::SetContentResponse(false);
 }
 
 void

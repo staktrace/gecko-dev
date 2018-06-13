@@ -324,10 +324,12 @@ public:
   void SetInitialThumbPos(CSSCoord aThumbPos);
   void SetDragMetrics(const AsyncDragMetrics& aDragMetrics);
 
+  bool SetContentResponse(bool aStartedAsyncScrollbarDrag) override;
   void DispatchEvent(const InputData& aEvent) const override;
 private:
   AsyncDragMetrics mDragMetrics;
   CSSCoord mInitialThumbPos;
+  bool mStartedAsyncScrollbarDrag;
   bool mReceivedMouseUp;
 };
 
