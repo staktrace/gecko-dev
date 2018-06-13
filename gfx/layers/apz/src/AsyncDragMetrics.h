@@ -9,6 +9,7 @@
 
 #include "FrameMetrics.h"
 #include "LayersTypes.h"
+#include "mozilla/FloatingPoint.h"
 #include "mozilla/Maybe.h"
 
 namespace IPC {
@@ -42,6 +43,19 @@ public:
     , mScrollbarDragOffset(aScrollbarDragOffset)
     , mDirection(Some(aDirection))
   {}
+
+  bool operator==(const AsyncDragMetrics& aOther) const
+  {
+    return mViewId == aOther.mViewId
+        && mPresShellId == aOther.mPresShellId
+        && mDragStartSequenceNumber == aOther.mDragStartSequenceNumber
+        // Allow the calculation between main-thread and APZ to be off by
+        // up to half a CSS pixel.
+        && FuzzyEqualsAdditive(mScrollbarDragOffset.value,
+                               aOther.mScrollbarDragOffset.value,
+                               0.5f)
+        && mDirection == aOther.mDirection;
+  }
 
   FrameMetrics::ViewID mViewId;
   uint32_t mPresShellId;

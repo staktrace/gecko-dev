@@ -322,12 +322,13 @@ public:
   }
 
   void SetInitialThumbPos(CSSCoord aThumbPos);
-  void SetDragMetrics(const AsyncDragMetrics& aDragMetrics);
+  bool SetDragMetrics(const AsyncDragMetrics& aDragMetrics);
 
   bool SetContentResponse(bool aStartedAsyncScrollbarDrag) override;
+  bool IsReadyForHandling() const override;
   void DispatchEvent(const InputData& aEvent) const override;
 private:
-  AsyncDragMetrics mDragMetrics;
+  Maybe<AsyncDragMetrics> mDragMetrics;
   CSSCoord mInitialThumbPos;
   bool mStartedAsyncScrollbarDrag;
   bool mReceivedMouseUp;

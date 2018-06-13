@@ -314,10 +314,15 @@ DragBlockState::SetInitialThumbPos(CSSCoord aThumbPos)
   mInitialThumbPos = aThumbPos;
 }
 
-void
+bool
 DragBlockState::SetDragMetrics(const AsyncDragMetrics& aDragMetrics)
 {
-  mDragMetrics = aDragMetrics;
+  if (mDragMetrics) {
+    MOZ_ASSERT(*mDragMetrics == aDragMetrics);
+    return false;
+  }
+  mDragMetrics = Some(aDragMetrics);
+  return true;
 }
 
 bool
@@ -330,6 +335,20 @@ DragBlockState::SetContentResponse(bool aStartedAsyncScrollbarDrag)
   return CancelableBlockState::SetContentResponse(false);
 }
 
+bool
+DragBlockState::IsReadyForHandling() const
+{
+  if (!CancelableBlockState::IsReadyForHandling()) {
+    return false;
+  }
+
+  if (mStartedAsyncScrollbarDrag && !mDragMetrics.isSome()) {
+    return false;
+  }
+
+  return true;
+}
+
 void
 DragBlockState::DispatchEvent(const InputData& aEvent) const
 {
@@ -338,7 +357,7 @@ DragBlockState::DispatchEvent(const InputData& aEvent) const
     return;
   }
 
-  GetTargetApzc()->HandleDragEvent(mouseInput, mDragMetrics, mInitialThumbPos);
+  GetTargetApzc()->HandleDragEvent(mouseInput, mDragMetrics.refOr(AsyncDragMetrics()), mInitialThumbPos);
 }
 
 bool
