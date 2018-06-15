@@ -11,6 +11,7 @@
 #include "mozilla/EventForwards.h"
 #include "mozilla/layers/APZUtils.h"
 #include "nsIDOMWindowUtils.h"
+#include "nsRefreshDriver.h"
 
 #include <functional>
 
@@ -27,6 +28,24 @@ namespace layers {
 
 typedef std::function<void(uint64_t, const nsTArray<TouchBehaviorFlags>&)>
         SetAllowedTouchBehaviorCallback;
+
+class DisplayportSetListener : public nsAPostRefreshObserver
+{
+public:
+  DisplayportSetListener(nsIWidget* aWidget,
+                         nsIPresShell* aPresShell,
+                         const uint64_t& aInputBlockId,
+                         const nsTArray<ScrollableLayerGuid>& aTargets);
+  virtual ~DisplayportSetListener();
+  bool Register();
+  void DidRefresh() override;
+
+private:
+  RefPtr<nsIWidget> mWidget;
+  RefPtr<nsIPresShell> mPresShell;
+  uint64_t mInputBlockId;
+  nsTArray<ScrollableLayerGuid> mTargets;
+};
 
 /* This class contains some helper methods that facilitate implementing the
    GeckoContentController callback interface required by the AsyncPanZoomController.
@@ -145,11 +164,12 @@ public:
      * interested to know this, because they may need to delay certain actions
      * until after the displayport comes into effect.)
      */
-    static bool SendSetTargetAPZCNotification(nsIWidget* aWidget,
-                                              nsIDocument* aDocument,
-                                              const WidgetGUIEvent& aEvent,
-                                              const ScrollableLayerGuid& aGuid,
-                                              uint64_t aInputBlockId);
+    static UniquePtr<DisplayportSetListener> SendSetTargetAPZCNotification(
+            nsIWidget* aWidget,
+            nsIDocument* aDocument,
+            const WidgetGUIEvent& aEvent,
+            const ScrollableLayerGuid& aGuid,
+            uint64_t aInputBlockId);
 
     /* Figure out the allowed touch behaviors of each touch point in |aEvent|
      * and send that information to the provided callback. */
