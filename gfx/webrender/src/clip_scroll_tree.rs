@@ -62,6 +62,12 @@ pub struct ClipChainDescriptor {
     pub clips: Vec<ClipScrollNodeIndex>,
 }
 
+pub struct ClipRenderContext<'a> {
+    pub clip_store: &'a mut ClipStore,
+    pub resource_cache: &'a mut ResourceCache,
+    pub gpu_cache: &'a mut GpuCache,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ClipChainIndex(pub usize);
 
@@ -223,9 +229,7 @@ impl ClipScrollTree {
         &mut self,
         screen_rect: &DeviceIntRect,
         device_pixel_scale: DevicePixelScale,
-        clip_store: &mut ClipStore,
-        resource_cache: &mut ResourceCache,
-        gpu_cache: &mut GpuCache,
+        render_context: &mut ClipRenderContext,
         pan: WorldPoint,
         scene_properties: &SceneProperties,
     ) -> TransformPalette {
@@ -251,9 +255,7 @@ impl ClipScrollTree {
                 &mut state,
                 &mut next_coordinate_system_id,
                 device_pixel_scale,
-                clip_store,
-                resource_cache,
-                gpu_cache,
+                render_context,
                 &mut transform_palette,
                 scene_properties,
             );
@@ -270,9 +272,7 @@ impl ClipScrollTree {
         state: &mut TransformUpdateState,
         next_coordinate_system_id: &mut CoordinateSystemId,
         device_pixel_scale: DevicePixelScale,
-        clip_store: &mut ClipStore,
-        resource_cache: &mut ResourceCache,
-        gpu_cache: &mut GpuCache,
+        render_context: &mut ClipRenderContext,
         transform_palette: &mut TransformPalette,
         scene_properties: &SceneProperties,
     ) {
@@ -289,9 +289,7 @@ impl ClipScrollTree {
                 &mut state,
                 next_coordinate_system_id,
                 device_pixel_scale,
-                clip_store,
-                resource_cache,
-                gpu_cache,
+                render_context,
                 scene_properties,
                 &mut self.clip_chains,
             );
@@ -312,9 +310,7 @@ impl ClipScrollTree {
                 &mut state,
                 next_coordinate_system_id,
                 device_pixel_scale,
-                clip_store,
-                resource_cache,
-                gpu_cache,
+                render_context,
                 transform_palette,
                 scene_properties,
             );

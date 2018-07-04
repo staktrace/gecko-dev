@@ -6,8 +6,8 @@ use api::{DevicePixelScale, ExternalScrollId, LayoutPixel, LayoutPoint, LayoutRe
 use api::{LayoutVector2D, LayoutTransform, PipelineId, PropertyBinding};
 use api::{ScrollClamping, ScrollLocation, ScrollSensitivity, StickyOffsetBounds};
 use clip::{ClipChain, ClipChainNode, ClipSourcesHandle, ClipStore, ClipWorkItem};
-use clip_scroll_tree::{ClipChainIndex, ClipScrollNodeIndex, CoordinateSystemId};
-use clip_scroll_tree::{TransformUpdateState, TransformIndex};
+use clip_scroll_tree::{ClipChainIndex, ClipRenderContext, ClipScrollNodeIndex};
+use clip_scroll_tree::{CoordinateSystemId, TransformUpdateState, TransformIndex};
 use euclid::SideOffsets2D;
 use gpu_cache::GpuCache;
 use gpu_types::{TransformData, TransformPalette};
@@ -336,9 +336,7 @@ impl ClipScrollNode {
         state: &mut TransformUpdateState,
         next_coordinate_system_id: &mut CoordinateSystemId,
         device_pixel_scale: DevicePixelScale,
-        clip_store: &mut ClipStore,
-        resource_cache: &mut ResourceCache,
-        gpu_cache: &mut GpuCache,
+        render_context: &mut ClipRenderContext,
         scene_properties: &SceneProperties,
         clip_chains: &mut Vec<ClipChain>,
     ) {
@@ -371,9 +369,9 @@ impl ClipScrollNode {
         self.update_clip_work_item(
             state,
             device_pixel_scale,
-            clip_store,
-            resource_cache,
-            gpu_cache,
+            render_context.clip_store,
+            render_context.resource_cache,
+            render_context.gpu_cache,
             clip_chains,
         );
     }
