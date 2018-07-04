@@ -10,7 +10,7 @@ use clip_scroll_node::{ClipScrollNode};
 use clip_scroll_tree::{ClipRenderContext, ClipScrollNodeIndex, ClipScrollTree};
 use display_list_flattener::{DisplayListFlattener};
 use gpu_cache::GpuCache;
-use gpu_types::{PrimitiveHeaders, TransformData, UvRectKind};
+use gpu_types::{PrimitiveHeaders, TransformData, TransformPalette, UvRectKind};
 use hit_test::{HitTester, HitTestingRun};
 use internal_types::{FastHashMap};
 use picture::PictureSurface;
@@ -294,6 +294,33 @@ impl FrameBuilder {
         }
     }
 
+    pub fn update_clip_scroll_tree(
+        &mut self,
+        clip_scroll_tree: &mut ClipScrollTree,
+        device_pixel_scale: DevicePixelScale,
+        resource_cache: Option<&mut ResourceCache>,
+        gpu_cache: Option<&mut GpuCache>,
+        pan: WorldPoint,
+        scene_properties: &SceneProperties,
+    ) -> Option<TransformPalette> {
+        let mut clip_render_context = if resource_cache.is_some() {
+            Some(ClipRenderContext {
+                clip_store: &mut self.clip_store,
+                resource_cache: resource_cache.unwrap(),
+                gpu_cache: gpu_cache.unwrap(),
+            })
+        } else {
+            None
+        };
+        clip_scroll_tree.update_tree(
+            &self.screen_rect.to_i32(),
+            device_pixel_scale,
+            &mut clip_render_context,
+            pan,
+            scene_properties,
+        )
+    }
+
     pub fn build(
         &mut self,
         resource_cache: &mut ResourceCache,
@@ -322,20 +349,14 @@ impl FrameBuilder {
         resource_cache.begin_frame(frame_id);
         gpu_cache.begin_frame();
 
-        let transform_palette = {
-            let clip_render_context = ClipRenderContext {
-                clip_store: &mut self.clip_store,
-                resource_cache,
-                gpu_cache,
-            };
-            clip_scroll_tree.update_tree(
-                &self.screen_rect.to_i32(),
-                device_pixel_scale,
-                &mut Some(clip_render_context),
-                pan,
-                scene_properties,
-            ).expect("Pass a ClipRenderContext, should get back a TransformPalette")
-        };
+        let transform_palette = self.update_clip_scroll_tree(
+            clip_scroll_tree,
+            device_pixel_scale,
+            Some(resource_cache),
+            Some(gpu_cache),
+            pan,
+            &scene_properties,
+        ).expect("Should get back a TransformPalette");
 
         self.update_scroll_bars(clip_scroll_tree, gpu_cache);
 
