@@ -336,7 +336,7 @@ impl ClipScrollNode {
         state: &mut TransformUpdateState,
         next_coordinate_system_id: &mut CoordinateSystemId,
         device_pixel_scale: DevicePixelScale,
-        render_context: &mut ClipRenderContext,
+        render_context: &mut Option<ClipRenderContext>,
         scene_properties: &SceneProperties,
         clip_chains: &mut Vec<ClipChain>,
     ) {
@@ -366,14 +366,16 @@ impl ClipScrollNode {
             _ => self.invertible = true,
         }
 
-        self.update_clip_work_item(
-            state,
-            device_pixel_scale,
-            render_context.clip_store,
-            render_context.resource_cache,
-            render_context.gpu_cache,
-            clip_chains,
-        );
+        if let &mut Some(ref mut context) = render_context {
+            self.update_clip_work_item(
+                state,
+                device_pixel_scale,
+                context.clip_store,
+                context.resource_cache,
+                context.gpu_cache,
+                clip_chains,
+            );
+        }
     }
 
     pub fn update_clip_work_item(

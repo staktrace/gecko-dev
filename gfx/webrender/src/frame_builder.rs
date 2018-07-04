@@ -323,7 +323,7 @@ impl FrameBuilder {
         gpu_cache.begin_frame();
 
         let transform_palette = {
-            let mut clip_render_context = ClipRenderContext {
+            let clip_render_context = ClipRenderContext {
                 clip_store: &mut self.clip_store,
                 resource_cache,
                 gpu_cache,
@@ -331,10 +331,10 @@ impl FrameBuilder {
             clip_scroll_tree.update_tree(
                 &self.screen_rect.to_i32(),
                 device_pixel_scale,
-                &mut clip_render_context,
+                &mut Some(clip_render_context),
                 pan,
                 scene_properties,
-            )
+            ).expect("Pass a ClipRenderContext, should get back a TransformPalette")
         };
 
         self.update_scroll_bars(clip_scroll_tree, gpu_cache);
