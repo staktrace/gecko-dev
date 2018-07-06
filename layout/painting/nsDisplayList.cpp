@@ -6321,8 +6321,18 @@ nsDisplayOpacity::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuil
     prop.effect_type = wr::WrAnimationType::Opacity;
 
 
+    nsCString src;
+    if (mFrame->PresShell()->GetDocument()) {
+      src = mFrame->PresShell()->GetDocument()->GetDocumentURI()->GetSpecOrDefault();
+    }
+    if (mFrame->GetContent() && mFrame->GetContent()->AsElement()) {
+      nsAutoString desc;
+      mFrame->GetContent()->AsElement()->Describe(desc);
+      src.Append(" | ");
+      src.Append(NS_LossyConvertUTF16toASCII(desc));
+    }
     OpAddCompositorAnimations
-      anim(CompositorAnimations(animationInfo.GetAnimations(), animationsId));
+      anim(CompositorAnimations(animationInfo.GetAnimations(), animationsId), src);
     aManager->WrBridge()->AddWebRenderParentCommand(anim);
     aManager->AddActiveCompositorAnimationId(animationsId);
   } else if (animationsId) {
@@ -8238,8 +8248,18 @@ nsDisplayTransform::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBu
     prop.id = animationsId;
     prop.effect_type = wr::WrAnimationType::Transform;
 
+    nsCString src;
+    if (mFrame->PresShell()->GetDocument()) {
+      src = mFrame->PresShell()->GetDocument()->GetDocumentURI()->GetSpecOrDefault();
+    }
+    if (mFrame->GetContent() && mFrame->GetContent()->AsElement()) {
+      nsAutoString desc;
+      mFrame->GetContent()->AsElement()->Describe(desc);
+      src.Append(" | ");
+      src.Append(NS_LossyConvertUTF16toASCII(desc));
+    }
     OpAddCompositorAnimations
-      anim(CompositorAnimations(animationInfo.GetAnimations(), animationsId));
+      anim(CompositorAnimations(animationInfo.GetAnimations(), animationsId), src);
     aManager->WrBridge()->AddWebRenderParentCommand(anim);
     aManager->AddActiveCompositorAnimationId(animationsId);
   } else if (animationsId) {

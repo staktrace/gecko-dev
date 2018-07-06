@@ -978,6 +978,7 @@ WebRenderBridgeParent::ProcessWebRenderParentCommands(const InfallibleTArray<Web
         CompositorAnimations data(std::move(op.data()));
         if (data.animations().Length()) {
           mAnimStorage->SetAnimations(data.id(), data.animations());
+          mAnimStorage->SetDebugInfo(data.id(), op.debuginfo());
           mActiveAnimations.insert(data.id());
         }
         break;

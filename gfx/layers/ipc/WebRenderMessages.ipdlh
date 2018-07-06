@@ -60,6 +60,7 @@ struct OpPushExternalImageForTexture {
 
 struct OpAddCompositorAnimations {
   CompositorAnimations data;
+  nsCString debuginfo;
 };
 
 struct OpAddPipelineIdForCompositable {

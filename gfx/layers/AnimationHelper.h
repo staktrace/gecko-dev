@@ -164,6 +164,9 @@ public:
    */
   void SetAnimations(uint64_t aId, const AnimationArray& aAnimations);
 
+  void SetDebugInfo(uint64_t aId, const nsCString& aDebugInfo);
+  nsCString GetDebugInfo(uint64_t aId);
+
   /**
    * Return the animations if a given id can map to its animations
    */
@@ -194,6 +197,7 @@ private:
 private:
   AnimatedValueTable mAnimatedValues;
   AnimationsTable mAnimations;
+  nsDataHashtable<nsUint64HashKey, nsCString> mDebugInfo;
 };
 
 /**

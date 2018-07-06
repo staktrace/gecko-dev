@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "AnimationHelper.h"
+#include "gfxPrefs.h"
 #include "mozilla/ComputedTimingFunction.h" // for ComputedTimingFunction
 #include "mozilla/dom/AnimationEffectBinding.h" // for dom::FillMode
 #include "mozilla/dom/KeyframeEffectBinding.h" // for dom::IterationComposite
@@ -27,6 +28,7 @@ CompositorAnimationStorage::Clear()
 
   mAnimatedValues.Clear();
   mAnimations.Clear();
+  mDebugInfo.Clear();
 }
 
 void
@@ -36,6 +38,7 @@ CompositorAnimationStorage::ClearById(const uint64_t& aId)
 
   mAnimatedValues.Remove(aId);
   mAnimations.Remove(aId);
+  mDebugInfo.Remove(aId);
 }
 
 AnimatedValue*
@@ -145,6 +148,17 @@ CompositorAnimationStorage::SetAnimations(uint64_t aId, const AnimationArray& aV
   mAnimations.Put(aId, value);
 }
 
+void
+CompositorAnimationStorage::SetDebugInfo(uint64_t aId, const nsCString& aInfo)
+{
+  mDebugInfo.Put(aId, aInfo);
+}
+
+nsCString
+CompositorAnimationStorage::GetDebugInfo(uint64_t aId)
+{
+  return mDebugInfo.Get(aId);
+}
 
 AnimationHelper::SampleResult
 AnimationHelper::SampleAnimationForEachNode(
@@ -637,6 +651,10 @@ AnimationHelper::SampleAnimations(CompositorAnimationStorage* aStorage,
       continue;
     }
 
+    if (gfxPrefs::WebRenderDebugStuckAnimations()) {
+      printf_stderr("Active animation on [%s]\n",
+          aStorage->GetDebugInfo(iter.Key()).get());
+    }
     isAnimating = true;
     RefPtr<RawServoAnimationValue> animationValue;
     InfallibleTArray<AnimData> animationData;
