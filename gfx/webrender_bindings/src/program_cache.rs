@@ -188,6 +188,7 @@ impl WrProgramBinaryDiskCache {
                 for entry in read_dir(cache_path).unwrap() {
                     let entry = entry.unwrap();
                     let path = entry.path();
+                    eprintln!("Loading {:?} from disk", path);
 
                     info!("loading shader file");
 

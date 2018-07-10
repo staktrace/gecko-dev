@@ -56,6 +56,7 @@ public:
 
   virtual void Run(RenderThread& aRenderThread, WindowId aWindowId) override
   {
+    AUTO_PROFILER_TRACING("WebRender", "NewRenderer");
     layers::AutoCompleteTask complete(mTask);
 
     UniquePtr<RenderCompositor> compositor = RenderCompositor::Create(std::move(mCompositorWidget));
@@ -126,6 +127,7 @@ public:
 
   void Run(RenderThread& aRenderThread, WindowId aWindowId) override
   {
+    AUTO_PROFILER_TRACING("WebRender", "AsyncSetup");
     if (gfx::gfxVars::UseWebRenderProgramBinary()) {
       wr_renderer_update_program_cache(mWrRenderer, aRenderThread.ProgramCache()->Raw());
     }

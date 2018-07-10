@@ -803,6 +803,12 @@ impl Device {
     }
 
     pub fn update_program_cache(&mut self, cached_programs: Rc<ProgramCache>) {
+        let oldcount = if let Some(ref cached_programs) = self.cached_programs {
+            cached_programs.binaries.borrow().len()
+        } else {
+            0
+        };
+        eprintln!("Replacing {} old shaders with {} new ones", oldcount, cached_programs.binaries.borrow().len());
         self.cached_programs = Some(cached_programs);
     }
 
@@ -1454,6 +1460,7 @@ impl Device {
                         program_cache_handler.notify_program_binary_failed(&binary);
                     }
                 } else {
+                    eprintln!("Shader cache hit for {}", base_filename);
                     loaded = true;
                 }
             }

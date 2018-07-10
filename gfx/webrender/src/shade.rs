@@ -134,6 +134,7 @@ impl LazilyCompiledShader {
 
     fn get(&mut self, device: &mut Device) -> Result<&Program, ShaderError> {
         if self.program.is_none() {
+            eprintln!("Binding {} to program", self.name);
             let program = match self.kind {
                 ShaderKind::Primitive | ShaderKind::Brush | ShaderKind::Text => {
                     create_prim_shader(self.name,
@@ -171,6 +172,7 @@ impl LazilyCompiledShader {
 
     fn deinit(self, device: &mut Device) {
         if let Some(program) = self.program {
+            eprintln!("Deiniting {}", self.name);
             device.delete_program(program);
         }
     }
@@ -712,6 +714,7 @@ impl Shaders {
     ) {
         match group {
             "firefox:windows" => {
+                eprintln!("Eager-binding some programs");
                 self.cs_clip_rectangle.bind_program(device, renderer_errors);
                 self.cs_blur_a8.bind_program(device, renderer_errors);
                 self.cs_border_segment.bind_program(device, renderer_errors);
@@ -720,6 +723,7 @@ impl Shaders {
                 self.brush_solid.bind_program(device, renderer_errors);
                 self.brush_blend.bind_program(device, renderer_errors);
                 self.ps_text_run.bind_program(device, renderer_errors);
+                eprintln!("Done eager-binding programs");
             }
             _ => (),
         };
