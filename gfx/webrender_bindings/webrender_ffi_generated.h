@@ -1492,6 +1492,10 @@ void wr_renderer_set_external_image_handler(Renderer *aRenderer,
 WR_FUNC;
 
 WR_INLINE
+void wr_renderer_bind_shaders(Renderer *aRenderer)
+WR_FUNC;
+
+WR_INLINE
 void wr_renderer_update(Renderer *aRenderer)
 WR_FUNC;
 

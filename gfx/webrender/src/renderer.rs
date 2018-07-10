@@ -2207,6 +2207,13 @@ impl Renderer {
         (cpu_profiles, gpu_profiles)
     }
 
+    pub fn bind_shaders(&mut self, group: &'static str) {
+        self.shaders.bind_programs(
+            group,
+            &mut self.device,
+            &mut self.renderer_errors);
+    }
+
     /// Returns `true` if the active rendered documents (that need depth buffer)
     /// intersect on the main framebuffer, in which case we don't clear
     /// the whole depth and instead clear each document area separately.

@@ -34,7 +34,8 @@ public:
               RefPtr<widget::CompositorWidget>&& aWidget,
               layers::SynchronousTask* aTask,
               LayoutDeviceIntSize aSize,
-              layers::SyncHandle* aHandle)
+              layers::SyncHandle* aHandle,
+              wr::Renderer** aWrRenderer)
     : mDocHandle(aDocHandle)
     , mMaxTextureSize(aMaxTextureSize)
     , mUseANGLE(aUseANGLE)
@@ -43,6 +44,7 @@ public:
     , mTask(aTask)
     , mSize(aSize)
     , mSyncHandle(aHandle)
+    , mWrRenderer(aWrRenderer)
   {
     MOZ_COUNT_CTOR(NewRenderer);
   }
@@ -73,6 +75,7 @@ public:
       return;
     }
     MOZ_ASSERT(wrRenderer);
+    *mWrRenderer = wrRenderer;
 
     RefPtr<RenderThread> thread = &aRenderThread;
     auto renderer = MakeUnique<RendererOGL>(std::move(thread),
@@ -83,9 +86,6 @@ public:
     if (wrRenderer && renderer) {
       wr::WrExternalImageHandler handler = renderer->GetExternalImageHandler();
       wr_renderer_set_external_image_handler(wrRenderer, &handler);
-      if (gfx::gfxVars::UseWebRenderProgramBinary()) {
-        wr_renderer_update_program_cache(wrRenderer, aRenderThread.ProgramCache()->Raw());
-      }
     }
 
     if (renderer) {
@@ -107,6 +107,33 @@ private:
   layers::SynchronousTask* mTask;
   LayoutDeviceIntSize mSize;
   layers::SyncHandle* mSyncHandle;
+  wr::Renderer** mWrRenderer;
+};
+
+class RendererAsyncSetup : public RendererEvent
+{
+public:
+  explicit RendererAsyncSetup(wr::Renderer* aWrRenderer)
+    : mWrRenderer(aWrRenderer)
+  {
+    MOZ_COUNT_CTOR(RendererAsyncSetup);
+  }
+
+  ~RendererAsyncSetup()
+  {
+    MOZ_COUNT_DTOR(RendererAsyncSetup);
+  }
+
+  void Run(RenderThread& aRenderThread, WindowId aWindowId) override
+  {
+    if (gfx::gfxVars::UseWebRenderProgramBinary()) {
+      wr_renderer_update_program_cache(mWrRenderer, aRenderThread.ProgramCache()->Raw());
+    }
+    wr_renderer_bind_shaders(mWrRenderer);
+  }
+
+private:
+  wr::Renderer* mWrRenderer;
 };
 
 class RemoveRenderer : public RendererEvent
@@ -272,6 +299,7 @@ WebRenderAPI::Create(layers::CompositorBridgeParent* aBridge,
   uint32_t maxTextureSize = 0;
   bool useANGLE = false;
   layers::SyncHandle syncHandle = 0;
+  wr::Renderer* wrRenderer = nullptr;
 
   // Dispatch a synchronous task because the DocumentHandle object needs to be created
   // on the render thread. If need be we could delay waiting on this task until
@@ -279,7 +307,7 @@ WebRenderAPI::Create(layers::CompositorBridgeParent* aBridge,
   layers::SynchronousTask task("Create Renderer");
   auto event = MakeUnique<NewRenderer>(&docHandle, aBridge, &maxTextureSize, &useANGLE,
                                        std::move(aWidget), &task, aSize,
-                                       &syncHandle);
+                                       &syncHandle, &wrRenderer);
   RenderThread::Get()->RunEvent(aWindowId, std::move(event));
 
   task.Wait();
@@ -287,6 +315,10 @@ WebRenderAPI::Create(layers::CompositorBridgeParent* aBridge,
   if (!docHandle) {
     return nullptr;
   }
+
+  // Render-thread setup that we don't need to block on
+  auto asyncSetup = MakeUnique<RendererAsyncSetup>(wrRenderer);
+  RenderThread::Get()->RunEvent(aWindowId, std::move(asyncSetup));
 
   return RefPtr<WebRenderAPI>(new WebRenderAPI(docHandle, aWindowId, maxTextureSize, useANGLE, syncHandle)).forget();
 }

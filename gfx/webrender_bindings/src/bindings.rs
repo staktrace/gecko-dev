@@ -560,6 +560,11 @@ pub extern "C" fn wr_renderer_set_external_image_handler(renderer: &mut Renderer
 }
 
 #[no_mangle]
+pub extern "C" fn wr_renderer_bind_shaders(renderer: &mut Renderer) {
+    renderer.bind_shaders("firefox:windows");
+}
+
+#[no_mangle]
 pub extern "C" fn wr_renderer_update(renderer: &mut Renderer) {
     renderer.update();
 }

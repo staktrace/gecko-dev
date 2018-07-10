@@ -105,21 +105,31 @@ impl LazilyCompiledShader {
         Ok(shader)
     }
 
+    pub fn bind_program(
+        &mut self,
+        device: &mut Device,
+        renderer_errors: &mut Vec<RendererError>,
+    ) -> Option<&Program> {
+        let program = match self.get(device) {
+            Ok(program) => program,
+            Err(e) => {
+                renderer_errors.push(RendererError::from(e));
+                return None;
+            }
+        };
+        device.bind_program(program);
+        Some(program)
+    }
+
     pub fn bind(
         &mut self,
         device: &mut Device,
         projection: &Transform3D<f32>,
         renderer_errors: &mut Vec<RendererError>,
     ) {
-        let program = match self.get(device) {
-            Ok(program) => program,
-            Err(e) => {
-                renderer_errors.push(RendererError::from(e));
-                return;
-            }
-        };
-        device.bind_program(program);
-        device.set_uniforms(program, projection);
+        self.bind_program(device, renderer_errors).map(|program| {
+            device.set_uniforms(program, projection);
+        });
     }
 
     fn get(&mut self, device: &mut Device) -> Result<&Program, ShaderError> {
@@ -250,6 +260,18 @@ impl BrushShader {
         }
     }
 
+    fn bind_program(
+        &mut self,
+        device: &mut Device,
+        renderer_errors: &mut Vec<RendererError>,
+    ) {
+        self.opaque.bind_program(device, renderer_errors);
+        self.alpha.bind_program(device, renderer_errors);
+        if let Some(dual_source) = self.dual_source.as_mut() {
+            dual_source.bind_program(device, renderer_errors);
+        }
+    }
+
     fn deinit(self, device: &mut Device) {
         self.opaque.deinit(device);
         self.alpha.deinit(device);
@@ -305,6 +327,15 @@ impl TextShader {
             GlyphFormat::TransformedAlpha |
             GlyphFormat::TransformedSubpixel => &mut self.glyph_transform,
         }
+    }
+
+    fn bind_program(
+        &mut self,
+        device: &mut Device,
+        renderer_errors: &mut Vec<RendererError>,
+    ) {
+        self.simple.bind_program(device, renderer_errors);
+        self.glyph_transform.bind_program(device, renderer_errors);
     }
 
     fn deinit(self, device: &mut Device) {
@@ -671,6 +702,27 @@ impl Shaders {
     ) -> usize {
         ((buffer_kind as usize) * YUV_FORMATS.len() + (format as usize)) * YUV_COLOR_SPACES.len() +
             (color_space as usize)
+    }
+
+    pub fn bind_programs(
+        &mut self,
+        group: &'static str,
+        device: &mut Device,
+        renderer_errors: &mut Vec<RendererError>,
+    ) {
+        match group {
+            "firefox:windows" => {
+                self.cs_clip_rectangle.bind_program(device, renderer_errors);
+                self.cs_blur_a8.bind_program(device, renderer_errors);
+                self.cs_border_segment.bind_program(device, renderer_errors);
+                self.cs_clip_box_shadow.bind_program(device, renderer_errors);
+                //self.brush_image.bind_program(device, renderer_errors);
+                self.brush_solid.bind_program(device, renderer_errors);
+                self.brush_blend.bind_program(device, renderer_errors);
+                self.ps_text_run.bind_program(device, renderer_errors);
+            }
+            _ => (),
+        };
     }
 
     pub fn get(&mut self, key: &BatchKey) -> &mut LazilyCompiledShader {
