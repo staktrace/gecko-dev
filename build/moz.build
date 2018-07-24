@@ -128,3 +128,5 @@ if CONFIG['MOZ_VALGRIND']:
         'valgrind/i386-pc-linux-gnu.sup',
         'valgrind/x86_64-pc-linux-gnu.sup',
     ]
+
+DIRS += ["mozsearch-rust"]

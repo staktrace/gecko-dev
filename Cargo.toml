@@ -5,6 +5,7 @@
 # and do not need to be listed here. Their external dependencies are vendored
 # into `third_party/rust` by `mach vendor rust`.
 members = [
+  "build/mozsearch-rust",
   "js/src",
   "js/rust",
   "js/src/frontend/binsource", # Code generator.
