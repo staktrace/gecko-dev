@@ -152,9 +152,11 @@ public:
                                 TransactionId aTransactionId,
                                 const TimeStamp& aRefreshStartTime,
                                 const TimeStamp& aTxnStartTime,
-                                const TimeStamp& aFwdTime);
+                                const TimeStamp& aFwdTime,
+                                const LayersObserverEpoch& aChildObserverEpoch);
   TransactionId LastPendingTransactionId();
-  TransactionId FlushTransactionIdsForEpoch(const wr::Epoch& aEpoch, const TimeStamp& aEndTime);
+  std::pair<TransactionId, Maybe<LayersObserverEpoch>> FlushTransactionIdsForEpoch(
+          const wr::Epoch& aEpoch, const TimeStamp& aEndTime);
 
   TextureFactoryIdentifier GetTextureFactoryIdentifier();
 
@@ -228,7 +230,7 @@ private:
                                       wr::TransactionBuilder& aTxn);
 
   void ClearResources();
-  bool ShouldParentObserveEpoch();
+  bool ShouldParentObserveEpoch(const LayersObserverEpoch& aChildEpoch);
   mozilla::ipc::IPCResult HandleShutdown();
 
   // Returns true if there is any animation (including animations in delay
@@ -258,18 +260,21 @@ private:
                          TransactionId aId,
                          const TimeStamp& aRefreshStartTime,
                          const TimeStamp& aTxnStartTime,
-                         const TimeStamp& aFwdTime)
+                         const TimeStamp& aFwdTime,
+                         const LayersObserverEpoch& aChildObserverEpoch)
       : mEpoch(aEpoch)
       , mId(aId)
       , mRefreshStartTime(aRefreshStartTime)
       , mTxnStartTime(aTxnStartTime)
       , mFwdTime(aFwdTime)
+      , mChildObserverEpoch(aChildObserverEpoch)
     {}
     wr::Epoch mEpoch;
     TransactionId mId;
     TimeStamp mRefreshStartTime;
     TimeStamp mTxnStartTime;
     TimeStamp mFwdTime;
+    LayersObserverEpoch mChildObserverEpoch;
   };
 
   struct CompositorAnimationIdsForEpoch {

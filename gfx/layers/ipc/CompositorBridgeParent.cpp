@@ -2165,8 +2165,9 @@ CompositorBridgeParent::NotifyPipelineRendered(const wr::PipelineId& aPipelineId
     mWrBridge->RemoveEpochDataPriorTo(aEpoch);
 
     if (!mPaused) {
-      TransactionId transactionId = mWrBridge->FlushTransactionIdsForEpoch(aEpoch, aCompositeEnd);
-      Unused << SendDidComposite(LayersId{0}, transactionId, aCompositeStart, aCompositeEnd);
+      auto idEpochPair = mWrBridge->FlushTransactionIdsForEpoch(aEpoch, aCompositeEnd);
+      Unused << SendDidComposite(LayersId{0}, idEpochPair.first, aCompositeStart, aCompositeEnd);
+      // We don't send any ObserverLayersUpdate for the root window
 
       nsTArray<ImageCompositeNotificationInfo> notifications;
       mWrBridge->ExtractImageCompositeNotifications(&notifications);
@@ -2187,8 +2188,11 @@ CompositorBridgeParent::NotifyPipelineRendered(const wr::PipelineId& aPipelineId
 
       if (!mPaused) {
         CrossProcessCompositorBridgeParent* cpcp = lts->mCrossProcessParent;
-        TransactionId transactionId = lts->mWrBridge->FlushTransactionIdsForEpoch(aEpoch, aCompositeEnd);
-        Unused << cpcp->SendDidComposite(aLayersId, transactionId, aCompositeStart, aCompositeEnd);
+        auto idEpochPair = lts->mWrBridge->FlushTransactionIdsForEpoch(aEpoch, aCompositeEnd);
+        Unused << cpcp->SendDidComposite(aLayersId, idEpochPair.first, aCompositeStart, aCompositeEnd);
+        if (idEpochPair.second) {
+          Unused << SendObserveLayersUpdate(aLayersId, idEpochPair.second.ref(), true);
+        }
       }
     }
   });

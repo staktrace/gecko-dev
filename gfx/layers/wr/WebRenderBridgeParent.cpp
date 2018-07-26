@@ -817,7 +817,7 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
     // build is done, so we don't need to do it here.
   }
 
-  HoldPendingTransactionId(wrEpoch, aTransactionId, aRefreshStartTime, aTxnStartTime, aFwdTime);
+  HoldPendingTransactionId(wrEpoch, aTransactionId, aRefreshStartTime, aTxnStartTime, aFwdTime, mChildLayersObserverEpoch);
 
   if (mIdNamespace != aIdNamespace) {
     // Pretend we composited since someone is wating for this event,
@@ -826,10 +826,6 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
       TimeStamp now = TimeStamp::Now();
       cbp->NotifyPipelineRendered(mPipelineId, wrEpoch, now, now);
     }
-  }
-
-  if (ShouldParentObserveEpoch()) {
-    mCompositorBridge->ObserveLayersUpdate(GetLayersId(), mChildLayersObserverEpoch, true);
   }
 
   wr::IpcResourceUpdateQueue::ReleaseShmems(this, aSmallShmems);
@@ -898,7 +894,7 @@ WebRenderBridgeParent::RecvEmptyTransaction(const FocusTarget& aFocusTarget,
     sendDidComposite = false;
   }
 
-  HoldPendingTransactionId(mWrEpoch, aTransactionId, aRefreshStartTime, aTxnStartTime, aFwdTime);
+  HoldPendingTransactionId(mWrEpoch, aTransactionId, aRefreshStartTime, aTxnStartTime, aFwdTime, mChildLayersObserverEpoch);
 
   if (scheduleComposite) {
     ScheduleGenerateFrame();
@@ -910,10 +906,6 @@ WebRenderBridgeParent::RecvEmptyTransaction(const FocusTarget& aFocusTarget,
       TimeStamp now = TimeStamp::Now();
       cbp->NotifyPipelineRendered(mPipelineId, mWrEpoch, now, now);
     }
-  }
-
-  if (ShouldParentObserveEpoch()) {
-    mCompositorBridge->ObserveLayersUpdate(GetLayersId(), mChildLayersObserverEpoch, true);
   }
 
   return IPC_OK();
@@ -1568,14 +1560,16 @@ WebRenderBridgeParent::HoldPendingTransactionId(const wr::Epoch& aWrEpoch,
                                                 TransactionId aTransactionId,
                                                 const TimeStamp& aRefreshStartTime,
                                                 const TimeStamp& aTxnStartTime,
-                                                const TimeStamp& aFwdTime)
+                                                const TimeStamp& aFwdTime,
+                                                const LayersObserverEpoch& aChildObserverEpoch)
 {
   MOZ_ASSERT(aTransactionId > LastPendingTransactionId());
   mPendingTransactionIds.push(PendingTransactionId(aWrEpoch,
                                                    aTransactionId,
                                                    aRefreshStartTime,
                                                    aTxnStartTime,
-                                                   aFwdTime));
+                                                   aFwdTime,
+                                                   aChildObserverEpoch));
 }
 
 TransactionId
@@ -1588,10 +1582,11 @@ WebRenderBridgeParent::LastPendingTransactionId()
   return id;
 }
 
-TransactionId
+std::pair<TransactionId, Maybe<LayersObserverEpoch>>
 WebRenderBridgeParent::FlushTransactionIdsForEpoch(const wr::Epoch& aEpoch, const TimeStamp& aEndTime)
 {
   TransactionId id{0};
+  Maybe<LayersObserverEpoch> observerEpoch;
   while (!mPendingTransactionIds.empty()) {
     PendingTransactionId& txn = mPendingTransactionIds.front();
     if (aEpoch.mHandle < txn.mEpoch.mHandle) {
@@ -1615,10 +1610,14 @@ WebRenderBridgeParent::FlushTransactionIdsForEpoch(const wr::Epoch& aEpoch, cons
       printf_stderr("From forwarding transaction to end of generate frame latencyMs %d this %p\n", latencyMs, this);
     }
 #endif
+    if (ShouldParentObserveEpoch(txn.mChildObserverEpoch)) {
+      observerEpoch = Some(txn.mChildObserverEpoch);
+    }
+
     id = txn.mId;
     mPendingTransactionIds.pop();
   }
-  return id;
+  return std::make_pair(id, observerEpoch);
 }
 
 LayersId
@@ -1750,13 +1749,13 @@ WebRenderBridgeParent::ClearResources()
 }
 
 bool
-WebRenderBridgeParent::ShouldParentObserveEpoch()
+WebRenderBridgeParent::ShouldParentObserveEpoch(const LayersObserverEpoch& aChildEpoch)
 {
-  if (mParentLayersObserverEpoch == mChildLayersObserverEpoch) {
+  if (mParentLayersObserverEpoch == aChildEpoch) {
     return false;
   }
 
-  mParentLayersObserverEpoch = mChildLayersObserverEpoch;
+  mParentLayersObserverEpoch = aChildEpoch;
   return true;
 }
 
