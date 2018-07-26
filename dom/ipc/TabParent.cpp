@@ -3073,6 +3073,8 @@ TabParent::LayerTreeUpdate(const LayersObserverEpoch& aEpoch, bool aActive)
     NS_WARNING("Could not locate target for layer tree message.");
     return;
   }
+  printf_stderr("TabParent(%" PRIx64 ")::LayerTreeUpdate(%" PRIu64 ", %d)\n",
+          GetRenderFrame() ? GetRenderFrame()->GetLayersId().mId : 0, aEpoch.mId, aActive);
 
   mHasLayers = aActive;
 

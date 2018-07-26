@@ -479,6 +479,7 @@ impl<'a> DisplayListFlattener<'a> {
             },
         };
 
+        eprintln!("Flattening sub-pipeline {:?}", iframe_pipeline_id);
         //TODO: use or assert on `clip_and_scroll_ids.clip_node_id` ?
         let clip_chain_index = self.add_clip_node(
             info.clip_id,

@@ -805,6 +805,9 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
       LayoutDeviceIntSize widgetSize = mWidget->GetClientSize();
       LayoutDeviceIntRect docRect(LayoutDeviceIntPoint(), widgetSize);
       txn.SetWindowParameters(widgetSize, docRect);
+    } else {
+      printf_stderr("WebRenderBridgeParent got tab(%" PRIx64 ") (pipeline=%u,%u) display list with child epoch %" PRIu64 "\n",
+              GetLayersId().mId, mPipelineId.mNamespace, mPipelineId.mHandle, mChildLayersObserverEpoch.mId);
     }
     gfx::Color clearColor(0.f, 0.f, 0.f, 0.f);
     txn.SetDisplayList(clearColor, wrEpoch, LayerSize(aSize.width, aSize.height),

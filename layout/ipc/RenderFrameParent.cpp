@@ -386,6 +386,9 @@ nsDisplayRemote::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuild
     mFrame->GetContentRectRelativeToSelf(), mFrame->PresContext()->AppUnitsPerDevPixel());
   rect += mOffset;
 
+  LayersId id = GetRemoteLayersId();
+  printf_stderr("nsDisplayRemote creating iframe for layersId=%" PRIx64 " (pipeline %u,%u)\n",
+          id.mId, mozilla::wr::AsPipelineId(id).mNamespace, mozilla::wr::AsPipelineId(id).mHandle);
   aBuilder.PushIFrame(mozilla::wr::ToRoundedLayoutRect(rect),
       !BackfaceIsHidden(),
       mozilla::wr::AsPipelineId(GetRemoteLayersId()),

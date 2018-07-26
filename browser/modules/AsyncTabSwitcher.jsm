@@ -128,7 +128,7 @@ class AsyncTabSwitcher {
     // of tab switch spinners.
     this._loadTimerClearedBy = "none",
 
-    this._useDumpForLogging = false;
+    this._useDumpForLogging = true;
     this._logInit = false;
 
     this.window.addEventListener("MozAfterPaint", this);

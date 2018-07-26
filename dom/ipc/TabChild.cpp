@@ -2598,6 +2598,8 @@ TabChild::RecvRenderLayers(const bool& aEnabled, const bool& aForceRepaint, cons
   if (mLayersObserverEpoch >= aEpoch) {
     return IPC_OK();
   }
+  printf_stderr("TabChild(%" PRIx64 ")::RecvRenderLayers(%d, %d, %" PRIu64 ")\n",
+          GetLayersId().mId, aEnabled, aForceRepaint, aEpoch.mId);
   mLayersObserverEpoch = aEpoch;
 
   auto clearPaintWhileInterruptingJS = MakeScopeExit([&] {

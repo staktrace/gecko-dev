@@ -147,7 +147,10 @@ impl SceneBuilder {
             } => {
                 let scenebuild_start_time = precise_time_ns();
                 let built_scene = scene.map(|request|{
-                    build_scene(&self.config, request)
+                    eprintln!("Starting scene build...");
+                    let b = build_scene(&self.config, request);
+                    eprintln!("Done scene build\n");
+                    b
                 });
 
                 let rasterized_blobs = blob_rasterizer.as_mut().map_or(
