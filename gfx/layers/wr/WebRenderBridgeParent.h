@@ -170,8 +170,7 @@ public:
     return mIdNamespace;
   }
 
-  void FlushRendering();
-  void FlushRenderingAsync();
+  void FlushRendering(bool aWaitForPresent = true);
 
   /**
    * Schedule generating WebRender frame definitely at next composite timing.
