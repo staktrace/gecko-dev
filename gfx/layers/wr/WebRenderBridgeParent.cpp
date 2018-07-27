@@ -35,8 +35,6 @@
 #include "mozilla/webrender/RenderThread.h"
 #include "mozilla/widget/CompositorWidget.h"
 
-mozilla::TimeStamp gClock;
-
 bool is_in_main_thread()
 {
   return NS_IsMainThread();
@@ -774,9 +772,6 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
   AutoWebRenderBridgeParentAsyncMessageSender autoAsyncMessageSender(this, &aToDestroy);
 
   wr::Epoch wrEpoch = GetNextWrEpoch();
-  if (gClock.IsNull()) gClock = TimeStamp::Now();
-  if (mWidget) printf_stderr("%f Got DL at epoch %u\n", (TimeStamp::Now() - gClock).ToMilliseconds(), wrEpoch.mHandle);
-  else printf_stderr("%f (content DL)\n", (TimeStamp::Now() - gClock).ToMilliseconds());
 
   mAsyncImageManager->SetCompositionTime(TimeStamp::Now());
 
@@ -904,7 +899,6 @@ WebRenderBridgeParent::RecvEmptyTransaction(const FocusTarget& aFocusTarget,
   HoldPendingTransactionId(WrEpoch(), aTransactionId, aRefreshStartTime, aTxnStartTime, aFwdTime);
 
   if (scheduleComposite) {
-    printf_stderr("ScheduleComposite for EmptyTransaction\n");
     ScheduleGenerateFrame();
   } else if (sendDidComposite) {
     TimeStamp now = TimeStamp::Now();
@@ -1029,7 +1023,6 @@ WebRenderBridgeParent::FlushSceneBuilds()
   // shouldn't be calling this function all that much in production so this
   // is probably fine. If it becomes an issue we can add more state tracking
   // machinery to optimize it away.
-  printf_stderr("ScheduleComposite for FlushSceneBuilds\n");
   ScheduleGenerateFrame();
 }
 
@@ -1038,7 +1031,6 @@ WebRenderBridgeParent::FlushFrameGeneration()
 {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
   MOZ_ASSERT(IsRootWebRenderBridgeParent()); // This function is only useful on the root WRBP
-  printf_stderr("Flushing frame generation\n");
 
   // This forces a new GenerateFrame transaction to be sent to the render
   // backend thread, if one is pending. This doesn't block on any other threads.
@@ -1244,7 +1236,6 @@ WebRenderBridgeParent::RecvClearCachedResources()
   txn.ClearDisplayList(GetNextWrEpoch(), mPipelineId);
   mApi->SendTransaction(txn);
   // Schedule generate frame to clean up Pipeline
-  printf_stderr("ScheduleComposite for RecvClearCachedResources\n");
   ScheduleGenerateFrame();
   // Remove animations.
   for (const auto& id : mActiveAnimations) {
@@ -1304,7 +1295,6 @@ WebRenderBridgeParent::RecvScheduleComposite()
   if (mDestroyed) {
     return IPC_OK();
   }
-  printf_stderr("RecvScheduleComposite %d\n", mWidget != nullptr);
   ScheduleGenerateFrame();
   return IPC_OK();
 }
@@ -1576,7 +1566,6 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
   nsTArray<wr::WrTransformProperty> transformArray;
 
   if (SampleAnimations(opacityArray, transformArray)) {
-    printf_stderr("ScheduleComposite for OMTA\n");
     ScheduleGenerateFrame();
   }
   // We do this even if the arrays are empty, because it will clear out any
@@ -1592,8 +1581,6 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
   mApi->SetFrameStartTime(startTime);
 #endif
 
-  if (gClock.IsNull()) gClock = TimeStamp::Now();
-  printf_stderr("%f CompositeToTarget\n", (TimeStamp::Now() - gClock).ToMilliseconds());
   txn.GenerateFrame();
 
   mApi->SendTransaction(txn);
@@ -1689,8 +1676,6 @@ WebRenderBridgeParent::FlushRendering(bool aWaitForPresent)
     return;
   }
 
-  TimeStamp now = TimeStamp::Now();
-  printf_stderr("FlushRendering\n");
   // This gets called during e.g. window resizes, so we need to flush the
   // scene (which has the display list at the new window size).
   FlushSceneBuilds();
@@ -1698,7 +1683,6 @@ WebRenderBridgeParent::FlushRendering(bool aWaitForPresent)
   if (aWaitForPresent) {
     FlushFramePresentation();
   }
-  printf_stderr("/FlushRendering %f\n", (TimeStamp::Now() - now).ToMilliseconds());
 }
 
 void
@@ -1745,7 +1729,6 @@ WebRenderBridgeParent::ClearResources()
   mReceivedDisplayList = false;
 
   // Schedule generate frame to clean up Pipeline
-  printf_stderr("ScheduleComposite for ClearResources\n");
   ScheduleGenerateFrame();
   // WrFontKeys and WrImageKeys are deleted during WebRenderAPI destruction.
   for (const auto& entry : mTextureHosts) {

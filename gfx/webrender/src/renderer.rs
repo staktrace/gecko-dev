@@ -1871,7 +1871,6 @@ impl Renderer {
             match msg {
                 ResultMsg::PublishPipelineInfo(mut pipeline_info) => {
                     for (pipeline_id, epoch) in pipeline_info.epochs {
-                        eprintln!("Accepting {:?} => {:?}", pipeline_id, epoch);
                         self.pipeline_info.epochs.insert(pipeline_id, epoch);
                     }
                     self.pipeline_info.removed_pipelines.extend(pipeline_info.removed_pipelines.drain(..));
@@ -1882,7 +1881,6 @@ impl Renderer {
                     texture_update_list,
                     profile_counters,
                 ) => {
-                    eprintln!("Accepting new document");
                     if doc.is_new_scene {
                         #[cfg(feature = "debug_renderer")]
                         self.new_scene_indicator.changed();

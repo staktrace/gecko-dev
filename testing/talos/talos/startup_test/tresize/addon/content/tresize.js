@@ -7,10 +7,10 @@
  */
 
 var dataSet = [];
-var windowSize = 625;
+var windowSize = 425;
 var resizeIncrement = 2;
 var count = 0;
-var max = 30;
+var max = 300;
 
 var dumpDataSet = false;
 var doneCallback = null;
@@ -19,14 +19,12 @@ function painted() {
   window.removeEventListener("MozAfterPaint", painted, true);
   var paintTime = window.performance.now();
   Profiler.pause("resize " + count);
-  dump("done iteration " + count + " (" + (paintTime - dataSet[count].start) + ")\n");
   dataSet[count].end = paintTime;
-  setTimeout(resizeCompleted, 500);
+  setTimeout(resizeCompleted, 20);
 }
 
 function resizeTest() {
   try {
-    dump("starting iteration " + count + "\n");
     windowSize += resizeIncrement;
     window.addEventListener("MozAfterPaint", painted, true);
     Profiler.resume("resize " + count);
