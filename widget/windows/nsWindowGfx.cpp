@@ -234,6 +234,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
   if (GetLayerManager()->AsKnowsCompositor() && !mBounds.IsEqualEdges(mLastPaintBounds)) {
     // Do an early async composite so that we at least have something on the
     // screen in the right place, even if the content is out of date.
+    printf_stderr("widget early async composite request\n");
     GetLayerManager()->ScheduleComposite();
   }
   mLastPaintBounds = mBounds;
@@ -299,6 +300,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
   }
 
   if (GetLayerManager()->AsKnowsCompositor() && GetLayerManager()->NeedsComposite()) {
+    printf_stderr("widget needs composite\n");
     GetLayerManager()->ScheduleComposite();
     GetLayerManager()->SetNeedsComposite(false);
   }

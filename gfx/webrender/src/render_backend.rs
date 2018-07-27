@@ -495,6 +495,13 @@ impl DocumentOps {
         }
     }
 
+    fn render() -> Self {
+        DocumentOps {
+            render: true,
+            ..DocumentOps::nop()
+        }
+    }
+
     fn combine(&mut self, other: Self) {
         self.scroll = self.scroll || other.scroll;
         self.build = self.build || other.build;
@@ -748,6 +755,7 @@ impl RenderBackend {
                         let mut ops = DocumentOps::nop();
                         if let Some(doc) = self.documents.get_mut(&document_id) {
                             if let Some(mut built_scene) = built_scene.take() {
+                                eprintln!("New scene built");
                                 doc.new_async_scene_ready(built_scene);
                                 // After applying the new scene we need to
                                 // rebuild the hit-tester.
@@ -1143,12 +1151,17 @@ impl RenderBackend {
                 self.result_tx.send(msg).unwrap();
 
                 render_time = Some(precise_time_ns() - render_start_time);
+                eprintln!("Render time: {:?} generate frame: {}", render_time, transaction_msg.generate_frame);
 
                 let pending_update = self.resource_cache.pending_updates();
                 (pending_update, rendered_document)
             };
 
-            let msg = ResultMsg::PublishPipelineInfo(doc.updated_pipeline_info());
+            let info = doc.updated_pipeline_info();
+            for (pipeline, epoch) in &info.epochs {
+                eprintln!("Going to publish {:?} => {:?}", pipeline, epoch);
+            }
+            let msg = ResultMsg::PublishPipelineInfo(info);
             self.result_tx.send(msg).unwrap();
 
             // Publish the frame
@@ -1168,7 +1181,9 @@ impl RenderBackend {
             let msg = ResultMsg::PublishPipelineInfo(doc.updated_pipeline_info());
             self.result_tx.send(msg).unwrap();
         } else if op.rebuild_hit_tester {
+            let ht_start_time = precise_time_ns();
             doc.rebuild_hit_tester();
+            eprintln!("Hit test time: {:?}", precise_time_ns() - ht_start_time);
         }
 
         if transaction_msg.generate_frame {

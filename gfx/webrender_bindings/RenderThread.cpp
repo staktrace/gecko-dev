@@ -322,6 +322,7 @@ RenderThread::UpdateAndRender(wr::WindowId aWindowId,
 
   auto& renderer = it->second;
 
+  printf_stderr("Rendering\n");
   bool ret = renderer->UpdateAndRender(aReadback);
   if (!ret) {
     // Render did not happen, do not call NotifyDidRender.
@@ -737,6 +738,7 @@ void wr_schedule_render(mozilla::wr::WrWindowId aWindowId)
   RefPtr<mozilla::layers::CompositorBridgeParent> cbp =
       mozilla::layers::CompositorBridgeParent::GetCompositorBridgeParentFromWindowId(aWindowId);
   if (cbp) {
+    printf_stderr("wr_schedule_render\n");
     cbp->ScheduleRenderOnCompositorThread();
   }
 }

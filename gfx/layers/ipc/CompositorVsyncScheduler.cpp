@@ -161,6 +161,7 @@ CompositorVsyncScheduler::ScheduleComposition()
   if (mAsapScheduling) {
     // Used only for performance testing purposes, and when recording/replaying
     // to ensure that graphics are up to date.
+    printf_stderr("ASAP mode\n");
     PostCompositeTask(TimeStamp::Now());
 #ifdef MOZ_WIDGET_ANDROID
   } else if (mNeedsComposite >= 2 && mIsObservingVsync) {
@@ -176,6 +177,7 @@ CompositorVsyncScheduler::ScheduleComposition()
     mNeedsComposite++;
     if (!mIsObservingVsync && mNeedsComposite) {
       ObserveVsync();
+      printf_stderr("Starting observe\n");
       // Starting to observe vsync is an async operation that goes
       // through the main thread of the UI process. It's possible that
       // we're blocking there waiting on a composite, so schedule an initial
@@ -249,8 +251,8 @@ CompositorVsyncScheduler::Composite(TimeStamp aVsyncTimestamp)
     TimeDuration compositeFrameTotal = TimeStamp::Now() - aVsyncTimestamp;
     mozilla::Telemetry::Accumulate(mozilla::Telemetry::COMPOSITE_FRAME_ROUNDTRIP_TIME,
                                    compositeFrameTotal.ToMilliseconds());
-  } else if (mVsyncNotificationsSkipped++ > gfxPrefs::CompositorUnobserveCount()) {
-    UnobserveVsync();
+  //} else if (mVsyncNotificationsSkipped++ > gfxPrefs::CompositorUnobserveCount()) {
+  //  UnobserveVsync();
   }
 }
 

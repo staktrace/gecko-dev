@@ -2165,6 +2165,7 @@ CompositorBridgeParent::NotifyPipelineRendered(const wr::PipelineId& aPipelineId
   }
 
   if (mWrBridge->PipelineId() == aPipelineId) {
+    printf_stderr("Pipeline rendered at epoch %u\n", aEpoch.mHandle);
     mWrBridge->RemoveEpochDataPriorTo(aEpoch);
 
     if (!mPaused) {
