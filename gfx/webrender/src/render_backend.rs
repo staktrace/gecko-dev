@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use api::{ApiMsg, BuiltDisplayList, ClearCache, DebugCommand};
+use api::{AsyncBlobImageRasterizer, BlobImageRequest, BlobImageResult};
 #[cfg(feature = "debugger")]
 use api::{BuiltDisplayListIter, SpecificDisplayItem};
 use api::{DeviceIntPoint, DevicePixelScale, DeviceUintPoint, DeviceUintRect, DeviceUintSize};
@@ -23,6 +24,7 @@ use gpu_cache::GpuCache;
 use hit_test::{HitTest, HitTester};
 use internal_types::{DebugOutput, FastHashMap, FastHashSet, RenderedDocument, ResultMsg};
 use profiler::{BackendProfileCounters, IpcProfileCounters, ResourceProfileCounters};
+use rasterizer::{RasterizationRequest, RasterizationResult};
 use record::ApiRecordingReceiver;
 use renderer::{AsyncPropertySampler, PipelineInfo};
 use resource_cache::ResourceCache;
@@ -317,7 +319,8 @@ impl Document {
     fn forward_transaction_to_scene_builder(
         &mut self,
         transaction_msg: TransactionMsg,
-        blobs_to_rasterize: &[ImageKey],
+        rasterized_blobs: Vec<(BlobImageRequest, BlobImageResult)>,
+        blob_rasterizer: Option<Box<AsyncBlobImageRasterizer>>,
         document_ops: &DocumentOps,
         document_id: DocumentId,
         scene_id: u64,
@@ -344,13 +347,9 @@ impl Document {
             None
         };
 
-        let (blob_rasterizer, blob_requests) = resource_cache.create_blob_scene_builder_requests(
-            blobs_to_rasterize
-        );
-
         scene_tx.send(SceneBuilderRequest::Transaction {
             scene: scene_request,
-            blob_requests,
+            rasterized_blobs,
             blob_rasterizer,
             resource_updates: transaction_msg.resource_updates,
             frame_ops: transaction_msg.frame_ops,
@@ -445,6 +444,7 @@ impl Document {
     }
 }
 
+#[derive(PartialEq)]
 struct DocumentOps {
     scroll: bool,
     build: bool,
@@ -507,6 +507,9 @@ pub struct RenderBackend {
     api_rx: MsgReceiver<ApiMsg>,
     payload_rx: Receiver<Payload>,
     result_tx: Sender<ResultMsg>,
+    high_priority_rasterizer: Sender<RasterizationRequest>,
+    low_priority_rasterizer: Sender<RasterizationRequest>,
+    rasterizer_rx: Receiver<RasterizationResult>,
     scene_tx: Sender<SceneBuilderRequest>,
     scene_rx: Receiver<SceneBuilderResult>,
 
@@ -533,6 +536,9 @@ impl RenderBackend {
         api_rx: MsgReceiver<ApiMsg>,
         payload_rx: Receiver<Payload>,
         result_tx: Sender<ResultMsg>,
+        high_priority_rasterizer: Sender<RasterizationRequest>,
+        low_priority_rasterizer: Sender<RasterizationRequest>,
+        rasterizer_rx: Receiver<RasterizationResult>,
         scene_tx: Sender<SceneBuilderRequest>,
         scene_rx: Receiver<SceneBuilderResult>,
         default_device_pixel_ratio: f32,
@@ -550,6 +556,9 @@ impl RenderBackend {
             api_rx,
             payload_rx,
             result_tx,
+            high_priority_rasterizer,
+            low_priority_rasterizer,
+            rasterizer_rx,
             scene_tx,
             scene_rx,
             payload_buffer: Vec::new(),
@@ -713,6 +722,28 @@ impl RenderBackend {
         while keep_going {
             profile_scope!("handle_msg");
 
+            while let Ok(msg) = self.rasterizer_rx.try_recv() {
+                match msg {
+                    RasterizationResult::Transaction {
+                        blob_rasterizer,
+                        rasterized_blobs,
+                        document_id,
+                        transaction_msg,
+                    } => {
+                        self.update_document(
+                            document_id,
+                            transaction_msg,
+                            &[],
+                            Some((blob_rasterizer, rasterized_blobs)),
+                            &mut frame_counter,
+                            &mut profile_counters,
+                            DocumentOps::nop(),
+                            false,
+                        );
+                    }
+                }
+            }
+
             while let Ok(msg) = self.scene_rx.try_recv() {
                 match msg {
                     SceneBuilderResult::Transaction {
@@ -772,6 +803,7 @@ impl RenderBackend {
                                 document_id,
                                 transaction_msg,
                                 &[],
+                                None,
                                 &mut frame_counter,
                                 &mut profile_counters,
                                 ops,
@@ -799,6 +831,8 @@ impl RenderBackend {
             };
         }
 
+        let _ = self.high_priority_rasterizer.send(RasterizationRequest::Stop);
+        let _ = self.low_priority_rasterizer.send(RasterizationRequest::Stop);
         let _ = self.scene_tx.send(SceneBuilderRequest::Stop);
         // Ensure we read everything the scene builder is sending us from
         // inflight messages, otherwise the scene builder might panic.
@@ -987,6 +1021,7 @@ impl RenderBackend {
                     document_id,
                     doc_msgs,
                     &blob_requests,
+                    None,
                     frame_counter,
                     profile_counters,
                     DocumentOps::nop(),
@@ -1003,12 +1038,38 @@ impl RenderBackend {
         document_id: DocumentId,
         mut transaction_msg: TransactionMsg,
         blob_requests: &[ImageKey],
+        blob_results: Option<(Option<Box<AsyncBlobImageRasterizer>>,
+                              Vec<(BlobImageRequest, BlobImageResult)>)>,
         frame_counter: &mut u32,
         profile_counters: &mut BackendProfileCounters,
         initial_op: DocumentOps,
         has_built_scene: bool,
     ) {
         let mut op = initial_op;
+
+        // We need to send the transaction to the blob rasterizer even if there
+        // are no requests, in order to maintain ordering of transaction messages
+        if blob_results.is_none() && !has_built_scene {
+            assert!(op == DocumentOps::nop());
+
+            let (blob_rasterizer, blob_requests) = self.resource_cache.create_blob_scene_builder_requests(
+                blob_requests
+            );
+
+            let rasterizer_tx = if transaction_msg.high_priority {
+                &self.high_priority_rasterizer
+            } else {
+                &self.low_priority_rasterizer
+            };
+            rasterizer_tx.send(RasterizationRequest::Transaction {
+                blob_rasterizer,
+                blob_requests,
+                document_id,
+                transaction_msg,
+            }).unwrap();
+
+            return;
+        }
 
         if !blob_requests.is_empty() {
             transaction_msg.use_scene_builder_thread = true;
@@ -1029,10 +1090,12 @@ impl RenderBackend {
         if transaction_msg.use_scene_builder_thread {
             let scene_id = self.make_unique_scene_id();
             let doc = self.documents.get_mut(&document_id).unwrap();
+            let (blob_rasterizer, rasterized_blobs) = blob_results.unwrap();
 
             doc.forward_transaction_to_scene_builder(
                 transaction_msg,
-                blob_requests,
+                rasterized_blobs,
+                blob_rasterizer,
                 &op,
                 document_id,
                 scene_id,

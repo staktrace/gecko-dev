@@ -89,6 +89,7 @@ mod picture;
 mod prim_store;
 mod print_tree;
 mod profiler;
+mod rasterizer;
 mod record;
 mod render_backend;
 mod render_task;

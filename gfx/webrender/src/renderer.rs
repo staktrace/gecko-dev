@@ -40,6 +40,7 @@ use prim_store::DeferredResolve;
 use profiler::{BackendProfileCounters, FrameProfileCounters,
                GpuProfileTag, RendererProfileCounters, RendererProfileTimers};
 use device::query::GpuProfiler;
+use rasterizer::Rasterizer;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use record::ApiRecordingReceiver;
 use render_backend::RenderBackend;
@@ -1707,13 +1708,14 @@ impl Renderer {
             });
         let sampler = options.sampler;
         let enable_render_on_scroll = options.enable_render_on_scroll;
+        let renderer_id = options.renderer_id.unwrap_or(0);
 
         let blob_image_handler = options.blob_image_handler.take();
         let thread_listener_for_render_backend = thread_listener.clone();
         let thread_listener_for_scene_builder = thread_listener.clone();
         let scene_builder_hooks = options.scene_builder_hooks;
-        let rb_thread_name = format!("WRRenderBackend#{}", options.renderer_id.unwrap_or(0));
-        let scene_thread_name = format!("WRSceneBuilder#{}", options.renderer_id.unwrap_or(0));
+        let rb_thread_name = format!("WRRenderBackend#{}", renderer_id);
+        let scene_thread_name = format!("WRSceneBuilder#{}", renderer_id);
         let glyph_rasterizer = GlyphRasterizer::new(workers)?;
 
         let (scene_builder, scene_tx, scene_rx) = SceneBuilder::new(
@@ -1734,6 +1736,18 @@ impl Renderer {
             }
         })?;
 
+        let (raster_result_tx, raster_result_rx) = channel();
+        let rasterizer_high = Rasterizer::create(
+            format!("WRRasterizerHigh#{}", renderer_id),
+            thread_listener.clone(),
+            raster_result_tx.clone(),
+            api_tx.clone())?;
+        let rasterizer_low = Rasterizer::create(
+            format!("WRRasterizerLow#{}", renderer_id),
+            thread_listener.clone(),
+            raster_result_tx,
+            api_tx.clone())?;
+
         thread::Builder::new().name(rb_thread_name.clone()).spawn(move || {
             register_thread_with_profiler(rb_thread_name.clone());
             if let Some(ref thread_listener) = *thread_listener_for_render_backend {
@@ -1751,6 +1765,9 @@ impl Renderer {
                 api_rx,
                 payload_rx_for_backend,
                 result_tx,
+                rasterizer_high,
+                rasterizer_low,
+                raster_result_rx,
                 scene_tx,
                 scene_rx,
                 device_pixel_ratio,
