@@ -1714,7 +1714,7 @@ impl Renderer {
         let scene_builder_hooks = options.scene_builder_hooks;
         let rb_thread_name = format!("WRRenderBackend#{}", options.renderer_id.unwrap_or(0));
         let scene_thread_name = format!("WRSceneBuilder#{}", options.renderer_id.unwrap_or(0));
-        let glyph_rasterizer = GlyphRasterizer::new(workers)?;
+        let glyph_rasterizer = GlyphRasterizer::new(workers.clone())?;
 
         let (scene_builder, scene_tx, scene_rx) = SceneBuilder::new(
             config,
@@ -1745,6 +1745,7 @@ impl Renderer {
                 texture_cache,
                 glyph_rasterizer,
                 blob_image_handler,
+                workers,
             );
 
             let mut backend = RenderBackend::new(

@@ -344,19 +344,13 @@ impl Document {
             None
         };
 
-        let (blob_rasterizer, blob_requests) = resource_cache.create_blob_scene_builder_requests(
-            blobs_to_rasterize
-        );
-
-        scene_tx.send(SceneBuilderRequest::Transaction {
-            scene: scene_request,
-            blob_requests,
-            blob_rasterizer,
-            resource_updates: transaction_msg.resource_updates,
-            frame_ops: transaction_msg.frame_ops,
-            render: transaction_msg.generate_frame,
+        resource_cache.rasterize_and_forward_transaction(
+            blobs_to_rasterize,
+            scene_tx.clone(),
+            scene_request,
+            transaction_msg,
             document_id,
-        }).unwrap();
+        );
     }
 
     fn render(

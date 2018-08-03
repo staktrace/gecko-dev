@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::{AsyncBlobImageRasterizer, BlobImageRequest, BlobImageParams, BlobImageResult};
+use api::{AsyncBlobImageRasterizer, BlobImageRequest, BlobImageResult};
 use api::{DocumentId, PipelineId, ApiMsg, FrameMsg, ResourceUpdate};
 use api::channel::MsgSender;
 use display_list_flattener::build_scene;
@@ -21,7 +21,7 @@ pub enum SceneBuilderRequest {
     Transaction {
         document_id: DocumentId,
         scene: Option<SceneRequest>,
-        blob_requests: Vec<BlobImageParams>,
+        rasterized_blobs: Vec<(BlobImageRequest, BlobImageResult)>,
         blob_rasterizer: Option<Box<AsyncBlobImageRasterizer>>,
         resource_updates: Vec<ResourceUpdate>,
         frame_ops: Vec<FrameMsg>,
@@ -139,8 +139,8 @@ impl SceneBuilder {
             SceneBuilderRequest::Transaction {
                 document_id,
                 scene,
-                blob_requests,
-                mut blob_rasterizer,
+                rasterized_blobs,
+                blob_rasterizer,
                 resource_updates,
                 frame_ops,
                 render,
@@ -149,11 +149,6 @@ impl SceneBuilder {
                 let built_scene = scene.map(|request|{
                     build_scene(&self.config, request)
                 });
-
-                let rasterized_blobs = blob_rasterizer.as_mut().map_or(
-                    Vec::new(),
-                    |rasterizer| rasterizer.rasterize(&blob_requests),
-                );
 
                 // We only need the pipeline info and the result channel if we
                 // have a hook callback *and* if this transaction actually built

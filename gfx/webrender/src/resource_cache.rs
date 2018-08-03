@@ -5,10 +5,10 @@
 use api::{AddFont, BlobImageResources, AsyncBlobImageRasterizer, ResourceUpdate};
 use api::{BlobImageDescriptor, BlobImageHandler, BlobImageRequest};
 use api::{ClearCache, ColorF, DevicePoint, DeviceUintPoint, DeviceUintRect, DeviceUintSize};
-use api::{FontInstanceKey, FontKey, FontTemplate, GlyphIndex};
+use api::{DocumentId, FontInstanceKey, FontKey, FontTemplate, GlyphIndex};
 use api::{ExternalImageData, ExternalImageType, BlobImageResult, BlobImageParams};
 use api::{FontInstanceOptions, FontInstancePlatformOptions, FontVariation};
-use api::{GlyphDimensions, IdNamespace};
+use api::{GlyphDimensions, IdNamespace, TransactionMsg};
 use api::{ImageData, ImageDescriptor, ImageKey, ImageRendering};
 use api::{TileOffset, TileSize, TileRange, NormalizedRect, BlobImageData};
 use app_units::Au;
@@ -29,9 +29,11 @@ use gpu_types::UvRectKind;
 use image::{compute_tile_range, for_each_tile_in_range};
 use internal_types::{FastHashMap, FastHashSet, SourceTexture, TextureUpdateList};
 use profiler::{ResourceProfileCounters, TextureCacheProfileCounters};
+use rayon::ThreadPool;
 use render_backend::FrameId;
 use render_task::{RenderTaskCache, RenderTaskCacheKey, RenderTaskId};
 use render_task::{RenderTaskCacheEntry, RenderTaskCacheEntryHandle, RenderTaskTree};
+use scene_builder::{SceneBuilderRequest, SceneRequest};
 use std::collections::hash_map::Entry::{self, Occupied, Vacant};
 use std::collections::hash_map::ValuesMut;
 use std::{cmp, mem};
@@ -40,6 +42,7 @@ use std::hash::Hash;
 #[cfg(any(feature = "capture", feature = "replay"))]
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
+use std::sync::mpsc::Sender;
 use texture_cache::{TextureCache, TextureCacheHandle};
 use tiling::SpecialRenderPasses;
 
@@ -384,6 +387,8 @@ pub struct ResourceCache {
     missing_blob_images: Vec<BlobImageParams>,
     // The rasterizer associated with the current scene.
     blob_image_rasterizer: Option<Box<AsyncBlobImageRasterizer>>,
+    // The threadpool for async blob rasterization
+    workers: Arc<ThreadPool>,
 }
 
 impl ResourceCache {
@@ -391,6 +396,7 @@ impl ResourceCache {
         texture_cache: TextureCache,
         glyph_rasterizer: GlyphRasterizer,
         blob_image_handler: Option<Box<BlobImageHandler>>,
+        workers: Arc<ThreadPool>,
     ) -> Self {
         ResourceCache {
             cached_glyphs: GlyphCache::new(),
@@ -408,6 +414,7 @@ impl ResourceCache {
             blob_image_templates: FastHashMap::default(),
             missing_blob_images: Vec::new(),
             blob_image_rasterizer: None,
+            workers,
         }
     }
 
@@ -931,7 +938,7 @@ impl ResourceCache {
         }
     }
 
-    pub fn create_blob_scene_builder_requests(
+    fn create_blob_scene_builder_requests(
         &mut self,
         keys: &[ImageKey]
     ) -> (Option<Box<AsyncBlobImageRasterizer>>, Vec<BlobImageParams>) {
@@ -1049,6 +1056,35 @@ impl ResourceCache {
         let handler = self.blob_image_handler.as_mut().unwrap();
         handler.prepare_resources(&self.resources, &blob_request_params);
         (Some(handler.create_blob_rasterizer()), blob_request_params)
+    }
+
+    pub fn rasterize_and_forward_transaction(
+        &mut self,
+        blobs_to_rasterize: &[ImageKey],
+        scene_tx: Sender<SceneBuilderRequest>,
+        scene: Option<SceneRequest>,
+        transaction_msg: TransactionMsg,
+        document_id: DocumentId,
+    ) {
+        let (mut blob_rasterizer, blob_requests) = self.create_blob_scene_builder_requests(
+            blobs_to_rasterize
+        );
+        self.workers.spawn(move || {
+            let rasterized_blobs = blob_rasterizer.as_mut().map_or(
+                Vec::new(),
+                |rasterizer| rasterizer.rasterize(&blob_requests),
+            );
+
+            scene_tx.send(SceneBuilderRequest::Transaction {
+                scene,
+                rasterized_blobs,
+                blob_rasterizer,
+                resource_updates: transaction_msg.resource_updates,
+                frame_ops: transaction_msg.frame_ops,
+                render: transaction_msg.generate_frame,
+                document_id,
+            }).ok();
+        });
     }
 
     fn discard_tiles_outside_visible_area(
