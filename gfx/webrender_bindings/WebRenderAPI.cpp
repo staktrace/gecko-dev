@@ -138,10 +138,11 @@ private:
 };
 
 
-TransactionBuilder::TransactionBuilder(bool aUseSceneBuilderThread)
+TransactionBuilder::TransactionBuilder(bool aForUIProcess,
+                                       bool aUseSceneBuilderThread)
   : mUseSceneBuilderThread(aUseSceneBuilderThread)
 {
-  mTxn = wr_transaction_new(mUseSceneBuilderThread);
+  mTxn = wr_transaction_new(mUseSceneBuilderThread, aForUIProcess);
 }
 
 TransactionBuilder::~TransactionBuilder()

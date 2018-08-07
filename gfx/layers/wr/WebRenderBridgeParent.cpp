@@ -592,7 +592,7 @@ WebRenderBridgeParent::RecvUpdateResources(nsTArray<OpUpdateResource>&& aResourc
     return IPC_OK();
   }
 
-  wr::TransactionBuilder txn;
+  wr::TransactionBuilder txn(IsRootWebRenderBridgeParent());
 
   if (!UpdateResources(aResourceUpdates, aSmallShmems, aLargeShmems, txn)) {
     wr::IpcResourceUpdateQueue::ReleaseShmems(this, aSmallShmems);
@@ -775,7 +775,7 @@ WebRenderBridgeParent::RecvSetDisplayList(const gfx::IntSize& aSize,
 
   mAsyncImageManager->SetCompositionTime(TimeStamp::Now());
 
-  wr::TransactionBuilder txn;
+  wr::TransactionBuilder txn(IsRootWebRenderBridgeParent());
   wr::AutoTransactionSender sender(mApi, &txn);
 
   ProcessWebRenderParentCommands(aCommands, txn);
@@ -874,7 +874,7 @@ WebRenderBridgeParent::RecvEmptyTransaction(const FocusTarget& aFocusTarget,
 
   if (!aCommands.IsEmpty()) {
     mAsyncImageManager->SetCompositionTime(TimeStamp::Now());
-    wr::TransactionBuilder txn;
+    wr::TransactionBuilder txn(IsRootWebRenderBridgeParent());
     wr::Epoch wrEpoch = GetNextWrEpoch();
     txn.UpdateEpoch(mPipelineId, wrEpoch);
     ProcessWebRenderParentCommands(aCommands, txn);
@@ -924,7 +924,7 @@ WebRenderBridgeParent::RecvParentCommands(nsTArray<WebRenderParentCommand>&& aCo
   if (mDestroyed) {
     return IPC_OK();
   }
-  wr::TransactionBuilder txn;
+  wr::TransactionBuilder txn(IsRootWebRenderBridgeParent());
   ProcessWebRenderParentCommands(aCommands, txn);
   mApi->SendTransaction(txn);
   return IPC_OK();
@@ -1231,7 +1231,7 @@ WebRenderBridgeParent::RecvClearCachedResources()
   mCompositorBridge->ObserveLayersUpdate(GetLayersId(), mChildLayersObserverEpoch, false);
 
   // Clear resources
-  wr::TransactionBuilder txn;
+  wr::TransactionBuilder txn(IsRootWebRenderBridgeParent());
   txn.ClearDisplayList(GetNextWrEpoch(), mPipelineId);
   mApi->SendTransaction(txn);
   // Schedule generate frame to clean up Pipeline
@@ -1507,7 +1507,7 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
     // its display list, other async pipelines can still be rendered while the scene is
     // building. Those other async pipelines can go in the other transaction that
     // we create below.
-    wr::TransactionBuilder txn;
+    wr::TransactionBuilder txn(IsRootWebRenderBridgeParent());
     mAsyncImageManager->ApplyAsyncImagesOfImageBridge(txn);
     mApi->SendTransaction(txn);
   }
@@ -1529,7 +1529,7 @@ WebRenderBridgeParent::CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::In
   // Ensure this GenerateFrame is handled on the render backend thread rather
   // than going through the scene builder thread. That way we continue generating
   // frames with the old scene even during slow scene builds.
-  wr::TransactionBuilder txn(/* aUseSceneBuilderThread */ false);
+  wr::TransactionBuilder txn(IsRootWebRenderBridgeParent(), /* aUseSceneBuilderThread */ false);
 
   nsTArray<wr::WrOpacityProperty> opacityArray;
   nsTArray<wr::WrTransformProperty> transformArray;
@@ -1690,7 +1690,7 @@ WebRenderBridgeParent::ClearResources()
 
   wr::Epoch wrEpoch = GetNextWrEpoch();
 
-  wr::TransactionBuilder txn;
+  wr::TransactionBuilder txn(IsRootWebRenderBridgeParent());
   txn.ClearDisplayList(wrEpoch, mPipelineId);
   mReceivedDisplayList = false;
 

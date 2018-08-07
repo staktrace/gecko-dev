@@ -53,7 +53,8 @@ struct Line {
 
 class TransactionBuilder {
 public:
-  explicit TransactionBuilder(bool aUseSceneBuilderThread = true);
+  explicit TransactionBuilder(bool aForUIProcess,
+                              bool aUseSceneBuilderThread = true);
 
   ~TransactionBuilder();
 

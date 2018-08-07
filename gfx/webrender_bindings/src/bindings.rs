@@ -1029,7 +1029,7 @@ pub unsafe extern "C" fn wr_api_shut_down(dh: &mut DocumentHandle) {
     dh.api.shut_down();
 }
 
-fn make_transaction(do_async: bool) -> Transaction {
+fn make_transaction(do_async: bool, high_priority: bool) -> Transaction {
     let mut transaction = Transaction::new();
     // Ensure that we either use async scene building or not based on the
     // gecko pref, regardless of what the default is. We can remove this once
@@ -1039,12 +1039,17 @@ fn make_transaction(do_async: bool) -> Transaction {
     } else {
         transaction.skip_scene_builder();
     }
+    if high_priority {
+        transaction.set_high_priority();
+    }
     transaction
 }
 
 #[no_mangle]
-pub extern "C" fn wr_transaction_new(do_async: bool) -> *mut Transaction {
-    Box::into_raw(Box::new(make_transaction(do_async)))
+pub extern "C" fn wr_transaction_new(do_async: bool,
+                                     high_priority: bool,
+) -> *mut Transaction {
+    Box::into_raw(Box::new(make_transaction(do_async, high_priority)))
 }
 
 /// cbindgen:postfix=WR_DESTRUCTOR_SAFE_FUNC
@@ -1370,7 +1375,7 @@ pub extern "C" fn wr_api_send_transaction(
     if transaction.is_empty() {
         return;
     }
-    let new_txn = make_transaction(is_async);
+    let new_txn = make_transaction(is_async, transaction.is_high_priority());
     let txn = mem::replace(transaction, new_txn);
     dh.api.send_transaction(dh.document_id, txn);
 }

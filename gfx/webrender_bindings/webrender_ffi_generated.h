@@ -1674,7 +1674,8 @@ bool wr_transaction_is_empty(const Transaction *aTxn)
 WR_FUNC;
 
 WR_INLINE
-Transaction *wr_transaction_new(bool aDoAsync)
+Transaction *wr_transaction_new(bool aDoAsync,
+                                bool aHighPriority)
 WR_FUNC;
 
 WR_INLINE
