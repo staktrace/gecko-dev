@@ -56,6 +56,12 @@ pub struct Transaction {
     use_scene_builder_thread: bool,
 
     generate_frame: bool,
+
+    // A hint that this transaction can be processed at a higher priority. High-
+    // priority transactions can jump ahead of regular-priority transactions,
+    // but both high- and regular-priority transactions are processed in order
+    // relative to other transactions of the same priority.
+    high_priority: bool,
 }
 
 impl Transaction {
@@ -67,6 +73,7 @@ impl Transaction {
             payloads: Vec::new(),
             use_scene_builder_thread: false, // TODO: make this true by default.
             generate_frame: false,
+            high_priority: false,
         }
     }
 
@@ -79,6 +86,14 @@ impl Transaction {
     // most transactions, and opt-in for specific cases like scrolling and async video.
     pub fn use_scene_builder_thread(&mut self) {
         self.use_scene_builder_thread = true;
+    }
+
+    pub fn set_high_priority(&mut self) {
+        self.high_priority = true;
+    }
+
+    pub fn is_high_priority(&self) -> bool {
+        self.high_priority
     }
 
     pub fn is_empty(&self) -> bool {
@@ -256,6 +271,7 @@ impl Transaction {
                 resource_updates: self.resource_updates,
                 use_scene_builder_thread: self.use_scene_builder_thread,
                 generate_frame: self.generate_frame,
+                high_priority: self.high_priority,
             },
             self.payloads,
         )
@@ -354,6 +370,7 @@ pub struct TransactionMsg {
     pub resource_updates: Vec<ResourceUpdate>,
     pub generate_frame: bool,
     pub use_scene_builder_thread: bool,
+    pub high_priority: bool,
 }
 
 impl TransactionMsg {
@@ -372,6 +389,7 @@ impl TransactionMsg {
             resource_updates: Vec::new(),
             generate_frame: false,
             use_scene_builder_thread: false,
+            high_priority: false,
         }
     }
 
@@ -382,6 +400,7 @@ impl TransactionMsg {
             resource_updates: Vec::new(),
             generate_frame: false,
             use_scene_builder_thread: false,
+            high_priority: false,
         }
     }
 }

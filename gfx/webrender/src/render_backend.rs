@@ -759,6 +759,7 @@ impl RenderBackend {
                             resource_updates,
                             generate_frame: render,
                             use_scene_builder_thread: false,
+                            high_priority: false,
                         };
 
                         self.resource_cache.add_rasterized_blob_images(rasterized_blobs);
