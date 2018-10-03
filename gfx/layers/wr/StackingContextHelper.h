@@ -82,6 +82,7 @@ private:
   bool mAffectsClipPositioning;
   Maybe<wr::WrClipId> mReferenceFrameId;
   Maybe<nsDisplayTransform*> mDeferredTransformItem;
+  Maybe<gfx::Matrix4x4> mDeferredAncestorTransform;
   bool mIsPreserve3D;
   bool mRasterizeLocally;
 };
