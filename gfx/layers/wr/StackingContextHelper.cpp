@@ -23,6 +23,7 @@ StackingContextHelper::StackingContextHelper()
 }
 
 StackingContextHelper::StackingContextHelper(const StackingContextHelper& aParentSC,
+                                             const ActiveScrolledRoot* aAsr,
                                              wr::DisplayListBuilder& aBuilder,
                                              const nsTArray<wr::WrFilterOp>& aFilters,
                                              const LayoutDeviceRect& aBounds,
@@ -81,9 +82,15 @@ StackingContextHelper::StackingContextHelper(const StackingContextHelper& aParen
   mAffectsClipPositioning = mReferenceFrameId.isSome() ||
       (aBounds.TopLeft() != LayoutDevicePoint());
 
-  if (mDeferredTransformItem && aParentSC.mDeferredTransformItem &&
-      (*mDeferredTransformItem)->GetActiveScrolledRoot() == (*aParentSC.mDeferredTransformItem)->GetActiveScrolledRoot()) {
-    mDeferredAncestorTransform = aParentSC.GetDeferredTransformMatrix();
+  // Propagate or accumulate the deferral if the ASR matches
+  if (aParentSC.mDeferredTransformItem &&
+      aAsr == (*aParentSC.mDeferredTransformItem)->GetActiveScrolledRoot()) {
+    if (mDeferredTransformItem) {
+      mDeferredAncestorTransform = aParentSC.GetDeferredTransformMatrix();
+    } else {
+      mDeferredTransformItem = aParentSC.mDeferredTransformItem;
+      mDeferredAncestorTransform = aParentSC.mDeferredAncestorTransform;
+    }
   }
 }
 

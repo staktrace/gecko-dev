@@ -6668,6 +6668,7 @@ nsDisplayOpacity::CreateWebRenderCommands(
 
   nsTArray<mozilla::wr::WrFilterOp> filters;
   StackingContextHelper sc(aSc,
+                           GetActiveScrolledRoot(),
                            aBuilder,
                            filters,
                            LayoutDeviceRect(),
@@ -6721,6 +6722,7 @@ nsDisplayBlendMode::CreateWebRenderCommands(
 {
   nsTArray<mozilla::wr::WrFilterOp> filters;
   StackingContextHelper sc(aSc,
+                           GetActiveScrolledRoot(),
                            aBuilder,
                            filters,
                            LayoutDeviceRect(),
@@ -6872,7 +6874,7 @@ nsDisplayBlendContainer::CreateWebRenderCommands(
   mozilla::layers::WebRenderLayerManager* aManager,
   nsDisplayListBuilder* aDisplayListBuilder)
 {
-  StackingContextHelper sc(aSc, aBuilder);
+  StackingContextHelper sc(aSc, GetActiveScrolledRoot(), aBuilder);
 
   return nsDisplayWrapList::CreateWebRenderCommands(
     aBuilder, aResources, sc, aManager, aDisplayListBuilder);
@@ -7012,6 +7014,7 @@ nsDisplayOwnLayer::CreateWebRenderCommands(
   prop.effect_type = wr::WrAnimationType::Transform;
 
   StackingContextHelper sc(aSc,
+                           GetActiveScrolledRoot(),
                            aBuilder,
                            nsTArray<wr::WrFilterOp>(),
                            LayoutDeviceRect(),
@@ -7768,7 +7771,7 @@ nsDisplayStickyPosition::CreateWebRenderCommands(
   }
 
   {
-    StackingContextHelper sc(aSc, aBuilder);
+    StackingContextHelper sc(aSc, GetActiveScrolledRoot(), aBuilder);
     nsDisplayWrapList::CreateWebRenderCommands(
       aBuilder, aResources, sc, aManager, aDisplayListBuilder);
   }
@@ -8751,6 +8754,7 @@ nsDisplayTransform::CreateWebRenderCommands(
     ActiveLayerTracker::IsStyleMaybeAnimated(Frame(), eCSSProperty_transform);
 
   StackingContextHelper sc(aSc,
+                           GetActiveScrolledRoot(),
                            aBuilder,
                            filters,
                            LayoutDeviceRect(position, LayoutDeviceSize()),
@@ -9400,6 +9404,7 @@ nsDisplayPerspective::CreateWebRenderCommands(
 
   nsTArray<mozilla::wr::WrFilterOp> filters;
   StackingContextHelper sc(aSc,
+                           GetActiveScrolledRoot(),
                            aBuilder,
                            filters,
                            LayoutDeviceRect(),
@@ -9970,6 +9975,7 @@ nsDisplayMasksAndClipPaths::CreateWebRenderCommands(
     bounds.MoveTo(0, 0);
 
     layer.emplace(aSc,
+                  GetActiveScrolledRoot(),
                   aBuilder,
                   /*aFilters: */ nsTArray<wr::WrFilterOp>(),
                   /*aBounds: */ bounds,
@@ -10285,6 +10291,7 @@ nsDisplayFilters::CreateWebRenderCommands(
 
   float opacity = mFrame->StyleEffects()->mOpacity;
   StackingContextHelper sc(aSc,
+                           GetActiveScrolledRoot(),
                            aBuilder,
                            wrFilters,
                            LayoutDeviceRect(),
