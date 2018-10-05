@@ -1412,6 +1412,13 @@ WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(nsDisplayList* a
         forceNewLayerData = true;
       }
 
+      if (!forceNewLayerData &&
+          item->GetType() == DisplayItemType::TYPE_TRANSFORM &&
+          aSc.GetDeferredTransformItem() &&
+          (*aSc.GetDeferredTransformItem())->GetActiveScrolledRoot() != asr) {
+        forceNewLayerData = true;
+      }
+
       // If we're going to create a new layer data for this item, stash the
       // ASR so that if we recurse into a sublist they will know where to stop
       // walking up their ASR chain when building scroll metadata.
