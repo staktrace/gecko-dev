@@ -631,7 +631,7 @@ ElfLoader::Register(CustomElf *handle)
   if (dbg) {
     // We could race with the system linker when modifying the debug map, so
     // only do so while holding the system linker's internal lock.
-    RunWithSystemLinkerLock([this, handle] { dbg.Add(handle); });
+    /*RunWithSystemLinkerLock([this, handle] {*/ dbg.Add(handle);// });
   }
 }
 
@@ -660,7 +660,7 @@ ElfLoader::Forget(CustomElf *handle)
   if (dbg) {
     // We could race with the system linker when modifying the debug map, so
     // only do so while holding the system linker's internal lock.
-    RunWithSystemLinkerLock([this, handle] { dbg.Remove(handle); });
+    /*RunWithSystemLinkerLock([this, handle] {*/ dbg.Remove(handle);// });
   }
 }
 
