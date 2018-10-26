@@ -7067,6 +7067,12 @@ nsDisplayOwnLayer::UpdateScrollData(
       aLayerData->SetScrollbarData(mScrollbarData);
       if (IsScrollThumbLayer()) {
         aLayerData->SetScrollbarAnimationId(mWrAnimationId);
+        LayoutDeviceRect bounds = LayoutDeviceIntRect::FromAppUnits(
+            mBounds, mFrame->PresContext()->AppUnitsPerDevPixel());
+        // Assume a resolution of 1.0 for now because this is a WebRender codepath
+        // and we don't really handle resolution on the Gecko side
+        LayerIntRect layerBounds = RoundedOut(bounds * LayoutDeviceToLayerScale(1.0f));
+        aLayerData->SetVisibleRegion(LayerIntRegion(layerBounds));
       }
     }
   }
