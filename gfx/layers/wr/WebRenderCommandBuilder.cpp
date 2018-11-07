@@ -1320,8 +1320,22 @@ WebRenderCommandBuilder::BuildWebRenderCommands(wr::DisplayListBuilder& aBuilder
   MOZ_ASSERT(mDumpIndent == 0);
   mClipManager.BeginBuild(mManager, aBuilder);
 
+  Maybe<wr::WrAnimationProperty> zoomProp;
   {
-    StackingContextHelper pageRootSc(sc, nullptr, aBuilder, aFilters);
+    if (gfxPrefs::APZAllowZooming() && XRE_IsContentProcess() && !aDisplayList->IsEmpty()) {
+      RefPtr<WebRenderAnimationData> animationData =
+        CreateOrRecycleWebRenderUserData<WebRenderAnimationData>(aDisplayList->GetTop());
+      AnimationInfo& animationInfo = animationData->GetAnimationInfo();
+      animationInfo.EnsureAnimationsId();
+      uint64_t animationId = animationInfo.GetCompositorAnimationsId();
+
+      zoomProp.emplace();
+      zoomProp->effect_type = wr::WrAnimationType::Transform;
+      zoomProp->id = animationId;
+    }
+
+    StackingContextHelper pageRootSc(sc, nullptr, aBuilder, aFilters,
+        LayoutDeviceRect(), nullptr, zoomProp.ptrOr(nullptr));
     if (ShouldDumpDisplayList(aDisplayListBuilder)) {
       mBuilderDumpIndex = aBuilder.Dump(mDumpIndent + 1, Some(mBuilderDumpIndex), Nothing());
     }
