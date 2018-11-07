@@ -924,36 +924,45 @@ impl DisplayListBuilder {
         self.save_state.take().expect("No save to clear in DisplayListBuilder");
     }
 
-    /// Print the display items in the list to stderr. If the start parameter
-    /// is specified, only display items starting at that index (inclusive) will
-    /// be printed. If the end parameter is specified, only display items before
-    /// that index (exclusive) will be printed. Calling this function with
-    /// end <= start is allowed but is just a waste of CPU cycles.
-    /// This function returns the total number of items in the display list, which
-    /// allows the caller to subsequently invoke this function to only dump the
-    /// newly-added items.
-    pub fn print_display_list(
+    /// Print the display items in the list to stdout.
+    pub fn print_display_list(&mut self) {
+        let (dump, _) = self.get_printed_display_list(0, None, None);
+        print!("{}", dump);
+    }
+
+    /// Produces a debug representation of display items in the list, to be
+    /// used for debug-printint. If the start parameter is specified, only
+    /// display items starting at that index (inclusive) will be printed. If
+    /// the end parameter is specified, only display items before that index
+    /// (exclusive) will be printed. Calling this function with end <= start
+    /// is allowed but is just a waste of CPU cycles. In function returns a
+    /// tuple: the first item is the string representation of the selected
+    /// display items, one per line, with the given indent. The second item is
+    /// the total number of items in the display list, which allows the caller
+    /// to subsequently invoke this function to only dump the newly-added items.
+    pub fn get_printed_display_list(
         &mut self,
         indent: usize,
         start: Option<usize>,
         end: Option<usize>,
-    ) -> usize {
+    ) -> (String, usize) {
         let mut temp = BuiltDisplayList::default();
         mem::swap(&mut temp.data, &mut self.data);
 
+        let mut dumped = String::new();
         let mut index: usize = 0;
         {
             let mut iter = BuiltDisplayListIter::new(&temp);
             while let Some(item) = iter.next_raw() {
                 if index >= start.unwrap_or(0) && end.map_or(true, |e| index < e) {
-                    eprintln!("{}{:?}", "  ".repeat(indent), item.display_item());
+                    dumped.push_str(&format!("{}{:?}\n", "  ".repeat(indent), item.display_item()));
                 }
                 index += 1;
             }
         }
 
         self.data = temp.data;
-        index
+        (dumped, index)
     }
 
     /// Add an item to the display list.
