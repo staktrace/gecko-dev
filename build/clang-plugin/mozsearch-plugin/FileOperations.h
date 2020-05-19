@@ -28,10 +28,12 @@ std::string getAbsolutePath(const std::string &Filename);
 // object goes out of scope. On Windows, we use a named mutex. On POSIX
 // platforms, we use flock.
 struct AutoLockFile {
-  int FileDescriptor = -1;
+  std::string Filename;
 
 #if defined(_WIN32) || defined(_WIN64)
   HANDLE Handle = NULL;
+#else
+  int FileDescriptor = -1;
 #endif
 
   AutoLockFile(const std::string &Filename);
@@ -39,8 +41,9 @@ struct AutoLockFile {
 
   bool success();
 
-  FILE *openFile(const char *Mode);
-  bool truncateFile(size_t Length);
+  FILE *openFile();
+  FILE *openTmp();
+  bool moveTmp();
 };
 
 #endif
