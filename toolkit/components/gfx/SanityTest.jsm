@@ -437,6 +437,7 @@ SanityTest.prototype = {
       return;
     }
 
+    dump("gfx/SanityTest.jsm got profile-after-change with data: " + data + "\n");
     // profile-after-change fires only at startup, so we won't need
     // to use the listener again.
     let tester = listener;

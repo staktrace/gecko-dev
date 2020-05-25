@@ -941,6 +941,7 @@ void nsDocumentViewer::SetNavigationTiming(nsDOMNavigationTiming* timing) {
 //
 NS_IMETHODIMP
 nsDocumentViewer::LoadComplete(nsresult aStatus) {
+  printf_stderr("contentviewer(%p)->LoadComplete called\n", this);
   /* We need to protect ourself against auto-destruction in case the
      window is closed while processing the OnLoad event.  See bug
      http://bugzilla.mozilla.org/show_bug.cgi?id=78445 for more

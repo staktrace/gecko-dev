@@ -4864,6 +4864,7 @@ nsresult XREMain::XRE_mainRun() {
   nsCOMPtr<nsIAppStartup> appStartup(components::AppStartup::Service());
   NS_ENSURE_TRUE(appStartup, NS_ERROR_FAILURE);
 
+  printf_stderr("nsAppRunner calling mDirProvider.DoStartup\n");
   mDirProvider.DoStartup();
 
 #ifdef MOZ_THUNDERBIRD

@@ -218,6 +218,7 @@ nsContentDLF::CreateInstanceForDocument(nsISupports* aContainer,
   nsCOMPtr<nsIContentViewer> contentViewer = NS_NewContentViewer();
 
   // Bind the document to the Content Viewer
+  printf_stderr("contentviewer(%p)->LoadStart being called for doc(%p)\n", contentViewer.get(), aDocument);
   contentViewer->LoadStart(aDocument);
   contentViewer.forget(aContentViewer);
   return NS_OK;
@@ -295,14 +296,11 @@ nsresult nsContentDLF::CreateDocument(
   rv = aChannel->GetURI(getter_AddRefs(aURL));
   if (NS_FAILED(rv)) return rv;
 
-#ifdef NOISY_CREATE_DOC
-  if (nullptr != aURL) {
-    nsAutoString tmp;
-    aURL->ToString(tmp);
-    fputs(NS_LossyConvertUTF16toASCII(tmp).get(), stdout);
-    printf(": creating document\n");
+//#ifdef NOISY_CREATE_DOC
+  if (aURL) {
+    printf_stderr("%s: creating document\n", aURL->GetSpecOrDefault().get());
   }
-#endif
+//#endif
 
   // Create the document
   RefPtr<Document> doc = aDocumentCreator();
@@ -321,6 +319,7 @@ nsresult nsContentDLF::CreateDocument(
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Bind the document to the Content Viewer
+  printf_stderr("contentviewer(%p)->LoadStart being called\n", contentViewer.get());
   contentViewer->LoadStart(doc);
   contentViewer.forget(aContentViewer);
   return NS_OK;

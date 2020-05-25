@@ -210,6 +210,7 @@ nsresult XRE_InitEmbedding2(nsIFile* aLibXULDirectory, nsIFile* aAppDirectory,
 
 void XRE_NotifyProfile() {
   NS_ASSERTION(gDirServiceProvider, "XRE_InitEmbedding was not called!");
+  printf_stderr("XRE_NotifyProfile calling gDirServiceProvider.DoStartup\n");
   gDirServiceProvider->DoStartup();
 }
 

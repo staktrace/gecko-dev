@@ -973,8 +973,10 @@ nsXREDirProvider::DoStartup() {
       NS_WARNING("Failed to create Addons Manager.");
     }
 
+    printf_stderr("nsXREDirProvider firing profile-after-change on startup\n");
     obsSvc->NotifyObservers(nullptr, "profile-after-change", kStartup);
 
+    printf_stderr("nsXREDirProvider creating profile-after-change services\n");
     // Any component that has registered for the profile-after-change category
     // should also be created at this time.
     (void)NS_CreateServicesFromCategory("profile-after-change", nullptr,
