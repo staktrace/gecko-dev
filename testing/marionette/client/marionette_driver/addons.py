@@ -48,6 +48,7 @@ class Addons(object):
 
         """
         body = {"path": path, "temporary": temp}
+        print("Marionette client installing addon at %s" % path)
         try:
             return self._mn._send_message("Addon:Install",
                                           body, key="value")

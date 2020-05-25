@@ -1830,6 +1830,7 @@ var gBrowserInit = {
   },
 
   onLoad() {
+    dump("gBrowser.onLoad running\n");
     gBrowser.addEventListener("DOMUpdateBlockedPopups", gPopupBlockerObserver);
 
     window.addEventListener("AppCommand", HandleAppCommandEvent, true);
