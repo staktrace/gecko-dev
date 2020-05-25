@@ -233,6 +233,19 @@ var BrowserUtils = {
 
     let x = rect.left,
       y = rect.top;
+    let w = rect.width;
+    let h = rect.height;
+
+    const offsetX = {};
+    const offsetY = {};
+    aElement.ownerGlobal.windowUtils.getVisualViewportOffsetRelativeToLayoutViewport(offsetX, offsetY);
+
+    let resolution = aElement.ownerGlobal.windowUtils.getResolution();
+    x = x * resolution;
+    y = y * resolution;
+
+    x = x - resolution*offsetX.value;
+    y = y - resolution*offsetY.value;
 
     // We need to compensate for any iframes that might shift things
     // over. We also need to compensate for zooming.
@@ -240,6 +253,8 @@ var BrowserUtils = {
     while (parentFrame) {
       win = parentFrame.ownerGlobal;
       let cstyle = win.getComputedStyle(parentFrame);
+
+      resolution = resolution * win.windowUtils.getResolution();
 
       let framerect = parentFrame.getBoundingClientRect();
       x +=
@@ -250,6 +265,16 @@ var BrowserUtils = {
         framerect.top +
         parseFloat(cstyle.borderTopWidth) +
         parseFloat(cstyle.paddingTop);
+
+      const loffsetX = {};
+      const loffsetY = {};
+      aElement.ownerGlobal.windowUtils.getVisualViewportOffsetRelativeToLayoutViewport(loffsetX, loffsetY);
+
+      x = x - loffsetX.value;
+      y = y - loffsetY.value;
+
+      x = x * win.windowUtils.getResolution();
+      y = y * win.windowUtils.getResolution();
 
       parentFrame = win.frameElement;
     }
@@ -263,8 +288,8 @@ var BrowserUtils = {
     rect = {
       left: x * fullZoom,
       top: y * fullZoom,
-      width: rect.width * fullZoom,
-      height: rect.height * fullZoom,
+      width: rect.width * fullZoom * resolution,
+      height: rect.height * fullZoom * resolution,
     };
 
     return rect;
