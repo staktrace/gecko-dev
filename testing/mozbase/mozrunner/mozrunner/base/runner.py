@@ -151,6 +151,8 @@ class BaseRunner(object):
                 )
 
         self.crashed = 0
+        if self.logger:
+            self.logger.info('Launched with pid %s' % self.process_handler.pid)
         return self.process_handler.pid
 
     def wait(self, timeout=None):
