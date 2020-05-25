@@ -1114,7 +1114,9 @@ class Marionette(object):
             self.host,
             self.port,
             self.socket_timeout)
+        print("Marionette driver about to connect client")
         self.protocol, _ = self.client.connect()
+        print("Marionette driver done connecting client")
 
         resp = self._send_message("WebDriver:NewSession", capabilities)
         self.session_id = resp["sessionId"]
