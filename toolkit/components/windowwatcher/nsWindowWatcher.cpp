@@ -281,6 +281,7 @@ nsWindowWatcher::OpenWindow(mozIDOMWindowProxy* aParent, const char* aUrl,
                             const char* aName, const char* aFeatures,
                             nsISupports* aArguments,
                             mozIDOMWindowProxy** aResult) {
+  printf_stderr("nsWindowWatcher gonna open %s\n", aUrl);
   nsCOMPtr<nsIArray> argv = ConvertArgsToArray(aArguments);
 
   uint32_t argc = 0;
@@ -297,6 +298,7 @@ nsWindowWatcher::OpenWindow(mozIDOMWindowProxy* aParent, const char* aUrl,
                              /* aForceNoOpener = */ false,
                              /* aForceNoReferrer = */ false,
                              /* aLoadState = */ nullptr, getter_AddRefs(bc)));
+  printf_stderr("nsWindowWatcher did OpenWindowInternal for %s\n", aUrl);
   if (bc) {
     nsCOMPtr<mozIDOMWindowProxy> win(bc->GetDOMWindow());
     win.forget(aResult);
