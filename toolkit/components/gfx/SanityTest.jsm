@@ -450,6 +450,7 @@ SanityTest.prototype = {
     annotateCrashReport();
 
     // Open a tiny window to render our test page, and notify us when it's loaded
+    dump("Gonna open sanityparent window\n");
     var sanityTest = Services.ww.openWindow(
       null,
       "chrome://gfxsanity/content/sanityparent.html",
@@ -461,6 +462,7 @@ SanityTest.prototype = {
         ",chrome,titlebar=0,scrollbars=0,popup=1",
       null
     );
+    dump("Moving sanity window far away\n");
 
     // There's no clean way to have an invisible window and ensure it's always painted.
     // Instead, move the window far offscreen so it doesn't show up during launch.
