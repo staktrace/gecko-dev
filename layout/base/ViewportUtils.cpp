@@ -113,6 +113,16 @@ nsPoint ViewportUtils::LayoutToVisual(const nsPoint& aPt, PresShell* aContext) {
   return CSSPoint::ToAppUnits(transformed);
 }
 
+LayoutDevicePoint ViewportUtils::LayoutToVisual(const LayoutDevicePoint& aPoint, PresShell* aContext) {
+  ScrollableLayerGuid::ViewID targetScrollId = ScrollableLayerGuid::NULL_SCROLL_ID;
+  if (nsIFrame* rootScrollFrame = aContext->GetRootScrollFrame()) {
+    targetScrollId =
+        nsLayoutUtils::FindOrCreateIDFor(rootScrollFrame->GetContent());
+  }
+  auto visualToLayout = ViewportUtils::GetVisualToLayoutTransform<LayoutDevicePixel>(targetScrollId);
+  return visualToLayout.Inverse().TransformPoint(aPoint);
+}
+
 // Definitions of the two explicit instantiations forward declared in the header
 // file. This causes code for these instantiations to be emitted into the object
 // file for ViewportUtils.cpp.

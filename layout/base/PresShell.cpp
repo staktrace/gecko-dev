@@ -4834,6 +4834,27 @@ UniquePtr<RangePaintInfo> PresShell::CreateRangePaintInfo(
   return info;
 }
 
+LayoutDevicePoint ConvertToScreenRelativeVisual(LayoutDeviceIntPoint aPt, nsPresContext* aCtx) {
+  LayoutDevicePoint layoutToVisualPoint(aPt);
+  LayoutDeviceIntRect rootScreenRect;
+  for (nsPresContext* ctx = aCtx; ctx; ctx = ctx->GetParentPresContext()) {
+    PresShell* shell = ctx->PresShell();
+    rootScreenRect = LayoutDeviceIntRect::FromAppUnitsToNearest(
+        shell->GetRootFrame()->GetScreenRectInAppUnits(), ctx->AppUnitsPerDevPixel());
+    if (shell->GetResolution() == 1.0) {
+      continue;
+    }
+    layoutToVisualPoint = ViewportUtils::LayoutToVisual(layoutToVisualPoint, shell);
+  }
+
+  // Then we do the presShell-to-screen conversion, using `rootScreenRect`
+  // which is outside the outermost APZ zoom. XXX this probaly doesn't handle
+  // the nested-presShell scenario where an outer presShell has the zoom.
+  // we want to use the rootScreenRect of the outermost presShell instead,
+  // while also adjusting layoutToVisualPoint for successive presShells as we walk up
+  return layoutToVisualPoint + rootScreenRect.TopLeft();
+}
+
 already_AddRefed<SourceSurface> PresShell::PaintRangePaintInfo(
     const nsTArray<UniquePtr<RangePaintInfo>>& aItems, Selection* aSelection,
     const Maybe<CSSIntRegion>& aRegion, nsRect aArea,
@@ -4843,13 +4864,14 @@ already_AddRefed<SourceSurface> PresShell::PaintRangePaintInfo(
   if (!pc || aArea.width == 0 || aArea.height == 0) return nullptr;
 
   // use the rectangle to create the surface
-  nsIntRect pixelArea = aArea.ToOutsidePixels(pc->AppUnitsPerDevPixel());
+  LayoutDeviceIntRect pixelArea = LayoutDeviceIntRect::FromAppUnitsToOutside(
+      aArea, pc->AppUnitsPerDevPixel());
 
   // if the image should not be resized, scale must be 1
   float scale = 1.0;
-  nsIntRect rootScreenRect =
-      GetRootFrame()->GetScreenRectInAppUnits().ToNearestPixels(
-          pc->AppUnitsPerDevPixel());
+  LayoutDeviceIntRect rootScreenRect =
+      LayoutDeviceIntRect::FromAppUnitsToNearest(
+          GetRootFrame()->GetScreenRectInAppUnits(), pc->AppUnitsPerDevPixel());
 
   nsRect maxSize;
   pc->DeviceContext()->GetClientRect(maxSize);
@@ -4912,11 +4934,17 @@ already_AddRefed<SourceSurface> PresShell::PaintRangePaintInfo(
     // be the case.
     MOZ_ASSERT(resolutionScale >= 1.0);
 
-    // adjust the screen position based on the rescaled size
-    nscoord left = rootScreenRect.x + pixelArea.x;
-    nscoord top = rootScreenRect.y + pixelArea.y;
-    aScreenRect->x = NSToIntFloor(aPoint.x - float(aPoint.x - left) * scale);
-    aScreenRect->y = NSToIntFloor(aPoint.y - float(aPoint.y - top) * scale);
+    // Now we need adjust the screen position of the drag image based on the
+    // scaling factor and any APZ zoom that may be in effect. `pixelArea`'s
+    // top-left corner is in presShell-relative layout space, and we to end up
+    // in a screen-relative visual space. First we do the layout to visual
+    // conversion.
+
+    LayoutDevicePoint visualPoint = ConvertToScreenRelativeVisual(
+        pixelArea.TopLeft(), pc);
+
+    aScreenRect->x = NSToIntFloor(aPoint.x - float(aPoint.x - visualPoint.x) * scale);
+    aScreenRect->y = NSToIntFloor(aPoint.y - float(aPoint.y - visualPoint.y) * scale);
 
     scale *= resolutionScale;
     pixelArea.width = NSToIntFloor(float(pixelArea.width) * scale);
@@ -4926,8 +4954,9 @@ already_AddRefed<SourceSurface> PresShell::PaintRangePaintInfo(
     }
   } else {
     // move aScreenRect to the position of the surface in screen coordinates
-    aScreenRect->MoveTo(rootScreenRect.x + pixelArea.x,
-                        rootScreenRect.y + pixelArea.y);
+    LayoutDevicePoint visualPoint = ConvertToScreenRelativeVisual(
+        pixelArea.TopLeft(), pc);
+    aScreenRect->MoveTo(RoundedToInt(visualPoint));
   }
   aScreenRect->width = pixelArea.width;
   aScreenRect->height = pixelArea.height;

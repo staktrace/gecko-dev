@@ -51,6 +51,14 @@ class ViewportUtils {
   static nsRect VisualToLayout(const nsRect& aRect, PresShell* aContext);
   static nsPoint LayoutToVisual(const nsPoint& aPt, PresShell* aContext);
 
+  /*
+   * This function converts the point from layout to visual space
+   * by applying the inverse of GetLayoutToVisualTransform() of the root
+   * scrollframe of provided presShell.
+   */
+  static LayoutDevicePoint LayoutToVisual(
+      const LayoutDevicePoint& aPoint, PresShell* aContext);
+
   /**
    * Returns non-null if |aFrame| is inside the async zoom container but its
    * parent frame is not, thereby making |aFrame| a root of a subtree of
