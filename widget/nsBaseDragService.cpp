@@ -349,6 +349,7 @@ nsBaseDragService::InvokeDragSessionWithImage(
 
   mScreenPosition.x = aDragEvent->ScreenX(CallerType::System);
   mScreenPosition.y = aDragEvent->ScreenY(CallerType::System);
+  printf_stderr("InvokeDragSessionWithImage(%d) %d,%d\n", XRE_IsParentProcess(), mScreenPosition.x, mScreenPosition.y);
   mInputSource = aDragEvent->MozInputSource();
 
   // If dragging within a XUL tree and no custom drag image was
@@ -399,6 +400,7 @@ nsBaseDragService::InvokeDragSessionWithRemoteImage(
 
   mScreenPosition.x = aDragEvent->ScreenX(CallerType::System);
   mScreenPosition.y = aDragEvent->ScreenY(CallerType::System);
+  printf_stderr("InvokeDragSessionWithRemoteImage(%d) %d,%d\n", XRE_IsParentProcess(), mScreenPosition.x, mScreenPosition.y);
   mInputSource = aDragEvent->MozInputSource();
 
   nsresult rv =
@@ -430,6 +432,7 @@ nsBaseDragService::InvokeDragSessionWithSelection(
 
   mScreenPosition.x = aDragEvent->ScreenX(CallerType::System);
   mScreenPosition.y = aDragEvent->ScreenY(CallerType::System);
+  printf_stderr("InvokeDragSessionWithSelection(%d) %d,%d\n", XRE_IsParentProcess(), mScreenPosition.x, mScreenPosition.y);
   mInputSource = aDragEvent->MozInputSource();
 
   // just get the focused node from the selection

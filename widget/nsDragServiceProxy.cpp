@@ -53,6 +53,7 @@ nsresult nsDragServiceProxy::InvokeDragSessionImpl(
   if (mHasImage || mSelection) {
     nsPresContext* pc;
     RefPtr<SourceSurface> surface;
+    printf_stderr("proxy has screen position %d,%d\n", mScreenPosition.x, mScreenPosition.y);
     DrawDrag(mSourceNode, aRegion, mScreenPosition, &dragRect, &surface, &pc);
     printf_stderr("DragServiceProxy got rect %s in proc %d\n",
       Stringify(dragRect).c_str(), XRE_IsContentProcess());

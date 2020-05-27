@@ -110,6 +110,8 @@
 #include "mozilla/LookAndFeel.h"
 #include "GeckoProfiler.h"
 #include "Units.h"
+#include "LayersLogging.h"
+
 
 #ifdef XP_MACOSX
 #  import <ApplicationServices/ApplicationServices.h>
@@ -1744,6 +1746,10 @@ void EventStateManager::FillInEventFromGestureDown(WidgetMouseEvent* aEvent) {
   // different
   aEvent->mRefPoint =
       mGestureDownPoint - aEvent->mWidget->WidgetToScreenOffset();
+  printf_stderr("FillEventFromDown(%d) downpoint %s offset %s refPoint %s\n",
+    XRE_IsParentProcess(), mozilla::layers::Stringify(mGestureDownPoint).c_str(),
+    mozilla::layers::Stringify(aEvent->mWidget->WidgetToScreenOffset()).c_str(),
+    mozilla::layers::Stringify(aEvent->mRefPoint).c_str());
   aEvent->mModifiers = mGestureModifiers;
   aEvent->mButtons = mGestureDownButtons;
 }

@@ -4943,6 +4943,7 @@ already_AddRefed<SourceSurface> PresShell::PaintRangePaintInfo(
     LayoutDevicePoint visualPoint = ConvertToScreenRelativeVisual(
         pixelArea.TopLeft(), pc);
 
+    printf_stderr("rootScreenRect %s pixelArea %s visualPoint %s point %s\n", Stringify(rootScreenRect).c_str(), Stringify(pixelArea).c_str(), Stringify(visualPoint).c_str(), Stringify(aPoint).c_str());
     aScreenRect->x = NSToIntFloor(aPoint.x - float(aPoint.x - visualPoint.x) * scale);
     aScreenRect->y = NSToIntFloor(aPoint.y - float(aPoint.y - visualPoint.y) * scale);
 
