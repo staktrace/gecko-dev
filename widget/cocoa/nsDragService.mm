@@ -247,6 +247,7 @@ nsresult nsDragService::InvokeDragSessionImpl(nsIArray* aTransferableArray,
                                               const Maybe<CSSIntRegion>& aRegion,
                                               uint32_t aActionType) {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+  printf_stderr("cocoa::nsDragService::InvokeDragSessionImpl\n");
 
   if (!gLastDragView) {
     // gLastDragView is non-null between -[ChildView mouseDown:] and -[ChildView mouseUp:].
@@ -302,6 +303,9 @@ nsresult nsDragService::InvokeDragSessionImpl(nsIArray* aTransferableArray,
   NSImage* image = ConstructDragImage(mSourceNode, aRegion, &draggingPoint);
 
   NSRect localDragRect = image.alignmentRect;
+  printf_stderr("Dragging point is %f,%f\n", draggingPoint.x, draggingPoint.y);
+  printf_stderr("localDragRect is %f,%f %fx%f\n", localDragRect.origin.x, localDragRect.origin.y,
+    localDragRect.size.width, localDragRect.size.height);
   localDragRect.origin.x = draggingPoint.x;
   localDragRect.origin.y = draggingPoint.y - localDragRect.size.height;
 
@@ -587,6 +591,7 @@ void nsDragService::DragMovedWithView(NSDraggingSession* aSession, NSPoint aPoin
   // rather than the initial drag view, but I've seen no ill effects of this.
   CGFloat scaleFactor = nsCocoaUtils::GetBackingScaleFactor(mNativeDragView);
   LayoutDeviceIntPoint devPoint = nsCocoaUtils::CocoaPointsToDevPixels(aPoint, scaleFactor);
+  //printf_stderr("DragMovedWithView, point %d,%d\n", devPoint.x, devPoint.y);
 
   // If the image has changed, call enumerateDraggingItemsWithOptions to get
   // the item being dragged and update its image.

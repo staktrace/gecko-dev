@@ -49,11 +49,13 @@
 #include "gfxContext.h"
 #include "gfxPlatform.h"
 #include <algorithm>
+#include "LayersLogging.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
 using namespace mozilla::image;
+using mozilla::layers::Stringify;
 
 #define DRAGIMAGES_PREF "nglayout.enable_drag_images"
 
@@ -483,6 +485,10 @@ void nsBaseDragService::OpenDragPopup() {
   if (mDragPopup) {
     nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
     if (pm) {
+      printf_stderr("opening drag popup, screen %s image offset %s (delta %s)\n",
+        Stringify(mScreenPosition).c_str(),
+        Stringify(mImageOffset).c_str(),
+        Stringify(mScreenPosition - mImageOffset).c_str());
       pm->ShowPopupAtScreen(mDragPopup, mScreenPosition.x - mImageOffset.x,
                             mScreenPosition.y - mImageOffset.y, false, nullptr);
     }
@@ -633,6 +639,8 @@ nsBaseDragService::DragMoved(int32_t aX, int32_t aY) {
           RoundedToInt(LayoutDeviceIntPoint(aX, aY) /
                        frame->PresContext()->CSSToDevPixelScale()) -
           mImageOffset;
+      printf_stderr("DragMoved aX=%d aY=%d, cssPos = %s\n",
+        aX, aY, Stringify(cssPos).c_str());
       (static_cast<nsMenuPopupFrame*>(frame))->MoveTo(cssPos, true);
     }
   }
@@ -667,6 +675,11 @@ nsresult nsBaseDragService::DrawDrag(nsINode* aDOMNode,
                            aScreenPosition.y - mImageOffset.y, 1, 1);
 
   // if a drag image was specified, use that, otherwise, use the source node
+  if (aDOMNode) {
+    std::stringstream str;
+    str << aDOMNode;
+    printf_stderr("aDOMNode is %s\n", str.str().c_str());
+  }
   nsCOMPtr<nsINode> dragNode = mImage ? mImage.get() : aDOMNode;
 
   // get the presshell for the node being dragged. If the drag image is not in

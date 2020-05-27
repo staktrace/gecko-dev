@@ -11,6 +11,7 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
 #include "nsContentUtils.h"
+#include "LayersLogging.h"
 
 using mozilla::CSSIntRegion;
 using mozilla::LayoutDeviceIntRect;
@@ -22,6 +23,7 @@ using mozilla::gfx::DataSourceSurface;
 using mozilla::gfx::SourceSurface;
 using mozilla::gfx::SurfaceFormat;
 using mozilla::ipc::Shmem;
+using mozilla::layers::Stringify;
 
 nsDragServiceProxy::nsDragServiceProxy() = default;
 
@@ -52,6 +54,8 @@ nsresult nsDragServiceProxy::InvokeDragSessionImpl(
     nsPresContext* pc;
     RefPtr<SourceSurface> surface;
     DrawDrag(mSourceNode, aRegion, mScreenPosition, &dragRect, &surface, &pc);
+    printf_stderr("DragServiceProxy got rect %s in proc %d\n",
+      Stringify(dragRect).c_str(), XRE_IsContentProcess());
 
     if (surface) {
       RefPtr<DataSourceSurface> dataSurface = surface->GetDataSurface();
