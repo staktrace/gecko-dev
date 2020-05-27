@@ -231,6 +231,11 @@ struct RangePaintInfo {
   // offset of builder's reference frame to the root frame
   nsPoint mRootOffset;
 
+  // Resolution at which the items are normally painted. So if we're painting
+  // these items separately in a range, we may want to paint them at this
+  // resolution.
+  float mResolution = 1.0;
+
   RangePaintInfo(nsRange* aRange, nsIFrame* aFrame)
       : mRange(aRange),
         mBuilder(aFrame, nsDisplayListBuilderMode::Painting, false) {
@@ -4777,6 +4782,30 @@ UniquePtr<RangePaintInfo> PresShell::CreateRangePaintInfo(
     BuildDisplayListForNode(endContainer);
   }
 
+  // If one of the ancestor presShells (including this one) has a resolution
+  // set, we may have some APZ zoom applied. That means we may need to rasterize
+  // the nodes at that zoom level and do visual/layout viewport transformations.
+  // So populate `info` with relevant information, and also wrap the display
+  // list created above inside an nsDisplayAsyncZoom display item.
+  for (nsPresContext* ctx = GetPresContext(); ctx;
+       ctx = ctx->GetParentPresContext()) {
+    PresShell* shell = ctx->PresShell();
+    float resolution = shell->GetResolution();
+    if (resolution == 1.0) {
+      continue;
+    }
+
+    info->mResolution *= resolution;
+    nsIFrame* rootScrollFrame = shell->GetRootScrollFrame();
+    ViewID zoomedId =
+        nsLayoutUtils::FindOrCreateIDFor(rootScrollFrame->GetContent());
+
+    nsDisplayList wrapped;
+    wrapped.AppendNewToTop<nsDisplayAsyncZoom>(&info->mBuilder, rootScrollFrame,
+                                               &info->mList, nullptr, zoomedId);
+    info->mList.AppendToTop(&wrapped);
+  }
+
 #ifdef DEBUG
   if (gDumpRangePaintList) {
     fprintf(stderr, "CreateRangePaintInfo --- before ClipListToRange:\n");
@@ -4865,15 +4894,36 @@ already_AddRefed<SourceSurface> PresShell::PaintRangePaintInfo(
       }
     }
 
-    pixelArea.width = NSToIntFloor(float(pixelArea.width) * scale);
-    pixelArea.height = NSToIntFloor(float(pixelArea.height) * scale);
-    if (!pixelArea.width || !pixelArea.height) return nullptr;
+    // Pick a resolution scale factor that is the highest we need for any of
+    // the items. This means some items may get rendered at a higher-than-needed
+    // resolution but at least nothing will be avoidably blurry.
+    float resolutionScale = 1.0;
+    for (const UniquePtr<RangePaintInfo>& rangeInfo : aItems) {
+      resolutionScale = std::max(resolutionScale, rangeInfo->mResolution);
+    }
+    // Clamp the max resolution so that `pixelArea` when scaled by `scale` and
+    // `resolutionScale` isn't bigger than `maxSize`. This prevents
+    resolutionScale =
+        std::min(resolutionScale, maxSize.width / (scale * pixelArea.width));
+    resolutionScale =
+        std::min(resolutionScale, maxSize.height / (scale * pixelArea.height));
+    // The following assert should only get hit if pixelArea scaled by `scale`
+    // alone would already have been bigger than `maxSize`, which should never
+    // be the case.
+    MOZ_ASSERT(resolutionScale >= 1.0);
 
     // adjust the screen position based on the rescaled size
     nscoord left = rootScreenRect.x + pixelArea.x;
     nscoord top = rootScreenRect.y + pixelArea.y;
     aScreenRect->x = NSToIntFloor(aPoint.x - float(aPoint.x - left) * scale);
     aScreenRect->y = NSToIntFloor(aPoint.y - float(aPoint.y - top) * scale);
+
+    scale *= resolutionScale;
+    pixelArea.width = NSToIntFloor(float(pixelArea.width) * scale);
+    pixelArea.height = NSToIntFloor(float(pixelArea.height) * scale);
+    if (!pixelArea.width || !pixelArea.height) {
+      return nullptr;
+    }
   } else {
     // move aScreenRect to the position of the surface in screen coordinates
     aScreenRect->MoveTo(rootScreenRect.x + pixelArea.x,
@@ -4914,7 +4964,9 @@ already_AddRefed<SourceSurface> PresShell::PaintRangePaintInfo(
 
   gfxMatrix initialTM = ctx->CurrentMatrixDouble();
 
-  if (resize) initialTM.PreScale(scale, scale);
+  if (resize) {
+    initialTM.PreScale(scale, scale);
+  }
 
   // translate so that points are relative to the surface area
   gfxPoint surfaceOffset = nsLayoutUtils::PointToGfxPoint(
