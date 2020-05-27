@@ -4835,6 +4835,21 @@ UniquePtr<RangePaintInfo> PresShell::CreateRangePaintInfo(
 }
 
 LayoutDevicePoint ConvertToScreenRelativeVisual(LayoutDeviceIntPoint aPt, nsPresContext* aCtx) {
+  // nsIFrame* rootFrame = aCtx->PresShell()->GetRootFrame();
+  // nsIFrame* displayRootFrame = nsLayoutUtils::GetDisplayRootFrame(rootFrame);
+  // 
+  // Matrix4x4Flagged transform = nsLayoutUtils::GetTransformToAncestor(
+  //   RelativeTo{rootFrame},
+  //   RelativeTo{displayRootFrame, ViewportType::Visual});
+  // LayoutDevicePoint result(aPt);
+  // result = LayoutDevicePoint::FromUnknownPoint(transform.TransformPoint(result.ToUnknownPoint()));
+
+  // result += LayoutDeviceRect::FromAppUnits(
+  //       displayRootFrame->GetScreenRectInAppUnits(),
+  //       displayRootFrame->PresContext()->AppUnitsPerDevPixel()).TopLeft();
+
+  // return result;
+
   LayoutDevicePoint layoutToVisualPoint(aPt);
   LayoutDeviceIntRect rootScreenRect;
   for (nsPresContext* ctx = aCtx; ctx; ctx = ctx->GetParentPresContext()) {
