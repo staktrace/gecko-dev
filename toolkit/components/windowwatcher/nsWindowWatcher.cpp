@@ -276,6 +276,8 @@ static already_AddRefed<nsIArray> ConvertArgsToArray(nsISupports* aArguments) {
   return singletonArray.forget();
 }
 
+int gLogPipes_kats = 0;
+
 NS_IMETHODIMP
 nsWindowWatcher::OpenWindow(mozIDOMWindowProxy* aParent, const char* aUrl,
                             const char* aName, const char* aFeatures,
@@ -299,6 +301,7 @@ nsWindowWatcher::OpenWindow(mozIDOMWindowProxy* aParent, const char* aUrl,
                              /* aForceNoReferrer = */ false,
                              /* aLoadState = */ nullptr, getter_AddRefs(bc)));
   printf_stderr("nsWindowWatcher did OpenWindowInternal for %s\n", aUrl);
+  gLogPipes_kats = 10;
   if (bc) {
     nsCOMPtr<mozIDOMWindowProxy> win(bc->GetDOMWindow());
     win.forget(aResult);

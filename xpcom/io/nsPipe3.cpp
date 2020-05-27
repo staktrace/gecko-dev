@@ -1376,11 +1376,16 @@ nsPipeInputStream::IsNonBlocking(bool* aNonBlocking) {
   return NS_OK;
 }
 
+extern int gLogPipes_kats;
 NS_IMETHODIMP
 nsPipeInputStream::AsyncWait(nsIInputStreamCallback* aCallback, uint32_t aFlags,
                              uint32_t aRequestedCount,
                              nsIEventTarget* aTarget) {
   LOG(("III AsyncWait [this=%p]\n", this));
+  if (gLogPipes_kats) {
+    gLogPipes_kats--;
+    printf_stderr("nsPipeInputStream::AsyncWait on %p\n", this);
+  }
 
   nsPipeEvents pipeEvents;
   {
