@@ -1385,6 +1385,7 @@ nsPipeInputStream::AsyncWait(nsIInputStreamCallback* aCallback, uint32_t aFlags,
   if (gLogPipes_kats) {
     gLogPipes_kats--;
     printf_stderr("nsPipeInputStream::AsyncWait on %p\n", this);
+    MOZ_CRASH();
   }
 
   nsPipeEvents pipeEvents;

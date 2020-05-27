@@ -99,6 +99,7 @@ nsresult nsDocumentOpenInfo::Prepare() {
 
 NS_IMETHODIMP nsDocumentOpenInfo::OnStartRequest(nsIRequest* request) {
   LOG(("[0x%p] nsDocumentOpenInfo::OnStartRequest", this));
+  MOZ_CRASH();
   MOZ_ASSERT(request);
   if (!request) {
     return NS_ERROR_UNEXPECTED;
