@@ -492,9 +492,8 @@ static bool InitLog(const EnvCharType* aEnvVar, const char* aMsg,
 #  define ENVVAR_PRINTF "%s"
 #endif
 
-  if (strcmp(aProcType, "tab") == 0) {
-    printf_stderr(ENVVAR_PRINTF " -> %d (" ENVVAR_PRINTF ")\n", envvar, !!value, value);
-  }
+  bool logit = (strcmp(aProcType, "tab") == 0);
+  if (logit) printf_stderr(ENVVAR_PRINTF " -> %d (" ENVVAR_PRINTF ")\n", envvar, !!value, value);
   if (value) {
     nsTDependentString<EnvCharType> fname(value);
     if (fname.EqualsLiteral("1")) {
@@ -521,6 +520,7 @@ static bool InitLog(const EnvCharType* aEnvVar, const char* aMsg,
         if (hasLogExtension) {
           fname.AppendLiteral(".log");
         }
+        if (logit) printf_stderr("Made filename " ENVVAR_PRINTF "\n", fname.get());
       }
 #ifdef XP_WIN
       FILE* stream = ::_wfopen(fname.get(), L"wN");
@@ -529,11 +529,14 @@ static bool InitLog(const EnvCharType* aEnvVar, const char* aMsg,
       FILE* stream = ::fopen(fname.get(), "w");
       const char* fp = fname.get();
 #endif
+      if (logit) printf_stderr("Opened file: %d\n", !!stream);
       if (stream) {
         MozillaRegisterDebugFD(fileno(stream));
 #ifdef MOZ_ENABLE_FORKSERVER
+        if (logit) printf_stderr("registering forkserver\n");
         base::RegisterForkServerNoCloseFD(fileno(stream));
 #endif
+        if (logit) printf_stderr("registered forkserver\n");
         *aResult = stream;
         fprintf(stderr,
                 "### " ENVVAR_PRINTF " defined -- logging %s to " ENVVAR_PRINTF
@@ -547,9 +550,11 @@ static bool InitLog(const EnvCharType* aEnvVar, const char* aMsg,
         MOZ_ASSERT(false, "Tried and failed to create an XPCOM log");
       }
 #undef ENVVAR_PRINTF
+      if (logit) printf_stderr("initLog done, returning\n");
       return stream != nullptr;
     }
   }
+  if (logit) printf_stderr("initLog done, value false\n");
   return false;
 }
 
