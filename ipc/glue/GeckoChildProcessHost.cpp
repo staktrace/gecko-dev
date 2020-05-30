@@ -706,6 +706,7 @@ bool GeckoChildProcessHost::AsyncLaunch(std::vector<std::string> aExtraOpts) {
           IOThread(), __func__,
           [this, p](const LaunchResults aResults) {
             {
+              printf_stderr("subprocess %s launch successful\n", XRE_GeckoProcessTypeToString(mProcessType));
               if (!OpenPrivilegedHandle(base::GetProcId(aResults.mHandle))
 #ifdef XP_WIN
                   // If we failed in opening the process handle, try harder by
@@ -742,6 +743,7 @@ bool GeckoChildProcessHost::AsyncLaunch(std::vector<std::string> aExtraOpts) {
           [this, p](const LaunchError aError) {
             // WaitUntilConnected might be waiting for us to signal.
             // If something failed let's set the error state and notify.
+            printf_stderr("Failed to launch %s subprocess\n", XRE_GeckoProcessTypeToString(mProcessType));
             CHROMIUM_LOG(ERROR)
                 << "Failed to launch "
                 << XRE_GeckoProcessTypeToString(mProcessType) << " subprocess";
@@ -1017,10 +1019,12 @@ RefPtr<ProcessLaunchPromise> BaseProcessLauncher::PerformAsyncLaunch() {
   return DoLaunch()->Then(
       mLaunchThread, __func__,
       [self](base::ProcessHandle aHandle) {
+        printf_stderr("DoLaunch promise resolved, finishing launch\n");
         self->mResults.mHandle = aHandle;
         return self->FinishLaunch();
       },
       [](LaunchError aError) {
+        printf_stderr("DoLaunch promise rejected\n");
         return ProcessLaunchPromise::CreateAndReject(aError, __func__);
       });
 }
@@ -1552,7 +1556,7 @@ bool WindowsProcessLauncher::DoSetup() {
 }
 
 RefPtr<ProcessHandlePromise> WindowsProcessLauncher::DoLaunch() {
-  printf_stderr("WindowsProcessLauncher::DoLaunch [%s] [%s]\n",
+  printf_stderr("WindowsProcessLauncher::DoLaunch [%S] [%S]\n",
     mCmdLine->program().c_str(), mCmdLine->command_line_string().c_str());
   ProcessHandle handle = 0;
 #  ifdef MOZ_SANDBOX
@@ -1580,6 +1584,7 @@ RefPtr<ProcessHandlePromise> WindowsProcessLauncher::DoLaunch() {
 }
 
 bool WindowsProcessLauncher::DoFinishLaunch() {
+  printf_stderr("WindowsProcessLauncher::FinishLaunch\n");
   if (!BaseProcessLauncher::DoFinishLaunch()) {
     return false;
   }
@@ -1604,12 +1609,14 @@ bool WindowsProcessLauncher::DoFinishLaunch() {
   }
 #  endif  // MOZ_SANDBOX
 
+  printf_stderr("WindowsProcessLauncher::FinishLaunch ok\n");
   return true;
 }
 #endif  // XP_WIN
 
 RefPtr<ProcessLaunchPromise> BaseProcessLauncher::FinishLaunch() {
   if (!DoFinishLaunch()) {
+    printf_stderr("DoLaunchFinish failed\n");
     return ProcessLaunchPromise::CreateAndReject(LaunchError{}, __func__);
   }
 
@@ -1621,6 +1628,7 @@ RefPtr<ProcessLaunchPromise> BaseProcessLauncher::FinishLaunch() {
   Telemetry::AccumulateTimeDelta(Telemetry::CHILD_PROCESS_LAUNCH_MS,
                                  mStartTimeStamp);
 
+  printf_stderr("FinishLaunch done\n");
   return ProcessLaunchPromise::CreateAndResolve(mResults, __func__);
 }
 
