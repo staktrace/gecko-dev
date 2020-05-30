@@ -1010,6 +1010,7 @@ static bool Contains(const std::vector<std::string>& aExtraOpts,
 #endif  // defined(XP_WIN) && (defined(MOZ_SANDBOX) || defined(_ARM64_))
 
 RefPtr<ProcessLaunchPromise> BaseProcessLauncher::PerformAsyncLaunch() {
+  printf_stderr("BaseProcessLauncher::PerformAsyncLaunch\n");
   if (!DoSetup()) {
     return ProcessLaunchPromise::CreateAndReject(LaunchError{}, __func__);
   }
@@ -1187,6 +1188,7 @@ bool PosixProcessLauncher::DoSetup() {
   mChildArgv.push_back(exePath.value());
 
   if (pathType == BinPathType::Self) {
+    printf_stderr("In PosixProcessLauncher, making a content proc\n");
     mChildArgv.push_back("-contentproc");
   }
 
@@ -1266,6 +1268,11 @@ RefPtr<ProcessHandlePromise> AndroidProcessLauncher::DoLaunch() {
 
 #ifdef OS_POSIX
 RefPtr<ProcessHandlePromise> PosixProcessLauncher::DoLaunch() {
+  printf_stderr("PosixProcessLauncher::DoLaunch");
+  for (const auto& str : mChildArgv) {
+    printf_stderr(" [%s]", str.c_str());
+  }
+  printf_stderr("\n");
   ProcessHandle handle = 0;
   if (!base::LaunchApp(mChildArgv, *mLaunchOptions, &handle)) {
     return ProcessHandlePromise::CreateAndReject(LaunchError{}, __func__);
@@ -1404,6 +1411,7 @@ bool WindowsProcessLauncher::DoSetup() {
   mCmdLine.emplace(exePath.ToWStringHack());
 
   if (pathType == BinPathType::Self) {
+    printf_stderr("In WindowsProcessLauncher, making a content proc\n");
     mCmdLine->AppendLooseValue(UTF8ToWide("-contentproc"));
   }
 
@@ -1568,6 +1576,8 @@ bool WindowsProcessLauncher::DoSetup() {
 }
 
 RefPtr<ProcessHandlePromise> WindowsProcessLauncher::DoLaunch() {
+  printf_stderr("WindowsProcessLauncher::DoLaunch [%s] [%s]\n",
+    mCmdLine->program().c_str(), mCmdLine->command_line_string().c_str());
   ProcessHandle handle = 0;
 #  ifdef MOZ_SANDBOX
   if (mUseSandbox) {
