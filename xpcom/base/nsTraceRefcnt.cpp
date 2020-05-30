@@ -491,6 +491,9 @@ static bool InitLog(const EnvCharType* aEnvVar, const char* aMsg,
 #  define ENVVAR_PRINTF "%s"
 #endif
 
+  if (strcmp(aProcType, "tab") == 0) {
+    printf_stderr(ENVVAR_PRINTF " -> %d (" ENVVAR_PRINTF ")\n", envvar, !!value, value);
+  }
   if (value) {
     nsTDependentString<EnvCharType> fname(value);
     if (fname.EqualsLiteral("1")) {
@@ -571,6 +574,9 @@ static void DoInitTraceLog(const char* aProcType) {
   }
   bool defined = InitLog(ENVVAR("XPCOM_MEM_BLOAT_LOG"), "bloat/leaks",
                          &gBloatLog, aProcType);
+  if (strcmp(aProcType, "tab") == 0) {
+    printf_stderr("Done XPCOM_MEM_BLOAT_LOG init, defined %d\n", defined);
+  }
   if (!defined) {
     gLogLeaksOnly =
         InitLog(ENVVAR("XPCOM_MEM_LEAK_LOG"), "leaks", &gBloatLog, aProcType);
