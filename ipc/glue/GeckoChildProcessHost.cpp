@@ -731,6 +731,7 @@ bool GeckoChildProcessHost::AsyncLaunch(std::vector<std::string> aExtraOpts) {
 #endif
 
               MonitorAutoLock lock(mMonitor);
+              printf_stderr("setting process_created, notifying lock\n");
               // The OnChannel{Connected,Error} may have already advanced the
               // state.
               if (mProcessState < PROCESS_CREATED) {
@@ -763,6 +764,7 @@ bool GeckoChildProcessHost::AsyncLaunch(std::vector<std::string> aExtraOpts) {
 bool GeckoChildProcessHost::WaitUntilConnected(int32_t aTimeoutMs) {
   AUTO_PROFILER_LABEL("GeckoChildProcessHost::WaitUntilConnected", OTHER);
 
+  printf_stderr("WaitUntilConnected(%d)\n", aTimeoutMs);
   // NB: this uses a different mechanism than the chromium parent
   // class.
   TimeDuration timeout = (aTimeoutMs > 0)
@@ -776,22 +778,27 @@ bool GeckoChildProcessHost::WaitUntilConnected(int32_t aTimeoutMs) {
   // We'll receive several notifications, we need to exit when we
   // have either successfully launched or have timed out.
   while (mProcessState != PROCESS_CONNECTED) {
+    printf_stderr("WaitUntilConnected saw mProcessState %d\n", (int)mProcessState);
     // If there was an error then return it, don't wait out the timeout.
     if (mProcessState == PROCESS_ERROR) {
+      printf_stderr("WaitUntilConnected saw mProcessState ERROR\n");
       break;
     }
 
     CVStatus status = lock.Wait(timeout);
     if (status == CVStatus::Timeout) {
+      printf_stderr("WaitUntilConnected timed out\n");
       break;
     }
 
     if (timeout != TimeDuration::Forever()) {
       current = TimeStamp::Now();
       timeout -= current - waitStart;
+      printf_stderr("WaitUntilConnected woke up, trimming timeout to %f\n", timeout.ToMilliseconds());
       waitStart = current;
     }
   }
+  printf_stderr("WaitUntilConnected exited loop with mProcessState %d\n", (int)mProcessState);
 
   return mProcessState == PROCESS_CONNECTED;
 }
