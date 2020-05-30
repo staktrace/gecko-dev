@@ -567,6 +567,9 @@ static void DoInitTraceLog(const char* aProcType) {
 #  define ENVVAR(x) x
 #endif
 
+  if (strcmp(aProcType, "tab") == 0) {
+    printf_stderr("Initing trace log for content\n");
+  }
   bool defined = InitLog(ENVVAR("XPCOM_MEM_BLOAT_LOG"), "bloat/leaks",
                          &gBloatLog, aProcType);
   if (!defined) {
