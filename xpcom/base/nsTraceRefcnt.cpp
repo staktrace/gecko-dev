@@ -569,6 +569,7 @@ static void DoInitTraceLog(const char* aProcType) {
 
   if (strcmp(aProcType, "tab") == 0) {
     printf_stderr("Initing trace log for content\n");
+    MOZ_CRASH();
   }
   bool defined = InitLog(ENVVAR("XPCOM_MEM_BLOAT_LOG"), "bloat/leaks",
                          &gBloatLog, aProcType);
