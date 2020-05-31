@@ -538,6 +538,10 @@ static bool InitLog(const EnvCharType* aEnvVar, const char* aMsg,
 #endif
         if (logit) printf_stderr("registered forkserver\n");
         *aResult = stream;
+        printf_stderr(
+                "ps/### " ENVVAR_PRINTF " defined -- logging %s to " ENVVAR_PRINTF
+                "\n",
+                envvar, aMsg, fp);
         fprintf(stderr,
                 "### " ENVVAR_PRINTF " defined -- logging %s to " ENVVAR_PRINTF
                 "\n",
