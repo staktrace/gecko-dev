@@ -403,9 +403,11 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
                            OTHER);
   AUTO_PROFILER_INIT;
   AUTO_PROFILER_LABEL("XRE_InitChildProcess", OTHER);
+  bool d = XRE_IsContentProcess();
 
   // Ensure AbstractThread is minimally setup, so async IPC messages
   // work properly.
+  if (d) printf_stderr("InitChildProcess:: InitTLS\n");
   AbstractThread::InitTLS();
 
   // Complete 'task_t' exchange for Mac OS X. This structure has the same size
@@ -502,6 +504,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 
 #endif /* XP_MACOSX */
 
+  if (d) printf_stderr("InitChildProcess:: errorhandling\n");
   SetupErrorHandling(aArgv[0]);
 
   bool exceptionHandlerIsSet = false;
@@ -510,6 +513,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
     if (aArgc < 1) {
       return NS_ERROR_FAILURE;
     }
+  if (d) printf_stderr("InitChildProcess:: crashtime\n");
     const char* const crashTimeAnnotationArg = aArgv[--aArgc];
     uintptr_t crashTimeAnnotationFile =
         static_cast<uintptr_t>(std::stoul(std::string(crashTimeAnnotationArg)));
@@ -573,6 +577,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   }
 #endif
 
+  if (d) printf_stderr("InitChildProcess:: parentpid\n");
   // child processes launched by GeckoChildProcessHost get this magic
   // argument appended to their command lines
   const char* const parentPIDString = aArgv[aArgc - 1];
@@ -593,6 +598,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   // On Win7+, register the application user model id passed in by
   // parent. This insures windows created by the container properly
   // group with the parent app on the Win7 taskbar.
+  if (d) printf_stderr("InitChildProcess:: appmodeluid\n");
   const char* const appModelUserId = aArgv[--aArgc];
   if (appModelUserId) {
     // '-' implies no support
@@ -609,6 +615,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 
   base::AtExitManager exitManager;
 
+  if (d) printf_stderr("InitChildProcess:: cmdline\n");
   nsresult rv = XRE_InitCommandLine(aArgc, aArgv);
   if (NS_FAILED(rv)) {
     return NS_ERROR_FAILURE;
@@ -634,6 +641,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   }
 
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
+  if (d) printf_stderr("InitChildProcess:: sandbox\n");
   if (aChildData->sandboxBrokerServices) {
     SandboxBroker::Initialize(aChildData->sandboxBrokerServices);
     SandboxBroker::GeckoDependentInitialize();
@@ -646,6 +654,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
     // spurious warnings about XPCOM objects being destroyed from a
     // static context.
 
+  if (d) printf_stderr("InitChildProcess:: msgloop\n");
     Maybe<IOInterposerInit> ioInterposerGuard;
 
     // Associate this thread with a UI MessageLoop
@@ -714,6 +723,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
       }
 
 #if defined(XP_WIN)
+  if (d) printf_stderr("InitChildProcess:: shutdown\n");
       // Set child processes up such that they will get killed after the
       // chrome process is killed in cases where the user shuts the system
       // down or logs off.
@@ -731,6 +741,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
           aChildData->ProvideLogFunction);
 #endif
       if (XRE_GetProcessType() != GeckoProcessType_RemoteSandboxBroker) {
+  if (d) printf_stderr("InitChildProcess:: initdirs\n");
         // Remote sandbox launcher process doesn't have prerequisites for
         // these...
         mozilla::FilePreferences::InitDirectoriesWhitelist();
@@ -747,6 +758,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 
       // Allow ProcessChild to clean up after itself before going out of
       // scope and being deleted
+  if (d) printf_stderr("InitChildProcess:: cleanup\n");
       process->CleanUp();
       mozilla::Omnijar::CleanUp();
 
