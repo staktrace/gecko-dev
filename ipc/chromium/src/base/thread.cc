@@ -160,6 +160,7 @@ void Thread::StopSoon() {
 void Thread::ThreadMain() {
   nsCOMPtr<nsIThread> xpcomThread;
   auto loopType = startup_data_->options.message_loop_type;
+  if (gLogContentProc_kats) printf_stderr("in ThreadMain, loop type %d\n", (int)loopType);
   if (loopType == MessageLoop::TYPE_MOZILLA_NONMAINTHREAD ||
       loopType == MessageLoop::TYPE_MOZILLA_NONMAINUITHREAD) {
     auto queue =
@@ -171,6 +172,7 @@ void Thread::ThreadMain() {
     xpcomThread = NS_GetCurrentThread();
   }
 
+  if (gLogContentProc_kats) printf_stderr("gonna set up message loop\n");
   AUTO_PROFILER_REGISTER_THREAD(name_.c_str());
   mozilla::IOInterposer::RegisterCurrentThread();
 
@@ -181,6 +183,7 @@ void Thread::ThreadMain() {
   xpcomThread = nullptr;
 
   // Complete the initialization of our Thread object.
+  if (gLogContentProc_kats) printf_stderr("gonna do thread naming stuff %s\n", name_.c_str());
   thread_id_ = PlatformThread::CurrentId();
   PlatformThread::SetName(name_.c_str());
   NS_SetCurrentThreadName(name_.c_str());
@@ -189,9 +192,11 @@ void Thread::ThreadMain() {
                                  startup_data_->options.permanent_hang_timeout);
   message_loop_ = &message_loop;
 
+  if (gLogContentProc_kats) printf_stderr("gonna Thread::Init()\n");
   // Let the thread do extra initialization.
   // Let's do this before signaling we are started.
   Init();
+  if (gLogContentProc_kats) printf_stderr("gonna signal startup_data_.event\n");
 
   startup_data_->event.Signal();
   // startup_data_ can't be touched anymore since the starting thread is now
