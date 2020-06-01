@@ -3520,18 +3520,23 @@ bool SetRemoteExceptionHandler(const char* aCrashPipe,
                                uintptr_t aCrashTimeAnnotationFile) {
   MOZ_ASSERT(!gExceptionHandler, "crash client already init'd");
 
+  printf_stderr("before InitializeAnnotationFacilities\n");
+
   InitializeAnnotationFacilities();
 
 #if defined(XP_WIN)
   gChildCrashAnnotationReportFd = (FileHandle)aCrashTimeAnnotationFile;
+  printf_stderr("before new google_breakpad::ExceptionHandler\n");
   gExceptionHandler = new google_breakpad::ExceptionHandler(
       L"", ChildFPEFilter, ChildMinidumpCallback,
       nullptr,  // no callback context
       google_breakpad::ExceptionHandler::HANDLER_ALL, GetMinidumpType(),
       NS_ConvertASCIItoUTF16(aCrashPipe).get(), nullptr);
+  printf_stderr("before set_handle_debug_exceptions\n");
   gExceptionHandler->set_handle_debug_exceptions(true);
 
 #  if defined(HAVE_64BIT_BUILD)
+  printf_stderr("before SetJitExceptionHandler\n");
   SetJitExceptionHandler();
 #  endif
 #elif defined(XP_LINUX)
@@ -3553,10 +3558,13 @@ bool SetRemoteExceptionHandler(const char* aCrashPipe,
                                             aCrashPipe);
 #endif
 
+  printf_stderr("before mozalloc_set_oom_abort_handler\n");
   mozalloc_set_oom_abort_handler(AnnotateOOMAllocationSize);
 
+  printf_stderr("before set_terminate\n");
   oldTerminateHandler = std::set_terminate(&TerminateHandler);
 
+  printf_stderr("before return gExceptionHandler->IsOutOfProcess()\n");
   // we either do remote or nothing, no fallback to regular crash reporting
   return gExceptionHandler->IsOutOfProcess();
 }
