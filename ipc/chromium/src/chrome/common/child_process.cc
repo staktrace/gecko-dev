@@ -12,12 +12,15 @@
 
 ChildProcess* ChildProcess::child_process_;
 
+extern bool gLogContentProc_kats;
 ChildProcess::ChildProcess(ChildThread* child_thread)
     : child_thread_(child_thread) {
   DCHECK(!child_process_);
   child_process_ = this;
+if (gLogContentProc_kats) printf_stderr("ChildProcess::ChildProcess\n");
   if (child_thread_.get())  // null in unittests.
     child_thread_->Run();
+if (gLogContentProc_kats) printf_stderr("ChildProcess::ChildProcess done run\n");
 }
 
 ChildProcess::~ChildProcess() {

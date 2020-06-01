@@ -28,6 +28,7 @@ ChildThread::ChildThread(Thread::Options options)
 ChildThread::~ChildThread() {}
 
 bool ChildThread::Run() {
+if (gLogContentProc_kats) printf_stderr("ChildThread::Run\n");
   bool r = StartWithOptions(options_);
   return r;
 }

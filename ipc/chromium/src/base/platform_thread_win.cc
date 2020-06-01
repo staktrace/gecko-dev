@@ -11,6 +11,7 @@
 
 #include "nsThreadUtils.h"
 
+extern bool gLogContentProc_kats;
 namespace {
 
 DWORD __stdcall ThreadFunc(void* closure) {
@@ -54,8 +55,10 @@ bool PlatformThread::Create(size_t stack_size, Delegate* delegate,
   // have to work running on CreateThread() threads anyway, since we run code
   // on the Windows thread pool, etc.  For some background on the difference:
   //   http://www.microsoft.com/msj/1099/win32/win321099.aspx
+  if (gLogContentProc_kats) printf_stderr("PlatformThread::Create Calling CreateThread [%zu] [%u]\n", stack_size, flags);
   *thread_handle =
       CreateThread(NULL, stack_size, ThreadFunc, delegate, flags, NULL);
+  if (gLogContentProc_kats) printf_stderr("PlatformThread::Create done calling [%p]\n", thread_handle);
   return *thread_handle != NULL;
 }
 

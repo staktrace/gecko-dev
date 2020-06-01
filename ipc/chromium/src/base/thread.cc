@@ -92,20 +92,25 @@ bool Thread::Start() { return StartWithOptions(Options()); }
 bool Thread::StartWithOptions(const Options& options) {
   DCHECK(!message_loop_);
 
+  if (gLogContentProc_kats) printf_stderr("Thread::StartWithOptions\n");
   SetThreadWasQuitProperly(false);
 
   StartupData startup_data(options);
   startup_data_ = &startup_data;
 
+  if (gLogContentProc_kats) printf_stderr("calling PlatformThread::Create\n");
   if (!PlatformThread::Create(options.stack_size, this, &thread_)) {
     DLOG(ERROR) << "failed to create thread";
     startup_data_ = NULL;  // Record that we failed to start.
+  if (gLogContentProc_kats) printf_stderr("PlatformThread::Create failed\n");
     return false;
   }
 
+  if (gLogContentProc_kats) printf_stderr("Waiting for startup_data.event\n");
   // Wait for the thread to start and initialize message_loop_
   startup_data.event.Wait();
 
+  if (gLogContentProc_kats) printf_stderr("Thread::StartWithOptions done\n");
   DCHECK(message_loop_);
   return true;
 }
