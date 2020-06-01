@@ -202,7 +202,9 @@ void ExceptionHandler::Initialize(
   if (client.get() != NULL) {
     // If successful in registering with the monitoring process,
     // there is no need to setup in-process crash generation.
+    printf_stderr("before client->register()\n");
     if (client->Register()) {
+      printf_stderr("before client.release()\n");
       crash_generation_client_.reset(client.release());
     }
   }
@@ -239,7 +241,6 @@ void ExceptionHandler::Initialize(
     }
 
 
-    printf_stderr("before LoadLibrary(Ldbghelp.dll);\n");
     dbghelp_module_ = LoadLibrary(L"dbghelp.dll");
     if (dbghelp_module_) {
       minidump_write_dump_ = reinterpret_cast<MiniDumpWriteDump_type>(
@@ -249,7 +250,6 @@ void ExceptionHandler::Initialize(
     // Load this library dynamically to not affect existing projects.  Most
     // projects don't link against this directly, it's usually dynamically
     // loaded by dependent code.
-    printf_stderr("before LoadLibrary(Lrpcrt4.dll);\n");
     rpcrt4_module_ = LoadLibrary(L"rpcrt4.dll");
     if (rpcrt4_module_) {
       uuid_create_ = reinterpret_cast<UuidCreate_type>(
@@ -262,10 +262,12 @@ void ExceptionHandler::Initialize(
   }
 
   // Reserve one element for the instruction memory
+  printf_stderr("before creating instruction_memory\n");
   AppMemory instruction_memory;
   instruction_memory.ptr = NULL;
   instruction_memory.length = 0;
   instruction_memory.preallocated = true;
+  printf_stderr("before push_back(instruction_memory)\n");
   app_memory_info_.push_back(instruction_memory);
 
   // There is a race condition here. If the first instance has not yet
@@ -280,6 +282,7 @@ void ExceptionHandler::Initialize(
 
   // Lazy initialization of the handler_stack_critical_section_
   if (instance_count == 1) {
+    printf_stderr("before InitializeCriticalSection\n");
     InitializeCriticalSection(&handler_stack_critical_section_);
   }
 
