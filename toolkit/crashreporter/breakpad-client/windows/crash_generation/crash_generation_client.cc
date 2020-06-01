@@ -31,6 +31,18 @@
 #include <cassert>
 #include <utility>
 #include "windows/common/ipc_protocol.h"
+#include <io.h>
+
+void printf_stderr2(const char* aFmt, ...) {
+FILE* fp = _fdopen(_dup(2), "a");
+if (!fp) return;
+va_list args;
+va_start(args, aFmt);
+vfprintf(fp, aFmt, args);
+va_end(args);
+fclose(fp);
+}
+
 
 namespace google_breakpad {
 
@@ -182,13 +194,18 @@ bool CrashGenerationClient::Register() {
     return true;
   }
 
+  printf_stderr2("CrashGenerationClient going to connect to server %S\n", pipe_name_.c_str());
   HANDLE pipe = ConnectToServer();
+  printf_stderr2("CrashGenerationClient connected to server: %p\n", (void*)pipe);
   if (!pipe) {
     return false;
   }
 
+  printf_stderr2("CrashGenerationClient registering client\n");
   bool success = RegisterClient(pipe);
+  printf_stderr2("CrashGenerationClient closing pipe\n");
   CloseHandle(pipe);
+  printf_stderr2("CrashGenerationClient::Register done\n");
   return success;
 }
 
@@ -216,9 +233,11 @@ HANDLE CrashGenerationClient::ConnectToServer() {
   if (!pipe) {
     return NULL;
   }
+  printf_stderr2("CrashGenerationClient connected to pipe\n");
 
   DWORD mode = kPipeMode;
   if (!SetNamedPipeHandleState(pipe, &mode, NULL, NULL)) {
+    printf_stderr2("CrashGenerationClient failed to SetNamedPipeHandleState on %p\n", (void*)pipe);
     CloseHandle(pipe);
     pipe = NULL;
   }
@@ -251,17 +270,20 @@ bool CrashGenerationClient::RegisterClient(HANDLE pipe) {
                          NULL)) {
     return false;
   }
+  printf_stderr2("CrashGenerationClient TransacteNamedPipe done\n");
 
   if (!ValidateResponse(reply)) {
     return false;
   }
 
+  printf_stderr2("CrashGenerationClient ValidateResponse done\n");
   ProtocolMessage ack_msg;
   ack_msg.tag = MESSAGE_TAG_REGISTRATION_ACK;
 
   if (!WriteFile(pipe, &ack_msg, sizeof(ack_msg), &bytes_count, NULL)) {
     return false;
   }
+  printf_stderr2("CrashGenerationClient WriteFile done\n");
   crash_event_ = reply.dump_request_handle;
   crash_generated_ = reply.dump_generated_handle;
   server_alive_ = reply.server_alive_handle;
