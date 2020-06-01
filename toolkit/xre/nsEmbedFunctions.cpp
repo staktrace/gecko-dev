@@ -339,6 +339,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   MOZ_ASSERT(aChildData);
 
   printf_stderr("in XRE_InitChildProcess\n");
+  
   NS_SetCurrentThreadName("MainThread");
 
 #ifdef MOZ_ASAN_REPORTER
