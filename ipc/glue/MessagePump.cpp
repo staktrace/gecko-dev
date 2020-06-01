@@ -60,8 +60,10 @@ class DoWorkRunnable final : public CancelableRunnable,
 } /* namespace ipc */
 } /* namespace mozilla */
 
+extern bool gLogMsgLoop_kats;
 MessagePump::MessagePump(nsIEventTarget* aEventTarget)
     : mEventTarget(aEventTarget) {
+if (gLogMsgLoop_kats) printf_stderr("MessagePump constructor\n");
   mDoWorkEvent = new DoWorkRunnable(this);
 }
 

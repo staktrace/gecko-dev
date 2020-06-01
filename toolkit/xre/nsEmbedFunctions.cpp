@@ -331,6 +331,7 @@ static bool IsCrashReporterEnabled(const char* aArg) {
 
 }  // namespace
 
+bool gLogMsgLoop_kats = false;
 nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
                               const XREChildData* aChildData) {
   NS_ENSURE_ARG_MIN(aArgc, 2);
@@ -662,7 +663,10 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
     Maybe<IOInterposerInit> ioInterposerGuard;
 
     // Associate this thread with a UI MessageLoop
+    if (d) gLogMsgLoop_kats = true;
     MessageLoop uiMessageLoop(uiLoopType);
+    if (d) gLogMsgLoop_kats = false;
+    if (d) printf_stderr("InitChildProcess:: made uiMessageLoop\n");
     {
       UniquePtr<ProcessChild> process;
       switch (XRE_GetProcessType()) {
@@ -676,6 +680,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 
         case GeckoProcessType_Content:
           process = MakeUnique<ContentProcess>(parentPID);
+          if (d) printf_stderr("InitChildProcess:: made ContentProcess\n");
           break;
 
         case GeckoProcessType_IPDLUnitTest:
