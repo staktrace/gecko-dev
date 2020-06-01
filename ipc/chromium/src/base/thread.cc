@@ -20,6 +20,8 @@
 #  include "GeckoTaskTracer.h"
 #endif
 
+extern bool gLogContentProc_kats;
+
 namespace base {
 
 // This task is used to trigger the message loop to exit.
@@ -52,6 +54,7 @@ Thread::Thread(const char* name)
       message_loop_(NULL),
       thread_id_(0),
       name_(name) {
+  if (gLogContentProc_kats) printf_stderr("Thread constructor\n");
   MOZ_COUNT_CTOR(base::Thread);
 }
 

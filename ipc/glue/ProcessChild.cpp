@@ -17,6 +17,8 @@
 #include "mozilla/AppShutdown.h"
 #include "mozilla/ipc/IOThreadChild.h"
 
+extern bool gLogContentProc_kats;
+
 namespace mozilla {
 namespace ipc {
 
@@ -25,9 +27,11 @@ ProcessChild* ProcessChild::gProcessChild;
 static Atomic<bool> sExpectingShutdown(false);
 
 ProcessChild::ProcessChild(ProcessId aParentPid)
-    : ChildProcess(new IOThreadChild()),
-      mUILoop(MessageLoop::current()),
-      mParentPid(aParentPid) {
+    : ChildProcess(new IOThreadChild()) {
+  if (gLogContentProc_kats) printf_stderr("ProcessChild constructor\n");
+  mUILoop = MessageLoop::current();
+  if (gLogContentProc_kats) printf_stderr("ProcessChild constructor :: mUILoop ok\n");
+  mParentPid = aParentPid;
   MOZ_ASSERT(mUILoop, "UILoop should be created by now");
   MOZ_ASSERT(!gProcessChild, "should only be one ProcessChild");
   gProcessChild = this;

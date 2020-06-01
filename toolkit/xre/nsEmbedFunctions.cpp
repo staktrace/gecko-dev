@@ -332,6 +332,7 @@ static bool IsCrashReporterEnabled(const char* aArg) {
 }  // namespace
 
 bool gLogMsgLoop_kats = false;
+bool gLogContentProc_kats = false;
 nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
                               const XREChildData* aChildData) {
   NS_ENSURE_ARG_MIN(aArgc, 2);
@@ -679,7 +680,9 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
           break;
 
         case GeckoProcessType_Content:
+          if (d) gLogContentProc_kats = true;
           process = MakeUnique<ContentProcess>(parentPID);
+          if (d) gLogContentProc_kats = false;
           if (d) printf_stderr("InitChildProcess:: made ContentProcess\n");
           break;
 

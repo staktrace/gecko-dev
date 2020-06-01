@@ -11,13 +11,18 @@
 #include "chrome/common/child_process.h"
 #include "chrome/common/chrome_switches.h"
 
+extern bool gLogContentProc_kats;
+
 ChildThread::ChildThread(Thread::Options options)
-    : Thread("Chrome_ChildThread"),
-      owner_loop_(MessageLoop::current()),
-      options_(options) {
+    : Thread("Chrome_ChildThread") {
+  if (gLogContentProc_kats) printf_stderr("ChildThread constructor\n");
+  owner_loop_ = MessageLoop::current();
+  if (gLogContentProc_kats) printf_stderr("ChildThread constructor messageloop ok\n");
+  options_ = options;
   DCHECK(owner_loop_);
   channel_name_ = CommandLine::ForCurrentProcess()->GetSwitchValue(
       switches::kProcessChannelID);
+  if (gLogContentProc_kats) printf_stderr("ChildThread constructor done\n");
 }
 
 ChildThread::~ChildThread() {}
