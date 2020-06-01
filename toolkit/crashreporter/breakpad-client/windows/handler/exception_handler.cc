@@ -42,6 +42,17 @@
 #ifdef MOZ_PHC
 #include "replace_malloc_bridge.h"
 #endif
+#include <io.h>
+
+void printf_stderr(const char* aFmt, ...) {
+FILE* fp = _fdopen(_dup(2), "a");
+if (!fp) return;
+va_list args;
+va_start(args, aFmt);
+vfprintf(fp, aFmt, args);
+va_end(args);
+fclose(fp);
+}
 
 namespace google_breakpad {
 
@@ -176,6 +187,7 @@ void ExceptionHandler::Initialize(
 
   // Attempt to use out-of-process if user has specified a pipe or a
   // crash generation client.
+  printf_stderr("before scoped_ptr<CrashGenerationClient> client\n");
   scoped_ptr<CrashGenerationClient> client;
   if (crash_generation_client) {
     client.reset(crash_generation_client);
@@ -187,6 +199,7 @@ void ExceptionHandler::Initialize(
       new CrashGenerationClient(pipe_handle, dump_type_, custom_info));
   }
 
+  printf_stderr("before client.get() != NULL\n");
   if (client.get() != NULL) {
     // If successful in registering with the monitoring process,
     // there is no need to setup in-process crash generation.
@@ -205,6 +218,7 @@ void ExceptionHandler::Initialize(
     // only way to reliably guarantee sufficient stack space in an exception,
     // and it allows an easy way to get a snapshot of the requesting thread's
     // context outside of an exception.
+    printf_stderr("before InitializeCriticalSection(&handler_critical_section_);\n");
     InitializeCriticalSection(&handler_critical_section_);
     handler_start_semaphore_ = CreateSemaphore(NULL, 0, 1, NULL);
     assert(handler_start_semaphore_ != NULL);
@@ -225,6 +239,8 @@ void ExceptionHandler::Initialize(
       assert(handler_thread_ != NULL);
     }
 
+
+    printf_stderr("before LoadLibrary(Ldbghelp.dll);\n");
     dbghelp_module_ = LoadLibrary(L"dbghelp.dll");
     if (dbghelp_module_) {
       minidump_write_dump_ = reinterpret_cast<MiniDumpWriteDump_type>(
@@ -234,6 +250,7 @@ void ExceptionHandler::Initialize(
     // Load this library dynamically to not affect existing projects.  Most
     // projects don't link against this directly, it's usually dynamically
     // loaded by dependent code.
+    printf_stderr("before LoadLibrary(Lrpcrt4.dll);\n");
     rpcrt4_module_ = LoadLibrary(L"rpcrt4.dll");
     if (rpcrt4_module_) {
       uuid_create_ = reinterpret_cast<UuidCreate_type>(
@@ -268,6 +285,7 @@ void ExceptionHandler::Initialize(
   }
 
   if (handler_types != HANDLER_NONE) {
+    printf_stderr("before EnterCriticalSection(&handler_stack_critical_section_)\n");
     EnterCriticalSection(&handler_stack_critical_section_);
 
     // The first time an ExceptionHandler that installs a handler is
@@ -303,6 +321,7 @@ void ExceptionHandler::Initialize(
     LeaveCriticalSection(&handler_stack_critical_section_);
   }
 
+  printf_stderr("before include_context_heap_ = false at end\n");
   include_context_heap_ = false;
 }
 
