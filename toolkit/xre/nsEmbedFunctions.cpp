@@ -527,6 +527,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
       exceptionHandlerIsSet =
           CrashReporter::SetRemoteExceptionHandler(crashReporterArg);
 #elif defined(XP_WIN)
+  if (d) printf_stderr("InitChildProcess:: setremoteexceptionhandler\n");
       exceptionHandlerIsSet = CrashReporter::SetRemoteExceptionHandler(
           crashReporterArg, crashTimeAnnotationFile);
 #else
@@ -540,6 +541,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
     }
   }
 
+  if (d) printf_stderr("InitChildProcess:: gArgs\n");
   gArgv = aArgv;
   gArgc = aArgc;
 
@@ -565,6 +567,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
     sleep(GetDebugChildPauseTime());
   }
 #elif defined(OS_WIN)
+  if (d) printf_stderr("InitChildProcess:: debugchild\n");
   if (PR_GetEnv("MOZ_DEBUG_CHILD_PROCESS")) {
     NS_DebugBreak(NS_DEBUG_BREAK,
                   "Invoking NS_DebugBreak() to debug child process", nullptr,
@@ -718,6 +721,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
           MOZ_CRASH("Unknown main thread class");
       }
 
+  if (d) printf_stderr("InitChildProcess:: procinit\n");
       if (!process->Init(aArgc, aArgv)) {
         return NS_ERROR_FAILURE;
       }
@@ -745,7 +749,9 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
         // Remote sandbox launcher process doesn't have prerequisites for
         // these...
         mozilla::FilePreferences::InitDirectoriesWhitelist();
+  if (d) printf_stderr("InitChildProcess:: initprefs\n");
         mozilla::FilePreferences::InitPrefs();
+  if (d) printf_stderr("InitChildProcess:: override\n");
         OverrideDefaultLocaleIfNeeded();
       }
 
@@ -754,6 +760,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 #endif
 
       // Run the UI event loop on the main thread.
+  if (d) printf_stderr("InitChildProcess:: runmgsloop\n");
       uiMessageLoop.MessageLoop::Run();
 
       // Allow ProcessChild to clean up after itself before going out of
