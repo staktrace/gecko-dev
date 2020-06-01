@@ -178,6 +178,7 @@ void MessageLoop::set_current(MessageLoop* loop) { get_tls_ptr().Set(loop); }
 
 static mozilla::Atomic<int32_t> message_loop_id_seq(0);
 
+extern bool gLogMsgLoop_kats;
 MessageLoop::MessageLoop(Type type, nsIEventTarget* aEventTarget)
     : type_(type),
       id_(++message_loop_id_seq),
@@ -193,10 +194,13 @@ MessageLoop::MessageLoop(Type type, nsIEventTarget* aEventTarget)
       transient_hang_timeout_(0),
       permanent_hang_timeout_(0),
       next_sequence_num_(0) {
+if (gLogMsgLoop_kats) printf_stderr("MessageLoop constructor\n");
   DCHECK(!current()) << "should only have one message loop per thread";
+if (gLogMsgLoop_kats) printf_stderr("MessageLoop before tlsptr\n");
   get_tls_ptr().Set(this);
 
   // Must initialize after current() is initialized.
+if (gLogMsgLoop_kats) printf_stderr("MessageLoop before eventtarget\n");
   mEventTarget = new EventTarget(this);
 
   switch (type_) {
@@ -206,7 +210,9 @@ MessageLoop::MessageLoop(Type type, nsIEventTarget* aEventTarget)
       return;
     case TYPE_MOZILLA_CHILD:
       MOZ_RELEASE_ASSERT(!aEventTarget);
+if (gLogMsgLoop_kats) printf_stderr("MessageLoop making pump\n");
       pump_ = new mozilla::ipc::MessagePumpForChildProcess();
+if (gLogMsgLoop_kats) printf_stderr("MessageLoop made pump\n");
       // There is a MessageLoop Run call from XRE_InitChildProcess
       // and another one from MessagePumpForChildProcess. The one
       // from MessagePumpForChildProcess becomes the base, so we need
