@@ -171,15 +171,18 @@ bool ContentProcess::Init(int aArgc, char* aArgv[]) {
     return false;
   }
 
+printf_stderr("deserializing shared prefs\n");
   ::mozilla::ipc::SharedPreferenceDeserializer deserializer;
   if (!deserializer.DeserializeFromSharedMemory(prefsHandle, prefMapHandle,
                                                 prefsLen, prefMapSize)) {
     return false;
   }
 
+printf_stderr("mContent.Init\n");
   mContent.Init(IOThreadChild::message_loop(), ParentPid(), *parentBuildID,
                 IOThreadChild::TakeChannel(), *childID, *isForBrowser);
 
+printf_stderr("starting mXREEmbed\n");
   mXREEmbed.Start();
 #if (defined(XP_MACOSX)) && defined(MOZ_SANDBOX)
   mContent.SetProfileDir(profileDir);
@@ -191,6 +194,7 @@ bool ContentProcess::Init(int aArgc, char* aArgv[]) {
 #endif   /* XP_MACOSX && MOZ_SANDBOX */
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
+printf_stderr("setting up win sandbox\n");
   SetUpSandboxEnvironment();
 #endif
 
