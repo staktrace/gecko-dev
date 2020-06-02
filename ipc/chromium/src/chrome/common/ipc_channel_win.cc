@@ -35,6 +35,8 @@
 #  define ASSERT_OWNINGTHREAD(_class) ((void)0)
 #endif
 
+extern bool gLogContentProc_kats;
+
 namespace IPC {
 //------------------------------------------------------------------------------
 
@@ -57,14 +59,18 @@ Channel::ChannelImpl::ChannelImpl(const std::wstring& channel_id, Mode mode,
       ALLOW_THIS_IN_INITIALIZER_LIST(factory_(this)),
       shared_secret_(0),
       waiting_for_shared_secret_(false) {
+  if (gLogContentProc_kats) printf_stderr("Gonna ChannelImpl::Init\n");
   Init(mode, listener);
 
+  if (gLogContentProc_kats) printf_stderr("Gonna ChannelImpl::CreatePipe (%S)\n", channel_id.c_str());
   if (!CreatePipe(channel_id, mode)) {
+    if (gLogContentProc_kats) printf_stderr("ChannelImpl::CreatePipe failure\n");
     // The pipe may have been closed already.
     CHROMIUM_LOG(WARNING) << "Unable to create pipe named \"" << channel_id
                           << "\" in " << (mode == 0 ? "server" : "client")
                           << " mode.";
   }
+  if (gLogContentProc_kats) printf_stderr("ChannelImpl::CreatePipe success\n");
 }
 
 Channel::ChannelImpl::ChannelImpl(const std::wstring& channel_id,
@@ -204,6 +210,7 @@ bool Channel::ChannelImpl::CreatePipe(const std::wstring& channel_id,
                                       Mode mode) {
   DCHECK(pipe_ == INVALID_HANDLE_VALUE);
   const std::wstring pipe_name = PipeName(channel_id, &shared_secret_);
+  if (gLogContentProc_kats) printf_stderr("ChannelImpl::CreatePipe (%S)\n", pipe_name.c_str());
   if (mode == MODE_SERVER) {
     waiting_for_shared_secret_ = !!shared_secret_;
     pipe_ = CreateNamedPipeW(pipe_name.c_str(),
@@ -222,6 +229,7 @@ bool Channel::ChannelImpl::CreatePipe(const std::wstring& channel_id,
         pipe_name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
         SECURITY_SQOS_PRESENT | SECURITY_IDENTIFICATION | FILE_FLAG_OVERLAPPED,
         NULL);
+  if (gLogContentProc_kats) printf_stderr("ChannelImpl::CreatePipe got a file handle (%x) (INVALID %x)\n", pipe_, INVALID_HANDLE_VALUE);
   }
   if (pipe_ == INVALID_HANDLE_VALUE) {
     // If this process is being closed, the pipe may be gone already.
@@ -231,6 +239,7 @@ bool Channel::ChannelImpl::CreatePipe(const std::wstring& channel_id,
   }
 
   // Create the Hello message to be sent when Connect is called
+  if (gLogContentProc_kats) printf_stderr("ChannelImpl::CreatePipe gonna EnqueueHello\n");
   return EnqueueHelloMessage();
 }
 
@@ -243,14 +252,18 @@ bool Channel::ChannelImpl::EnqueueHelloMessage() {
   int32_t secret = waiting_for_shared_secret_ ? 0 : shared_secret_;
 
   // Also, don't send if the value is zero (for IPC backwards compatability).
+  if (gLogContentProc_kats) printf_stderr("ChannelImpl::EnqueueHello gonna write pid\n");
   if (!m->WriteInt(GetCurrentProcessId()) ||
       (secret && !m->WriteUInt32(secret))) {
+    if (gLogContentProc_kats) printf_stderr("ChannelImpl::EnqueueHello failed write pid\n");
     CloseHandle(pipe_);
     pipe_ = INVALID_HANDLE_VALUE;
     return false;
   }
 
+  if (gLogContentProc_kats) printf_stderr("ChannelImpl::EnqueueHello outputqueuepush\n");
   OutputQueuePush(m.release());
+  if (gLogContentProc_kats) printf_stderr("ChannelImpl::EnqueueHello success write pid\n");
   return true;
 }
 
