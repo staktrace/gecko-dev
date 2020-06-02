@@ -302,6 +302,7 @@ HANDLE CrashGenerationClient::ConnectToPipe(const wchar_t* pipe_name,
   }
 
   for (int i = 0; i < kPipeConnectMaxAttempts; ++i) {
+    printf_stderr2("CrashGenerationClient ConnectToPipe attempt %d (%x %x)\n", i, pipe_access, flags_attrs);
     HANDLE pipe = CreateFile(pipe_name,
                              pipe_access,
                              0,
@@ -309,17 +310,20 @@ HANDLE CrashGenerationClient::ConnectToPipe(const wchar_t* pipe_name,
                              OPEN_EXISTING,
                              flags_attrs,
                              NULL);
+    printf_stderr2("CrashGenerationClient ConnectToPipe returned %x (INVALID=%x)\n", pipe, INVALID_HANDLE_VALUE);
     if (pipe != INVALID_HANDLE_VALUE) {
       return pipe;
     }
 
     // Cannot continue retrying if error is something other than
     // ERROR_PIPE_BUSY.
+    printf_stderr2("CrashGenerationClient ConnectToPipe GetLastError was %d\n", GetLastError());
     if (GetLastError() != ERROR_PIPE_BUSY) {
       break;
     }
 
     // Cannot continue retrying if wait on pipe fails.
+    printf_stderr2("CrashGenerationClient ConnectToPipe waiting...\n");
     if (!WaitNamedPipe(pipe_name, kPipeBusyWaitTimeoutMs)) {
       break;
     }
