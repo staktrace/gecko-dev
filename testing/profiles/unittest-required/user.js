@@ -16,6 +16,7 @@ user_pref("app.update.url.android", "");
 // and causing false-positive test failures. See bug 1176798, bug 1177018,
 // bug 1210465.
 user_pref("apz.content_response_timeout", 60000);
+user_pref("apz.allow_zooming", true);
 user_pref("browser.EULA.override", true);
 // Disable Bookmark backups by default.
 user_pref("browser.bookmarks.max_backups", 0);
