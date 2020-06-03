@@ -44,6 +44,7 @@ function test() {
     w.onresize = function() {
 
       if (w.innerWidth > 300 - epsilon || isExecuted) {
+        dump(`w.innerWidth is ${w.innerWidth}\n`);
         return;
       }
 
@@ -64,8 +65,10 @@ function test() {
   }, w);
 }
 
-SimpleTest.waitForFocus(function() {
-  synthesizeMouseAtCenter(document.getElementsByTagName('button')[0], {});
+SpecialPowers.pushPrefEnv({ set: [["apz.allow_zooming", false]]}, function() {
+  SimpleTest.waitForFocus(function() {
+    synthesizeMouseAtCenter(document.getElementsByTagName('button')[0], {});
+  });
 });
 
 </script>

@@ -208,7 +208,8 @@ function* test(testDriver) {
 if (isApzEnabled()) {
   SimpleTest.waitForExplicitFinish();
   SimpleTest.expectAssertions(0, 1); // this test triggers an assertion, see bug 1247050
-  waitUntilApzStable()
+  pushPrefs([["apz.allow_zooming", false]])
+  .then(waitUntilApzStable)
   .then(runContinuation(test))
   .then(SimpleTest.finish);
 }

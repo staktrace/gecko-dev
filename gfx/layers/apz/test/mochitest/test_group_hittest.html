@@ -26,6 +26,11 @@ var prefs = [
   ["apz.test.logging_enabled", true],
 ];
 
+var zoom_disabled = [
+  ...prefs,
+  ["apz.allow_zooming", false],
+];
+
 var subtests = [
   {"file": "helper_hittest_basic.html", "prefs": prefs},
   {"file": "helper_hittest_fixed_in_scrolled_transform.html", "prefs": prefs},
@@ -34,8 +39,8 @@ var subtests = [
   {"file": "helper_hittest_checkerboard.html", "prefs": prefs},
   {"file": "helper_hittest_backface_hidden.html", "prefs": prefs},
   {"file": "helper_hittest_touchaction.html", "prefs": prefs},
-  {"file": "helper_hittest_nested_transforms_bug1459696.html", "prefs": prefs},
-  {"file": "helper_hittest_sticky_bug1478304.html", "prefs": prefs},
+  {"file": "helper_hittest_nested_transforms_bug1459696.html", "prefs": zoom_disabled},
+  {"file": "helper_hittest_sticky_bug1478304.html", "prefs": zoom_disabled},
   {"file": "helper_hittest_clipped_fixed_modal.html", "prefs": prefs},
   {"file": "helper_hittest_pointerevents_svg.html", "prefs": prefs},
   {"file": "helper_hittest_clippath.html", "prefs": prefs},
