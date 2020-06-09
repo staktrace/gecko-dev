@@ -5964,23 +5964,34 @@ void ScrollFrameHelper::UpdateMinimumScaleSize(
 bool ScrollFrameHelper::ReflowFinished() {
   mPostedReflowCallback = false;
 
-  if (mIsRoot && mMinimumScaleSizeChanged &&
-      mOuter->PresShell()->UsesMobileViewportSizing() &&
-      !mOuter->PresShell()->IsResolutionUpdatedByApz()) {
-    PresShell* presShell = mOuter->PresShell();
-    RefPtr<MobileViewportManager> manager =
-        presShell->GetMobileViewportManager();
-    MOZ_ASSERT(manager);
+  if (mIsRoot) {
+    if (mMinimumScaleSizeChanged &&
+        mOuter->PresShell()->UsesMobileViewportSizing() &&
+        !mOuter->PresShell()->IsResolutionUpdatedByApz()) {
+      PresShell* presShell = mOuter->PresShell();
+      RefPtr<MobileViewportManager> manager =
+          presShell->GetMobileViewportManager();
+      MOZ_ASSERT(manager);
 
-    ScreenIntSize displaySize = ViewAs<ScreenPixel>(
-        manager->DisplaySize(),
-        PixelCastJustification::LayoutDeviceIsScreenForBounds);
+      ScreenIntSize displaySize = ViewAs<ScreenPixel>(
+          manager->DisplaySize(),
+          PixelCastJustification::LayoutDeviceIsScreenForBounds);
 
-    Document* doc = presShell->GetDocument();
-    MOZ_ASSERT(doc, "The document should be valid");
-    nsViewportInfo viewportInfo = doc->GetViewportInfo(displaySize);
-    manager->ShrinkToDisplaySizeIfNeeded(viewportInfo, displaySize);
-    mMinimumScaleSizeChanged = false;
+      Document* doc = presShell->GetDocument();
+      MOZ_ASSERT(doc, "The document should be valid");
+      nsViewportInfo viewportInfo = doc->GetViewportInfo(displaySize);
+      manager->ShrinkToDisplaySizeIfNeeded(viewportInfo, displaySize);
+      mMinimumScaleSizeChanged = false;
+    }
+
+    if (!UsesOverlayScrollbars()) {
+      // Layout scrollbars may have added or removed during reflow, so let's
+      // update the visual viewport accordingly.
+      if (RefPtr<MobileViewportManager> manager =
+                     mOuter->PresShell()->GetMobileViewportManager()) {
+        manager->UpdateVisualViewportSizeForPotentialScrollbarChange();
+      }
+    }
   }
 
   bool doScroll = true;

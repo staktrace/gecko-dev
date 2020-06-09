@@ -22,6 +22,7 @@
 #include "GeckoProfiler.h"
 #include "nsIMozBrowserFrame.h"
 #include "nsPlaceholderFrame.h"
+#include "MobileViewportManager.h"
 
 using namespace mozilla;
 typedef nsAbsoluteContainingBlock::AbsPosReflowFlags AbsPosReflowFlags;
@@ -385,6 +386,10 @@ nsSize ViewportFrame::AdjustViewportSizeForFixedPosition(
   // it has been set and it is larger than the computed size, otherwise use the
   // computed size.
   if (presShell->IsVisualViewportSizeSet()) {
+    if (RefPtr<MobileViewportManager> manager =
+                   presShell->GetMobileViewportManager()) {
+      manager->UpdateVisualViewportSizeForPotentialScrollbarChange();
+    }
     if (presShell->GetDynamicToolbarState() == DynamicToolbarState::Collapsed &&
         result < presShell->GetVisualViewportSizeUpdatedByDynamicToolbar()) {
       // We need to use the viewport size updated by the dynamic toolbar in the

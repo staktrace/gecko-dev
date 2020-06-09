@@ -11067,10 +11067,16 @@ void PresShell::MarkFixedFramesForReflow(IntrinsicDirty aIntrinsicDirty) {
 }
 
 void PresShell::CompleteChangeToVisualViewportSize() {
-  if (nsIScrollableFrame* rootScrollFrame = GetRootScrollFrameAsScrollable()) {
-    rootScrollFrame->MarkScrollbarsDirtyForReflow();
+  // This can get called during reflow, if the caller wants to get the latest
+  // visual viewport size after scrollbars have been added/removed. In such a
+  // case, we don't need to mark things as dirty because we're still doing the
+  // reflow.
+  if (!mIsReflowing) {
+    if (nsIScrollableFrame* rootScrollFrame = GetRootScrollFrameAsScrollable()) {
+      rootScrollFrame->MarkScrollbarsDirtyForReflow();
+    }
+    MarkFixedFramesForReflow(IntrinsicDirty::Resize);
   }
-  MarkFixedFramesForReflow(IntrinsicDirty::Resize);
 
   if (auto* window = nsGlobalWindowInner::Cast(mDocument->GetInnerWindow())) {
     window->VisualViewport()->PostResizeEvent();
