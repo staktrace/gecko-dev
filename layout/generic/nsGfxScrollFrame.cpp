@@ -4230,7 +4230,7 @@ nsSize ScrollFrameHelper::GetVisualViewportSize() const {
 
 nsPoint ScrollFrameHelper::GetVisualViewportOffset() const {
   PresShell* presShell = mOuter->PresShell();
-  if (mIsRoot && presShell->IsVisualViewportSizeSet()) {
+  if (mIsRoot && presShell->IsVisualViewportOffsetSet()) {
     return presShell->GetVisualViewportOffset();
   }
   return GetScrollPosition();
