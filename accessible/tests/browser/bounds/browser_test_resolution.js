@@ -45,12 +45,16 @@ async function testScaledBounds(browser, accDoc, scale, id, type = "object") {
 }
 
 async function runTests(browser, accDoc) {
+  Services.prefs.setIntPref("ui.useOverlayScrollbars", 1);
+
   await testScaledBounds(browser, accDoc, 2.0, "p1");
   await testScaledBounds(browser, accDoc, 0.5, "p2");
   await testScaledBounds(browser, accDoc, 3.5, "b1");
 
   await testScaledBounds(browser, accDoc, 2.0, "p1", "text");
   await testScaledBounds(browser, accDoc, 0.75, "p2", "text");
+
+  Services.prefs.clearUserPref("ui.useOverlayScrollbars");
 }
 
 /**
