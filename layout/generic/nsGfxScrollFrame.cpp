@@ -97,6 +97,11 @@ static mozilla::LazyLogModule sApzPaintSkipLog("apz.paintskip");
 static mozilla::LazyLogModule sScrollRestoreLog("scrollrestore");
 #define SCROLLRESTORE_LOG(...) \
   MOZ_LOG(sScrollRestoreLog, LogLevel::Debug, (__VA_ARGS__))
+static mozilla::LazyLogModule sRootScrollbarsLog("rootscrollbars");
+#define ROOT_SCROLLBAR_LOG(...) \
+  if (mHelper.mIsRoot) { \
+    MOZ_LOG(sRootScrollbarsLog, LogLevel::Debug, (__VA_ARGS__)); \
+  }
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -411,6 +416,7 @@ bool nsHTMLScrollFrame::TryLayout(ScrollReflowInput* aState,
           mHelper.mScrolledFrame);
     }
     aKidMetrics->mOverflowAreas.Clear();
+    ROOT_SCROLLBAR_LOG("TryLayout reflowing scrolled frame with scrollbars h=%d, v=%d\n", aAssumeHScroll, aAssumeVScroll);
     ReflowScrolledFrame(aState, aAssumeHScroll, aAssumeVScroll, aKidMetrics);
   }
 
@@ -465,6 +471,7 @@ bool nsHTMLScrollFrame::TryLayout(ScrollReflowInput* aState,
   }
 
   nsSize visualViewportSize = scrollPortSize;
+  ROOT_SCROLLBAR_LOG("TryLayout VV size %d x %d\n", visualViewportSize.width, visualViewportSize.height);
   mozilla::PresShell* presShell = PresShell();
   if (mHelper.mIsRoot && presShell->IsVisualViewportSizeSet()) {
     visualViewportSize = nsLayoutUtils::CalculateCompositionSizeForFrame(
@@ -477,6 +484,7 @@ bool nsHTMLScrollFrame::TryLayout(ScrollReflowInput* aState,
     float resolution = presShell->GetResolution();
     visualViewportSize.width /= resolution;
     visualViewportSize.height /= resolution;
+    ROOT_SCROLLBAR_LOG("TryLayout new VV size %d x %d\n", visualViewportSize.width, visualViewportSize.height);
   }
 
   nsRect overflowRect = aState->mContentsOverflowAreas.ScrollableOverflow();
@@ -497,6 +505,7 @@ bool nsHTMLScrollFrame::TryLayout(ScrollReflowInput* aState,
   }
   nsRect scrolledRect =
       mHelper.GetUnsnappedScrolledRectInternal(overflowRect, scrollPortSize);
+  ROOT_SCROLLBAR_LOG("TryLayout got scrolledRect %s from overflowRect %s scrollportSize %s\n", Stringify(scrolledRect).c_str(), Stringify(overflowRect).c_str(), Stringify(scrollPortSize).c_str());
   nscoord oneDevPixel = aState->mBoxState.PresContext()->DevPixelsToAppUnits(1);
 
   if (!aForce) {
@@ -512,6 +521,7 @@ bool nsHTMLScrollFrame::TryLayout(ScrollReflowInput* aState,
           scrollPortSize.width < hScrollbarMinSize.width) {
         wantHScrollbar = false;
       }
+      ROOT_SCROLLBAR_LOG("TryLayout wants H Scrollbar: %d =? %d\n", wantHScrollbar, aAssumeHScroll);
       if (wantHScrollbar != aAssumeHScroll) {
         return false;
       }
@@ -529,6 +539,7 @@ bool nsHTMLScrollFrame::TryLayout(ScrollReflowInput* aState,
           scrollPortSize.height < vScrollbarMinSize.height) {
         wantVScrollbar = false;
       }
+      ROOT_SCROLLBAR_LOG("TryLayout wants V Scrollbar: %d =?  %d\n", wantVScrollbar, aAssumeVScroll);
       if (wantVScrollbar != aAssumeVScroll) {
         return false;
       }
@@ -828,10 +839,12 @@ void nsHTMLScrollFrame::ReflowContents(ScrollReflowInput* aState,
 
   // Try leaving the horizontal scrollbar unchanged first. This will be more
   // efficient.
+  ROOT_SCROLLBAR_LOG("Trying layout1 with %d, %d\n", aState->mReflowedContentsWithHScrollbar, aState->mReflowedContentsWithVScrollbar);
   if (TryLayout(aState, &kidDesiredSize,
                 aState->mReflowedContentsWithHScrollbar,
                 aState->mReflowedContentsWithVScrollbar, false))
     return;
+  ROOT_SCROLLBAR_LOG("Trying layout2 with %d, %d\n", !aState->mReflowedContentsWithHScrollbar, aState->mReflowedContentsWithVScrollbar);
   if (TryLayout(aState, &kidDesiredSize,
                 !aState->mReflowedContentsWithHScrollbar,
                 aState->mReflowedContentsWithVScrollbar, false))
@@ -842,14 +855,17 @@ void nsHTMLScrollFrame::ReflowContents(ScrollReflowInput* aState,
   // does not exist here (we'll have to reflow due to the vertical scrollbar
   // change), so always try no horizontal scrollbar first.
   bool newVScrollbarState = !aState->mReflowedContentsWithVScrollbar;
+  ROOT_SCROLLBAR_LOG("Trying layout3 with %d, %d\n", false, newVScrollbarState);
   if (TryLayout(aState, &kidDesiredSize, false, newVScrollbarState, false))
     return;
+  ROOT_SCROLLBAR_LOG("Trying layout4 with %d, %d\n", true, newVScrollbarState);
   if (TryLayout(aState, &kidDesiredSize, true, newVScrollbarState, false))
     return;
 
   // OK, we're out of ideas. Try again enabling whatever scrollbars we can
   // enable and force the layout to stick even if it's inconsistent.
   // This just happens sometimes.
+  ROOT_SCROLLBAR_LOG("Giving up, adding both scrollbars...\n");
   TryLayout(aState, &kidDesiredSize,
             aState->mHScrollbar != ShowScrollbar::Never,
             aState->mVScrollbar != ShowScrollbar::Never, true);
