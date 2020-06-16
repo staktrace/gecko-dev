@@ -32,6 +32,7 @@
 #include "ipc/nsGUIEventIPC.h"
 #include "js/JSON.h"
 #include "mozilla/AsyncEventDispatcher.h"
+#include "mozilla/AutoResizeReflowSquasher.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/EventListenerManager.h"
@@ -1166,16 +1167,25 @@ mozilla::ipc::IPCResult BrowserChild::RecvUpdateDimensions(
   ScreenIntSize screenSize = GetInnerSize();
   ScreenIntRect screenRect = GetOuterRect();
 
-  // Set the size on the document viewer before we update the widget and
-  // trigger a reflow. Otherwise the MobileViewportManager reads the stale
-  // size from the content viewer when it computes a new CSS viewport.
-  nsCOMPtr<nsIBaseWindow> baseWin = do_QueryInterface(WebNavigation());
-  baseWin->SetPositionAndSize(0, 0, screenSize.width, screenSize.height,
-                              nsIBaseWindow::eRepaint);
+  {
+    AutoResizeReflowSquasher squasher;
 
-  mPuppetWidget->Resize(screenRect.x + mClientOffset.x + mChromeOffset.x,
-                        screenRect.y + mClientOffset.y + mChromeOffset.y,
-                        screenSize.width, screenSize.height, true);
+    // Make sure to set the size on the document viewer and the widget before
+    // triggering a reflow. We do this by capturing the reflows and making
+    // that happen at the end of this scoped block, using the squasher.
+    // The MobileViewportManager needs the content viewer size to be updated
+    // before the reflow, otherwise it gets a stale size when it computes
+    // a new CSS viewport. Similarly, the widget size needs to be updated before
+    // the root scrollframe figures out which scrollbars are needed because
+    // it might read the composition size from the widget.
+    nsCOMPtr<nsIBaseWindow> baseWin = do_QueryInterface(WebNavigation());
+    baseWin->SetPositionAndSize(0, 0, screenSize.width, screenSize.height,
+                                nsIBaseWindow::eRepaint);
+
+    mPuppetWidget->Resize(screenRect.x + mClientOffset.x + mChromeOffset.x,
+                          screenRect.y + mClientOffset.y + mChromeOffset.y,
+                          screenSize.width, screenSize.height, true);
+  }
 
   RecvSafeAreaInsetsChanged(mPuppetWidget->GetSafeAreaInsets());
 
