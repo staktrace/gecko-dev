@@ -12,24 +12,24 @@
 
 namespace mozilla {
 
-// Put one of these on the stack to "capture" any calls to
-// PresShell::ResizeReflow and have them execute when this class is destroyed.
+// Put one of these on the stack to "capture" any calls to aShell->ResizeReflow
+// and have them execute when this class is destroyed.
 // This effectively "squashes" together multiple calls to ResizeReflow and
 // combines them into one call at the end of the scope that contains this
-// RAII class. Note that all the calls to ResizeReflow must be on the same
-// PresShell and have the same arguments, otherwise an assertion will be
-// thrown.
+// RAII class. Note that only calls to ResizeReflow on a particular shell are
+// captured, and they must all have the same arguments, otherwise an assertion
+// will be thrown.
 class MOZ_RAII AutoResizeReflowSquasher {
  public:
-  AutoResizeReflowSquasher();
+  explicit AutoResizeReflowSquasher(PresShell* aShell);
   MOZ_CAN_RUN_SCRIPT ~AutoResizeReflowSquasher();
   static bool CaptureResizeReflow(PresShell* aShell, nscoord aWidth,
                                   nscoord aHeight,
                                   ResizeReflowOptions aOptions);
 
  private:
-  static bool sOnStack;
   static StaticRefPtr<PresShell> sPresShell;
+  static bool sHasCapture;
   static nscoord sWidth;
   static nscoord sHeight;
   static ResizeReflowOptions sOptions;

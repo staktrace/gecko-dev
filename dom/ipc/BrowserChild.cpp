@@ -1168,7 +1168,7 @@ mozilla::ipc::IPCResult BrowserChild::RecvUpdateDimensions(
   ScreenIntRect screenRect = GetOuterRect();
 
   {
-    AutoResizeReflowSquasher squasher;
+    AutoResizeReflowSquasher squasher(GetTopLevelPresShell());
 
     // Make sure to set the size on the document viewer and the widget before
     // triggering a reflow. We do this by capturing the reflows and making

@@ -8,49 +8,49 @@
 
 namespace mozilla {
 
-bool AutoResizeReflowSquasher::sOnStack = false;
 StaticRefPtr<PresShell> AutoResizeReflowSquasher::sPresShell;
+bool AutoResizeReflowSquasher::sHasCapture = false;
 nscoord AutoResizeReflowSquasher::sWidth = 0;
 nscoord AutoResizeReflowSquasher::sHeight = 0;
 ResizeReflowOptions AutoResizeReflowSquasher::sOptions =
     ResizeReflowOptions::NoOption;
 
-AutoResizeReflowSquasher::AutoResizeReflowSquasher() {
-  // Don't allow nested AutoResizeReflowSquashers
-  MOZ_ASSERT(!sOnStack);
+AutoResizeReflowSquasher::AutoResizeReflowSquasher(PresShell* aShell) {
+  // Don't allow nested AutoResizeReflowSquashers. Note that aShell may
+  // be null, in which case this AutoResizeReflowSquasher should behave as
+  // though it was never created. In this scenario nested instances are
+  // allowed.
   MOZ_ASSERT(!sPresShell);
-  sOnStack = true;
+  sPresShell = aShell;
+  MOZ_ASSERT(!sHasCapture);
 }
 
 AutoResizeReflowSquasher::~AutoResizeReflowSquasher() {
-  // Make sure to clear sOnStack before calling ResizeReflow, or we will just
-  // end up capturing the "squashed" call.
-  MOZ_ASSERT(sOnStack);
-  sOnStack = false;
-
-  if (sPresShell) {
-    // Use a local RefPtr to work around bug 1646129
-    RefPtr<PresShell> presShell = sPresShell;
+  RefPtr<PresShell> presShell = sPresShell;
+  sPresShell = nullptr;
+  if (sHasCapture) {
     presShell->ResizeReflow(sWidth, sHeight, sOptions);
-    sPresShell = nullptr;
+    sHasCapture = false;
   }
 }
 
 bool AutoResizeReflowSquasher::CaptureResizeReflow(
     PresShell* aShell, nscoord aWidth, nscoord aHeight,
     ResizeReflowOptions aOptions) {
-  if (!sOnStack) {
+  if (!sPresShell) {
     return false;
   }
-  if (!sPresShell) {
-    sPresShell = aShell;
+  if (sPresShell.get() != aShell) {
+    return false;
+  }
+  if (!sHasCapture) {
+    sHasCapture = true;
     sWidth = aWidth;
     sHeight = aHeight;
     sOptions = aOptions;
     return true;
   }
 
-  MOZ_ASSERT(sPresShell.get() == aShell);
   MOZ_ASSERT(sWidth == aWidth);
   MOZ_ASSERT(sHeight == aHeight);
   MOZ_ASSERT(sOptions == aOptions);
