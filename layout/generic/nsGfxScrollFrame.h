@@ -25,6 +25,7 @@
 #include "TextOverflow.h"
 #include "ScrollVelocityQueue.h"
 #include "mozilla/ScrollTypes.h"
+#include "mozilla/ScrollConflictResolver.h"
 #include "mozilla/PresState.h"
 #include "mozilla/layout/ScrollAnchorContainer.h"
 
@@ -556,7 +557,7 @@ class ScrollFrameHelper : public nsIReflowCallback {
   RefPtr<AsyncSmoothMSDScroll> mAsyncSmoothMSDScroll;
   RefPtr<ScrollbarActivity> mScrollbarActivity;
   nsTArray<nsIScrollPositionListener*> mListeners;
-  ScrollOrigin mLastScrollOrigin;
+  ScrollConflictResolver mScrollConflictResolver;
   ScrollOrigin mLastSmoothScrollOrigin;
   Maybe<nsPoint> mApzSmoothScrollDestination;
   uint32_t mScrollGeneration;
