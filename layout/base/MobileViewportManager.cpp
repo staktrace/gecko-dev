@@ -519,11 +519,7 @@ void MobileViewportManager::UpdateVisualViewportSizeByDynamicToolbar(
 
 void MobileViewportManager::
     UpdateVisualViewportSizeForPotentialScrollbarChange() {
-  if (!mPainted) {
-    NotifyResizeReflow();
-  } else {
-    RefreshVisualViewportSize();
-  }
+  RefreshVisualViewportSize();
 }
 
 void MobileViewportManager::UpdateDisplayPortMargins() {
@@ -576,6 +572,25 @@ void MobileViewportManager::NotifyResizeReflow() {
             Stringify(mMobileViewportSize).c_str());
 
     RefreshVisualViewportSize();
+  }
+}
+
+void MobileViewportManager::NotifyReflow() {
+  if (Maybe<LayoutDeviceIntSize> newDisplaySize =
+          mContext->GetContentViewerSize()) {
+    mDisplaySize = *newDisplaySize;
+    MVM_LOG("%p: Reflow starting, updated display size updated to %s\n", this,
+            Stringify(mDisplaySize).c_str());
+    if (mDisplaySize.width == 0 || mDisplaySize.height == 0) {
+      return;
+    }
+
+    ScreenIntSize displaySize = ViewAs<ScreenPixel>(
+        mDisplaySize, PixelCastJustification::LayoutDeviceIsScreenForBounds);
+    nsViewportInfo viewportInfo = mContext->GetViewportInfo(displaySize);
+    mMobileViewportSize = viewportInfo.GetSize();
+    MVM_LOG("%p: MVSize updated to %s\n", this,
+            Stringify(mMobileViewportSize).c_str());
   }
 }
 

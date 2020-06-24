@@ -79,6 +79,7 @@ class MobileViewportManager final : public nsIDOMEventListener,
    * that the visual viewport depends on.
    */
   void NotifyResizeReflow();
+  void NotifyReflow();
 
   /* Notify the MobileViewportManager that a reflow was requested in the
    * presShell.*/

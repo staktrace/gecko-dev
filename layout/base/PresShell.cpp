@@ -2670,6 +2670,7 @@ void PresShell::FrameNeedsReflow(nsIFrame* aFrame,
                                  IntrinsicDirty aIntrinsicDirty,
                                  nsFrameState aBitToAdd,
                                  ReflowRootHandling aRootHandling) {
+  printf_stderr("%p: Frame needs reflow\n", this);
   MOZ_ASSERT(aBitToAdd == NS_FRAME_IS_DIRTY ||
                  aBitToAdd == NS_FRAME_HAS_DIRTY_CHILDREN || !aBitToAdd,
              "Unexpected bits being added");
@@ -9491,6 +9492,10 @@ bool PresShell::DoReflow(nsIFrame* target, bool aInterruptible,
     timeStart = TimeStamp::Now();
   }
 
+  if (mMobileViewportManager) {
+    mMobileViewportManager->NotifyReflow();
+  }
+
   // Schedule a paint, but don't actually mark this frame as changed for
   // retained DL building purposes. If any child frames get moved, then
   // they will schedule paint again. We could probaby skip this, and just
@@ -10985,7 +10990,7 @@ void PresShell::UpdateViewportOverridden(bool aAfterInitialization) {
       if (MOZ_UNLIKELY(MOZ_LOG_TEST(sApzMvmLog, LogLevel::Debug))) {
         nsIURI* uri = mDocument->GetDocumentURI();
         MOZ_LOG(sApzMvmLog, LogLevel::Debug,
-                ("Created MVM %p (type %d) for URI %s",
+                ("%p created MVM %p (type %d) for URI %s", this,
                  mMobileViewportManager.get(), (int)*mvmType,
                  uri ? uri->GetSpecOrDefault().get() : "(null)"));
       }

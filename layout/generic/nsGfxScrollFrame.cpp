@@ -1246,6 +1246,7 @@ void nsHTMLScrollFrame::Reflow(nsPresContext* aPresContext,
     }
   }
   if (mHelper.mIsRoot) {
+    printf_stderr("Root scrollframe reflow, gonna update VV size, layoutSize is %s\n", Stringify(layoutSize).c_str());
     if (RefPtr<MobileViewportManager> manager =
             PresShell()->GetMobileViewportManager()) {
       // Note that this runs during layout, and when we get here the root
