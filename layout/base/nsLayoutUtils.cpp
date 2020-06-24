@@ -860,22 +860,51 @@ static nsRect GetDisplayPortFromMarginsData(
     posAlignment = ScreenSize(1, 1);
     sizeAlignment = ScreenSize(1, 1);
   } else if (useWebRender) {
-    // With WebRender we benefit from updating the displaylist and scene less often.
-    // For this we need to move the displayport less often which we achieve by using
-    // larger alignments for the displayport's position.
-    float w = screenRect.width;
-    float h = screenRect.height;
-    // Scale the alignment so that we never move by more than a quarter of the total
-    // unaligned displayport size. At most (1.0) we move by a screenful of content.
-    float sx = fmin(1.0, (aMarginsData->mMargins.LeftRight() + w) / w * 0.25);
-    float sy = fmin(1.0, (aMarginsData->mMargins.TopBottom() + h) / h * 0.25);
-    posAlignment.width = fmax(128.0, 512.0 * round(sx * w / 512.0));
-    posAlignment.height = fmax(128.0, 512.0 * round(sy * h / 512.0));
-    // tscrollx is very sensitive to the size of the displayport. We could just accept
-    // the regression and change it to something larger if need be, however smaller
-    // displayports also means less CPU work for most stages in webrender so we generally
-    // want to avoid very large displayports.
-    sizeAlignment = ScreenSize(128, 128);
+    // tscrollx is very sensitive to the size of the displayport. We could just
+    // accept the regression and change it to something larger if need be,
+    // however smaller displayports also means less CPU work for most stages in
+    // webrender so we generally want to avoid very large displayports.
+    float defaultAlignment = 128.0;
+    sizeAlignment = ScreenSize(defaultAlignment, defaultAlignment);
+
+    // With WebRender we benefit from updating the displaylist and scene less
+    // often during scrolling. For this we need to move the displayport less
+    // often which we achieve by using larger alignments for the displayport's
+    // position.
+
+    // If for wahtever reason the displayport does not have margins, we aren't
+    // likely to be in a situation where moving in it large increments will
+    // be beneficial.
+    float xMargin = aMarginsData->mMargins.LeftRight();
+    float yMargin = aMarginsData->mMargins.TopBottom();
+    bool hasXMargins = xMargin > 1.0;
+    bool hasYMargins = yMargin > 1.0;
+
+    // We round the alignment to a multiple of 256 to avoid small fluctuations
+    // that would cause the displaylist to be re-built.
+    float multiple = 256.0;
+
+    if (hasXMargins) {
+      // Scale the alignment so that we never move by more than a quarter of the
+      // total unaligned displayport size. At most (1.0) we move by a screenful
+      // of content.
+      float w = screenRect.width;
+      float sx = fmin(1.0, (xMargin + w) / w * 0.25);
+      posAlignment.width =
+          fmax(defaultAlignment, multiple * round(sx * w / multiple));
+    } else {
+      posAlignment.width = defaultAlignment;
+    }
+
+    if (hasYMargins) {
+      float h = screenRect.height;
+      float sy = fmin(1.0, (yMargin + h) / h * 0.25);
+      posAlignment.height =
+          fmax(defaultAlignment, multiple * round(sy * h / multiple));
+    } else {
+      posAlignment.height = defaultAlignment;
+    }
+
   } else if (StaticPrefs::layers_enable_tiles_AtStartup()) {
     // Don't align to tiles if they are too large, because we could expand
     // the displayport by a lot which can take more paint time. It's a tradeoff
@@ -963,8 +992,10 @@ static nsRect GetDisplayPortFromMarginsData(
   screenRect += scrollPosScreen;
   float x = posAlignment.width * floor(screenRect.x / posAlignment.width);
   float y = posAlignment.height * floor(screenRect.y / posAlignment.height);
-  float w = sizeAlignment.width * ceil(screenRect.width / sizeAlignment.width + 1);
-  float h = sizeAlignment.height * ceil(screenRect.height / sizeAlignment.height + 1);
+  float w =
+      sizeAlignment.width * ceil(screenRect.width / sizeAlignment.width + 1);
+  float h =
+      sizeAlignment.height * ceil(screenRect.height / sizeAlignment.height + 1);
   screenRect = ScreenRect(x, y, w, h);
   screenRect -= scrollPosScreen;
 
