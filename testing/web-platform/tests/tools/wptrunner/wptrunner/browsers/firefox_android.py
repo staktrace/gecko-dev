@@ -111,7 +111,6 @@ class ProfileCreator(FirefoxProfileCreator):
                 "layout.css.devPixelsPerPx": "1.0",
                 # Ensure that the full browser element
                 # appears in the screenshot
-                "apz.allow_zooming": False,
                 "android.widget_paints_background": False,
                 # Ensure that scrollbars are always painted
                 "layout.testing.overlay-scrollbars.always-visible": True,

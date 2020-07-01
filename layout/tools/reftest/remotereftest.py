@@ -357,9 +357,6 @@ class RemoteReftest(RefTest):
         prefs["browser.cache.disk.parent_directory"] = self.remoteCache
 
         prefs["layout.css.devPixelsPerPx"] = "1.0"
-        # Because Fennec is a little wacky (see bug 1156817) we need to load the
-        # reftest pages at 1.0 zoom, rather than zooming to fit the CSS viewport.
-        prefs["apz.allow_zooming"] = False
 
         # Set the extra prefs.
         profile.set_preferences(prefs)
