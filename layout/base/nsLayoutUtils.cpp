@@ -9404,9 +9404,12 @@ ScrollMetadata nsLayoutUtils::ComputeScrollMetadata(
       metrics.GetCumulativeResolution() * layerToParentLayerScale;
 
   if (aClipRect) {
+    LayoutDeviceToParentLayerScale2D clipScale;
+    if (!aIsRootContent) {
+      clipScale = metrics.GetCumulativeResolution() * layerToParentLayerScale;
+    }
     ParentLayerRect rect =
-        LayoutDeviceRect::FromAppUnits(*aClipRect, auPerDevPixel) *
-        metrics.GetCumulativeResolution() * layerToParentLayerScale;
+        LayoutDeviceRect::FromAppUnits(*aClipRect, auPerDevPixel) * clipScale;
     metadata.SetScrollClip(Some(LayerClip(RoundedToInt(rect))));
   }
 
