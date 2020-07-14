@@ -211,5 +211,6 @@ fails-if(layerChecksEnabled) != reftest-assigned-layer-fail-4.html about:blank
 
 # reftest-resolution
 pref(apz.allow_zooming,true) == reftest-resolution.html reftest-resolution-ref.html
+pref(apz.allow_zooming,true) == reftest-resolution-0_5.html reftest-resolution-0_5-ref.html
 
 == reftest-no-flush.html reftest-no-flush-ref.html
