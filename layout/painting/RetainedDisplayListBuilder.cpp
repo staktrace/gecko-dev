@@ -515,6 +515,8 @@ class MergeState {
     const bool modified = mBuilder->MergeDisplayLists(
         aNewItem ? aNewItem->GetChildren() : &empty, aOldItem->GetChildren(),
         aOutItem->GetChildren(), containerASRForChildren, aOutItem);
+    printf_stderr("aOutItem type %s modified %d new ASR %p\n", aOutItem->Name(),
+modified, containerASRForChildren ? *containerASRForChildren : nullptr);
     if (modified) {
       aOutItem->InvalidateCachedChildInfo(mBuilder->Builder());
       UpdateASR(aOutItem, containerASRForChildren);
@@ -641,8 +643,12 @@ class MergeState {
 #endif
 
   void UpdateContainerASR(nsDisplayItem* aItem) {
+    Maybe<const ActiveScrolledRoot*> old = mContainerASR;
     mContainerASR = SelectContainerASR(
         aItem->GetClipChain(), aItem->GetActiveScrolledRoot(), mContainerASR);
+    printf_stderr("Updated container ASR from %p to %p with item %s(%p)\n",
+      old ? *old : nullptr, mContainerASR ? *mContainerASR : nullptr,
+aItem->Name(), aItem);
   }
 
   MergedListIndex AddNewNode(
@@ -1480,10 +1486,10 @@ PartialUpdateResult RetainedDisplayListBuilder::AttemptPartialUpdate(
     aChecker->Set(&modifiedDL, "TM");
   }
 
-  // printf_stderr("Painting --- Modified list (dirty %d,%d,%d,%d):\n",
-  //              modifiedDirty.x, modifiedDirty.y, modifiedDirty.width,
-  //              modifiedDirty.height);
-  // nsIFrame::PrintDisplayList(&mBuilder, modifiedDL);
+  printf_stderr("Painting --- Modified list (dirty %d,%d,%d,%d):\n",
+               modifiedDirty.x, modifiedDirty.y, modifiedDirty.width,
+               modifiedDirty.height);
+  nsIFrame::PrintDisplayList(&mBuilder, modifiedDL);
 
   // |modifiedDL| can sometimes be empty here. We still perform the
   // display list merging to prune unused items (for example, items that
@@ -1499,8 +1505,8 @@ PartialUpdateResult RetainedDisplayListBuilder::AttemptPartialUpdate(
     result = PartialUpdateResult::Updated;
   }
 
-  // printf_stderr("Painting --- Merged list:\n");
-  // nsIFrame::PrintDisplayList(&mBuilder, mList);
+  printf_stderr("Painting --- Merged list:\n");
+  nsIFrame::PrintDisplayList(&mBuilder, mList);
 
   mBuilder.LeavePresShell(mBuilder.RootReferenceFrame(), List());
   return result;
