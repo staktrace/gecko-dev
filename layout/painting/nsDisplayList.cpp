@@ -6320,6 +6320,7 @@ bool nsDisplayOwnLayer::CreateWebRenderCommands(
   }
   if (IsZoomingLayer()) {
     params.reference_frame_kind = wr::WrReferenceFrameKind::Zoom;
+    params.clip = wr::WrStackingContextClip::ClipId(wr::wr_root_clip_id());
   }
   StackingContextHelper sc(aSc, GetActiveScrolledRoot(), mFrame, this, aBuilder,
                            params);
