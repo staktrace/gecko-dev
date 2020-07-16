@@ -3644,6 +3644,7 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   bool willBuildAsyncZoomContainer =
       mWillBuildScrollableLayer && aBuilder->ShouldBuildAsyncZoomContainer() &&
       isRootContent;
+  const ActiveScrolledRoot* zoomContainerASR = aBuilder->CurrentActiveScrolledRoot();
 
   nsRect scrollPortClip =
       effectiveScrollPort + aBuilder->ToReferenceFrame(mOuter);
@@ -3704,6 +3705,7 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         aBuilder);
     if (mWillBuildScrollableLayer && aBuilder->IsPaintingToWindow()) {
       asrSetter.EnterScrollFrame(sf);
+      zoomContainerASR = aBuilder->CurrentActiveScrolledRoot();
     }
 
     if (mWillBuildScrollableLayer && aBuilder->BuildCompositorHitTestInfo()) {
@@ -3863,7 +3865,7 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     clipState.ClipContentDescendants(clipRect, haveRadii ? radii : nullptr);
 
     set.Content()->AppendNewToTop<nsDisplayAsyncZoom>(
-        aBuilder, mOuter, &resultList, aBuilder->CurrentActiveScrolledRoot(),
+        aBuilder, mOuter, &resultList, zoomContainerASR,
         viewID);
   }
 
