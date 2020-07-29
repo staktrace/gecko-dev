@@ -25,6 +25,7 @@ class SampledAPZCState {
   CSSRect GetLayoutViewport() const { return mLayoutViewport; }
   CSSPoint GetScrollOffset() const { return mScrollOffset; }
   CSSToParentLayerScale2D GetZoom() const { return mZoom; }
+  TimeStamp GetInputCutoff() const { return mInputCutoff; }
   Maybe<CompositionPayload> TakeScrollPayload();
 
   void UpdateScrollProperties(const FrameMetrics& aMetrics);

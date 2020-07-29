@@ -1245,6 +1245,16 @@ nsEventStatus AsyncPanZoomController::HandleInputEvent(
     }
   }
 
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
+  TimeStamp cutoff = mSampledState.back().GetInputCutoff();
+  if (cutoff && aEvent.mTimeStamp < cutoff) {
+    APZC_LOG("Input event missed cutoff by %f ms, resampling...\n",
+             (cutoff - aEvent.mTimeStamp).ToMilliseconds());
+    SampledAPZCState& lastSample = mSampledState.back();
+    lastSample.UpdateScrollProperties(Metrics());
+    lastSample.UpdateZoomProperties(Metrics());
+  }
+
   return rv;
 }
 
