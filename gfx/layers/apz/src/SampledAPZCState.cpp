@@ -12,13 +12,6 @@ namespace layers {
 
 SampledAPZCState::SampledAPZCState() {}
 
-SampledAPZCState::SampledAPZCState(const FrameMetrics& aMetrics)
-    : mLayoutViewport(aMetrics.GetLayoutViewport()),
-      mScrollOffset(aMetrics.GetScrollOffset()),
-      mZoom(aMetrics.GetZoom()) {
-  RemoveFractionalAsyncDelta();
-}
-
 SampledAPZCState::SampledAPZCState(const FrameMetrics& aMetrics,
                                    Maybe<CompositionPayload>&& aPayload)
     : mLayoutViewport(aMetrics.GetLayoutViewport()),
@@ -28,15 +21,10 @@ SampledAPZCState::SampledAPZCState(const FrameMetrics& aMetrics,
   RemoveFractionalAsyncDelta();
 }
 
-bool SampledAPZCState::operator==(const SampledAPZCState& aOther) const {
-  // The payload doesn't factor into equality, that just comes along for
-  // the ride.
-  return mLayoutViewport.IsEqualEdges(aOther.mLayoutViewport) &&
-         mScrollOffset == aOther.mScrollOffset && mZoom == aOther.mZoom;
-}
-
-bool SampledAPZCState::operator!=(const SampledAPZCState& aOther) const {
-  return !(*this == aOther);
+bool SampledAPZCState::Matches(const FrameMetrics& aMetrics) const {
+  return mLayoutViewport.IsEqualEdges(aMetrics.GetLayoutViewport()) &&
+         mScrollOffset == aMetrics.GetScrollOffset() &&
+         mZoom == aMetrics.GetZoom();
 }
 
 Maybe<CompositionPayload> SampledAPZCState::TakeScrollPayload() {

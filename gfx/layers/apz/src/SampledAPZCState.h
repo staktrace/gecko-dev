@@ -16,12 +16,10 @@ namespace layers {
 class SampledAPZCState {
  public:
   SampledAPZCState();
-  explicit SampledAPZCState(const FrameMetrics& aMetrics);
   explicit SampledAPZCState(const FrameMetrics& aMetrics,
                             Maybe<CompositionPayload>&& aPayload);
 
-  bool operator==(const SampledAPZCState& aOther) const;
-  bool operator!=(const SampledAPZCState& aOther) const;
+  bool Matches(const FrameMetrics& aMetrics) const;
 
   CSSRect GetLayoutViewport() const { return mLayoutViewport; }
   CSSPoint GetScrollOffset() const { return mScrollOffset; }

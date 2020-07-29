@@ -4284,17 +4284,16 @@ void AsyncPanZoomController::AdvanceToNextSample() {
 bool AsyncPanZoomController::SampleCompositedAsyncTransform(
     const RecursiveMutexAutoLock& aProofOfLock) {
   MOZ_ASSERT(mSampledState.size() <= 2);
-  bool sampleChanged = (mSampledState.back() != SampledAPZCState(Metrics()));
+  bool sampleChanged = !mSampledState.back().Matches(Metrics());
   mSampledState.emplace_back(Metrics(), std::move(mScrollPayload));
   return sampleChanged;
 }
 
 void AsyncPanZoomController::ResampleCompositedAsyncTransform(
     const RecursiveMutexAutoLock& aProofOfLock) {
-  // This only gets called during testing situations, so the fact that this
-  // drops the scroll payload from mSampledState.front() is not really a
-  // problem.
-  mSampledState.front() = SampledAPZCState(Metrics());
+  SampledAPZCState& frontState = mSampledState.front();
+  frontState.UpdateScrollProperties(Metrics());
+  frontState.UpdateZoomProperties(Metrics());
 }
 
 void AsyncPanZoomController::ApplyAsyncTestAttributes(
