@@ -13,10 +13,12 @@ namespace layers {
 SampledAPZCState::SampledAPZCState() {}
 
 SampledAPZCState::SampledAPZCState(const FrameMetrics& aMetrics,
+                                   const TimeStamp& aInputCutoff,
                                    Maybe<CompositionPayload>&& aPayload)
     : mLayoutViewport(aMetrics.GetLayoutViewport()),
       mScrollOffset(aMetrics.GetScrollOffset()),
       mZoom(aMetrics.GetZoom()),
+      mInputCutoff(aInputCutoff),
       mScrollPayload(std::move(aPayload)) {
   RemoveFractionalAsyncDelta();
 }

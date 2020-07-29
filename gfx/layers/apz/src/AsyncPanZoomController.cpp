@@ -4285,7 +4285,8 @@ bool AsyncPanZoomController::SampleCompositedAsyncTransform(
     const RecursiveMutexAutoLock& aProofOfLock) {
   MOZ_ASSERT(mSampledState.size() <= 2);
   bool sampleChanged = !mSampledState.back().Matches(Metrics());
-  mSampledState.emplace_back(Metrics(), std::move(mScrollPayload));
+  mSampledState.emplace_back(Metrics(), mLastSampleTime,
+                             std::move(mScrollPayload));
   return sampleChanged;
 }
 

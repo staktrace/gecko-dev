@@ -17,6 +17,7 @@ class SampledAPZCState {
  public:
   SampledAPZCState();
   explicit SampledAPZCState(const FrameMetrics& aMetrics,
+                            const TimeStamp& aInputCutoff,
                             Maybe<CompositionPayload>&& aPayload);
 
   bool Matches(const FrameMetrics& aMetrics) const;
@@ -47,6 +48,9 @@ class SampledAPZCState {
   CSSRect mLayoutViewport;
   CSSPoint mScrollOffset;
   CSSToParentLayerScale2D mZoom;
+  // Timestamp cutoff for input events. Effects of input events with timestamps
+  // older than this should be incorporated into this sample.
+  TimeStamp mInputCutoff;
   // An optional payload that rides along with the sampled state.
   Maybe<CompositionPayload> mScrollPayload;
 
