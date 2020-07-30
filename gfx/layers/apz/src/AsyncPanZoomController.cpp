@@ -4602,6 +4602,8 @@ void AsyncPanZoomController::NotifyLayersUpdated(
   RepaintUpdateType contentRepaintType = RepaintUpdateType::eNone;
   bool viewportUpdated = false;
 
+  bool log = scrollOffsetUpdated || smoothScrollRequested;
+
   if ((aIsFirstPaint && aThisLayerTreeUpdated) || isDefault) {
     // Initialize our internal state to something sane when the content
     // that was just painted is something we knew nothing about previously
@@ -4722,7 +4724,7 @@ void AsyncPanZoomController::NotifyLayersUpdated(
       Maybe<CSSPoint> relativeDelta;
       if (StaticPrefs::apz_relative_update_enabled() &&
           aLayerMetrics.IsRelative()) {
-        APZC_LOG("%p relative updating scroll offset from %s by %s\n", this,
+        if (log) printf_stderr("%p relative updating scroll offset from %s by %s\n", this,
                  ToString(Metrics().GetScrollOffset()).c_str(),
                  ToString(aLayerMetrics.GetScrollOffset() -
                           aLayerMetrics.GetBaseScrollOffset())
@@ -4741,7 +4743,7 @@ void AsyncPanZoomController::NotifyLayersUpdated(
         relativeDelta =
             Some(Metrics().ApplyRelativeScrollUpdateFrom(aLayerMetrics));
       } else {
-        APZC_LOG("%p updating scroll offset from %s to %s\n", this,
+        if (log) printf_stderr("%p updating scroll offset from %s to %s\n", this,
                  ToString(Metrics().GetScrollOffset()).c_str(),
                  ToString(aLayerMetrics.GetScrollOffset()).c_str());
         Metrics().ApplyScrollUpdateFrom(aLayerMetrics);
@@ -4791,7 +4793,7 @@ void AsyncPanZoomController::NotifyLayersUpdated(
     // thread.  This flag will be reset by the main thread when it receives
     // the scroll update acknowledgement.
 
-    APZC_LOG("%p smooth scrolling from %s to %s in state %d\n", this,
+    if (log) printf_stderr("%p smooth scrolling from %s to %s in state %d\n", this,
              Stringify(Metrics().GetScrollOffset()).c_str(),
              Stringify(aLayerMetrics.GetSmoothScrollOffset()).c_str(), mState);
 

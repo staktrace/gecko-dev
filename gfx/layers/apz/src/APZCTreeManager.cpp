@@ -2808,6 +2808,7 @@ APZCTreeManager::HitTestResult APZCTreeManager::GetAPZCAtPointWR(
              Stringify(aHitTestPoint).c_str());
   std::vector<wr::WrHitResult> results =
       wr->HitTest(wr::ToWorldPoint(aHitTestPoint));
+  printf_stderr("APZCTM got %zu results\n", results.size());
 
   Maybe<wr::WrHitResult> chosenResult;
   for (const wr::WrHitResult& result : results) {
