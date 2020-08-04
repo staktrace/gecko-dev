@@ -30,6 +30,7 @@ class SampledAPZCState {
 
   void UpdateScrollProperties(const FrameMetrics& aMetrics);
   void UpdateZoomProperties(const FrameMetrics& aMetrics);
+  void Resample(const FrameMetrics& aMetrics);
 
   /**
    * Re-clamp mScrollOffset to the scroll range specified by the provided

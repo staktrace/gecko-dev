@@ -1250,9 +1250,7 @@ nsEventStatus AsyncPanZoomController::HandleInputEvent(
   if (cutoff && aEvent.mTimeStamp < cutoff) {
     APZC_LOG("Input event missed cutoff by %f ms, resampling...\n",
              (cutoff - aEvent.mTimeStamp).ToMilliseconds());
-    SampledAPZCState& lastSample = mSampledState.back();
-    lastSample.UpdateScrollProperties(Metrics());
-    lastSample.UpdateZoomProperties(Metrics());
+    mSampledState.back().Resample(Metrics());
   }
 
   return rv;
@@ -4302,9 +4300,7 @@ bool AsyncPanZoomController::SampleCompositedAsyncTransform(
 
 void AsyncPanZoomController::ResampleCompositedAsyncTransform(
     const RecursiveMutexAutoLock& aProofOfLock) {
-  SampledAPZCState& frontState = mSampledState.front();
-  frontState.UpdateScrollProperties(Metrics());
-  frontState.UpdateZoomProperties(Metrics());
+  mSampledState.front().Resample(Metrics());
 }
 
 void AsyncPanZoomController::ApplyAsyncTestAttributes(
@@ -4622,8 +4618,7 @@ void AsyncPanZoomController::NotifyLayersUpdated(
     ShareCompositorFrameMetrics();
 
     for (auto& sampledState : mSampledState) {
-      sampledState.UpdateScrollProperties(Metrics());
-      sampledState.UpdateZoomProperties(Metrics());
+      sampledState.Resample(Metrics());
     }
 
     if (Metrics().GetDisplayPortMargins() != ScreenMargin()) {

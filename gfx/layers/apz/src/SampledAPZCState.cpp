@@ -42,6 +42,11 @@ void SampledAPZCState::UpdateZoomProperties(const FrameMetrics& aMetrics) {
   mZoom = aMetrics.GetZoom();
 }
 
+void SampledAPZCState::Resample(const FrameMetrics& aMetrics) {
+  UpdateScrollProperties(aMetrics);
+  UpdateZoomProperties(aMetrics);
+}
+
 void SampledAPZCState::ClampScrollOffset(const FrameMetrics& aMetrics) {
   mScrollOffset = aMetrics.CalculateScrollRange().ClampPoint(mScrollOffset);
   FrameMetrics::KeepLayoutViewportEnclosingVisualViewport(
