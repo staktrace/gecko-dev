@@ -1975,6 +1975,8 @@ void PresShell::SimpleResizeReflow(nscoord aWidth, nscoord aHeight,
   if (isBSizeChanging) {
     nsLayoutUtils::MarkIntrinsicISizesDirtyIfDependentOnBSize(rootFrame);
   }
+MOZ_LOG(sApzMvmLog, LogLevel::Info, ("SimpleResizeReflow (%p) marking rootFrame dirty\n",
+mMobileViewportManager.get()));
   FrameNeedsReflow(rootFrame, IntrinsicDirty::Resize,
                    NS_FRAME_HAS_DIRTY_CHILDREN);
 
@@ -2010,8 +2012,13 @@ nsresult PresShell::ResizeReflowIgnoreOverride(nscoord aWidth, nscoord aHeight,
     }
   };
 
+MOZ_LOG(sApzMvmLog, LogLevel::Info, ("ResizeReflowIgnoreOverride (%p) options: %d\n",
+mMobileViewportManager.get(), !(aOptions & ResizeReflowOptions::BSizeLimit)));
   if (!(aOptions & ResizeReflowOptions::BSizeLimit)) {
     nsSize oldSize = mPresContext->GetVisibleArea().Size();
+MOZ_LOG(sApzMvmLog, LogLevel::Info, ("ResizeReflowIgnoreOverride (%p) oldSize: %d,%d newSize %d,%d\n",
+mMobileViewportManager.get(),
+oldSize.width, oldSize.height, aWidth, aHeight));
     if (oldSize == nsSize(aWidth, aHeight)) {
       return NS_OK;
     }
@@ -2129,6 +2136,7 @@ void PresShell::FireResizeEvent() {
 
   mResizeEventPending = false;
 
+  MOZ_LOG(sApzMvmLog, LogLevel::Info, ("PresShell with MVM %p firing resize event\n", mMobileViewportManager.get()));
   // Send resize event from here.
   WidgetEvent event(true, mozilla::eResize);
   nsEventStatus status = nsEventStatus_eIgnore;
@@ -9472,6 +9480,8 @@ void PresShell::sReflowContinueCallback(nsITimer* aTimer, void* aPresShell) {
   self->ScheduleReflow();
 }
 
+bool dumpit = false;
+
 bool PresShell::ScheduleReflowOffTimer() {
   MOZ_ASSERT(!mObservingLayoutFlushes, "Shouldn't get here");
   ASSERT_REFLOW_SCHEDULED_STATE();
@@ -9507,7 +9517,16 @@ bool PresShell::DoReflow(nsIFrame* target, bool aInterruptible,
   }
 
   if (mMobileViewportManager) {
+    bool dumpTree = false;
+    if (mMobileViewportManager->DisplaySize().width == 1920) {
+      //printf_stderr("%p: Old MVM size width is 1920\n", mMobileViewportManager.get());
+      dumpTree = true;
+    }
     mMobileViewportManager->UpdateSizesBeforeReflow();
+    if (dumpTree && mMobileViewportManager->DisplaySize().width < 1920) {
+      //target->DumpFrameTree();
+      dumpit = true;
+    }
   }
 
   // Schedule a paint, but don't actually mark this frame as changed for
@@ -9629,6 +9648,8 @@ bool PresShell::DoReflow(nsIFrame* target, bool aInterruptible,
 
   nsReflowStatus status;
   ReflowOutput desiredSize(reflowInput);
+MOZ_LOG(sApzMvmLog, LogLevel::Info, ("Reflowing %p for %p\n", target,
+mMobileViewportManager.get()));
   target->Reflow(mPresContext, desiredSize, reflowInput, status);
 
   // If an incremental reflow is initiated at a frame other than the
@@ -9682,6 +9703,8 @@ bool PresShell::DoReflow(nsIFrame* target, bool aInterruptible,
 
   mIsReflowing = false;
   bool interrupted = mPresContext->HasPendingInterrupt();
+MOZ_LOG(sApzMvmLog, LogLevel::Info, ("Done reflowing (%p) with interrupted=%d\n", mMobileViewportManager.get(), interrupted));
+dumpit = false;
   if (interrupted) {
     // Make sure target gets reflowed again.
     for (auto iter = mFramesToDirty.Iter(); !iter.Done(); iter.Next()) {

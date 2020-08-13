@@ -1212,6 +1212,12 @@ void nsHTMLScrollFrame::Reflow(nsPresContext* aPresContext,
                                ReflowOutput& aDesiredSize,
                                const ReflowInput& aReflowInput,
                                nsReflowStatus& aStatus) {
+if (mHelper.mIsRoot) {
+    if (RefPtr<MobileViewportManager> manager =
+            PresShell()->GetMobileViewportManager()) {
+      printf_stderr("Reflowing root scrollframe with MVM %p\n", manager.get());
+    }
+}
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsHTMLScrollFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
@@ -1337,6 +1343,7 @@ void nsHTMLScrollFrame::Reflow(nsPresContext* aPresContext,
   if (mHelper.mIsRoot) {
     if (RefPtr<MobileViewportManager> manager =
             PresShell()->GetMobileViewportManager()) {
+ printf_stderr("MVM %p on scrollbar reflow\n", manager.get());
       // Note that this runs during layout, and when we get here the root
       // scrollframe has already been laid out. It may have added or removed
       // scrollbars as a result of that layout, so we need to ensure the

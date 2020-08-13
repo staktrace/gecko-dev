@@ -254,6 +254,8 @@ nsRect ViewportFrame::AdjustReflowInputAsContainingBlock(
   return rect;
 }
 
+extern bool dumpit;
+
 void ViewportFrame::Reflow(nsPresContext* aPresContext,
                            ReflowOutput& aDesiredSize,
                            const ReflowInput& aReflowInput,
@@ -282,6 +284,10 @@ void ViewportFrame::Reflow(nsPresContext* aPresContext,
   if (mFrames.NotEmpty()) {
     // Deal with a non-incremental reflow or an incremental reflow
     // targeted at our one-and-only principal child frame.
+    //if (dumpit) {
+      printf_stderr("shouldReflowAllKids: %d subtreeDirty(%p): %d\n",
+       aReflowInput.ShouldReflowAllKids(), mFrames.FirstChild(), mFrames.FirstChild()->IsSubtreeDirty());
+    //}
     if (aReflowInput.ShouldReflowAllKids() ||
         mFrames.FirstChild()->IsSubtreeDirty()) {
       // Reflow our one-and-only principal child frame
@@ -298,8 +304,14 @@ void ViewportFrame::Reflow(nsPresContext* aPresContext,
                   ReflowChildFlags::Default, aStatus);
       kidBSize = kidDesiredSize.BSize(wm);
 
+      if (dumpit) {
+        printf_stderr("Reflowing child %p\n", kidFrame);
+      }
       FinishReflowChild(kidFrame, aPresContext, kidDesiredSize, &kidReflowInput,
                         0, 0, ReflowChildFlags::Default);
+      if (dumpit) {
+        printf_stderr("Done reflowing child %p\n", kidFrame);
+      }
     } else {
       kidBSize = LogicalSize(wm, mFrames.FirstChild()->GetSize()).BSize(wm);
     }
@@ -337,9 +349,15 @@ void ViewportFrame::Reflow(nsPresContext* aPresContext,
     nsRect rect = AdjustReflowInputAsContainingBlock(&reflowInput);
     AbsPosReflowFlags flags =
         AbsPosReflowFlags::CBWidthAndHeightChanged;  // XXX could be optimized
+    if (dumpit) {
+      printf_stderr("Reflowing abspos children\n");
+    }
     GetAbsoluteContainingBlock()->Reflow(this, aPresContext, reflowInput,
                                          aStatus, rect, flags,
                                          /* aOverflowAreas = */ nullptr);
+    if (dumpit) {
+      printf_stderr("Done reflowing abspos children\n");
+    }
   }
 
   if (mFrames.NotEmpty()) {

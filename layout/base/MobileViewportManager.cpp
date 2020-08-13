@@ -334,6 +334,7 @@ void MobileViewportManager::UpdateResolutionForViewportSizeChange(
   // 4. neither screen size nor CSS viewport changes
 
   if (!aDisplayWidthChangeRatio) {
+    MVM_LOG("%p: aDisplayWidthChangeRatio is not set, updating VVPS\n");
     UpdateVisualViewportSize(displaySize, zoom);
     return;
   }
@@ -542,6 +543,7 @@ void MobileViewportManager::UpdateDisplayPortMargins() {
 void MobileViewportManager::RefreshVisualViewportSize() {
   // This function is a subset of RefreshViewportSize, and only updates the
   // visual viewport size.
+  MVM_LOG("%p: Refreshing VVPS\n");
 
   if (!mContext) {
     return;
@@ -560,6 +562,8 @@ void MobileViewportManager::RefreshVisualViewportSize() {
 void MobileViewportManager::UpdateSizesBeforeReflow() {
   if (Maybe<LayoutDeviceIntSize> newDisplaySize =
           mContext->GetContentViewerSize()) {
+    MVM_LOG("%p: old size is %s, new size is %s\n", this,
+    Stringify(mDisplaySize).c_str(), Stringify(*newDisplaySize).c_str());
     if (mDisplaySize == *newDisplaySize) {
       return;
     }
