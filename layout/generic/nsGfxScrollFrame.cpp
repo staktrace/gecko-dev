@@ -3119,10 +3119,7 @@ void ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange,
             // might still get squashed into a full transaction if something
             // happens to trigger one.
             success = manager->SetPendingScrollUpdateForNextTransaction(
-                id,
-                {mScrollGeneration, CSSPoint::FromAppUnits(GetScrollPosition()),
-                 CSSPoint::FromAppUnits(GetApzScrollPosition()),
-                 mLastScrollOrigin == ScrollOrigin::Relative});
+                id, mScrollUpdates.LastElement());
             if (success) {
               schedulePaint = false;
               mOuter->SchedulePaint(nsIFrame::PAINT_COMPOSITE_ONLY);
