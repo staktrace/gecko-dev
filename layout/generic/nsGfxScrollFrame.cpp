@@ -3032,6 +3032,9 @@ void ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange,
   if (aOrigin == ScrollOrigin::Relative) {
     MOZ_ASSERT(!isScrollOriginDowngrade);
     MOZ_ASSERT(mLastScrollOrigin == ScrollOrigin::Relative);
+    printf_stderr("MT new relative scroll from %s to %s\n",
+      Stringify(CSSPoint::FromAppUnits(mApzScrollPos)).c_str(),
+      Stringify(CSSPoint::FromAppUnits(pt)).c_str());
     mScrollUpdates.AppendElement(ScrollPositionUpdate::NewRelativeScroll(
         mScrollGeneration, mApzScrollPos, pt));
     mApzScrollPos = pt;
@@ -4306,6 +4309,9 @@ bool ScrollFrameHelper::DecideScrollableLayer(
 void ScrollFrameHelper::NotifyApzTransaction() {
   mAllowScrollOriginDowngrade = true;
   mApzScrollPos = GetScrollPosition();
+  if (!mScrollUpdates.IsEmpty()) {
+    printf_stderr("Notify APZ transaction, scrollpos now %s\n", Stringify(CSSPoint::FromAppUnits(mApzScrollPos)).c_str());
+  }
   mRelativeOffset.reset();
   mScrollUpdates.Clear();
 }
