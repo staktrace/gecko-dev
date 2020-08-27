@@ -107,4 +107,16 @@ CSSPoint ScrollPositionUpdate::GetDelta() const {
   return mDelta;
 }
 
+void ScrollPositionUpdate::AppendToString(std::stringstream& aStream) const
+{
+  aStream << "ScrollPositionUpdate(gen=" << mScrollGeneration
+          << ", type=" << (int)mType
+          << ", mode=" << (int)mScrollMode
+          << ", origin=" << (int)mScrollOrigin
+          << ", dst=" << mDestination.x << "," << mDestination.y
+          << ", src=" << mSource.x << "," << mSource.y
+          << ", delta=" << mDelta.x << "," << mDelta.y
+          << ")";
+}
+
 }  // namespace mozilla

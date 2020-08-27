@@ -48,6 +48,8 @@ class ScrollPositionUpdate {
   CSSPoint GetSource() const;
   CSSPoint GetDelta() const;
 
+  void AppendToString(std::stringstream& aStream) const;
+
  private:
   uint32_t mScrollGeneration;
   ScrollUpdateType mType;
