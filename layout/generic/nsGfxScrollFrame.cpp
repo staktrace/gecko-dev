@@ -4312,6 +4312,13 @@ bool ScrollFrameHelper::DecideScrollableLayer(
   return mWillBuildScrollableLayer;
 }
 
+void ScrollFrameHelper::NotifyApzTransaction() {
+  mAllowScrollOriginDowngrade = true;
+  mApzScrollPos = GetScrollPosition();
+  mRelativeOffset.reset();
+  mScrollUpdates.Clear();
+}
+
 Maybe<ScrollMetadata> ScrollFrameHelper::ComputeScrollMetadata(
     LayerManager* aLayerManager, const nsIFrame* aContainerReferenceFrame,
     const Maybe<ContainerLayerParameters>& aParameters,
