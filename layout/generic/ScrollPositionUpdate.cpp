@@ -15,6 +15,14 @@ ScrollPositionUpdate::ScrollPositionUpdate()
       mScrollOrigin(ScrollOrigin::None) {}
 
 /*static*/
+ScrollPositionUpdate ScrollPositionUpdate::NewScrollframe(uint32_t aGeneration) {
+  ScrollPositionUpdate ret;
+  ret.mScrollGeneration = aGeneration;
+  ret.mScrollMode = ScrollMode::Instant;
+  return ret;
+}
+
+/*static*/
 ScrollPositionUpdate ScrollPositionUpdate::NewScroll(uint32_t aGeneration,
                                                      ScrollOrigin aOrigin,
                                                      nsPoint aDestination) {

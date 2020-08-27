@@ -2279,6 +2279,9 @@ ScrollFrameHelper::ScrollFrameHelper(nsContainerFrame* aOuter, bool aIsRoot)
       mProcessingScrollEvent(false),
       mApzAnimationInProgress(false),
       mVelocityQueue(aOuter->PresContext()) {
+  mScrollUpdates.AppendElement(
+      ScrollPositionUpdate::NewScrollframe(mScrollGeneration));
+
   if (LookAndFeel::GetInt(LookAndFeel::IntID::UseOverlayScrollbars) != 0) {
     mScrollbarActivity = new ScrollbarActivity(do_QueryFrame(aOuter));
   }

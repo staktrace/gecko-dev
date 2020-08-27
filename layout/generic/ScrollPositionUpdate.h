@@ -24,6 +24,7 @@ class ScrollPositionUpdate {
  public:
   explicit ScrollPositionUpdate();
 
+  static ScrollPositionUpdate NewScrollframe(uint32_t aGeneration);
   static ScrollPositionUpdate NewScroll(uint32_t aGeneration,
                                         ScrollOrigin aOrigin,
                                         nsPoint aDestination);
