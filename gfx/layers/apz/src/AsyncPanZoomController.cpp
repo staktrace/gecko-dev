@@ -4694,10 +4694,7 @@ void AsyncPanZoomController::NotifyLayersUpdated(
     }
     Metrics().SetScrollGeneration(scrollUpdate.GetGeneration());
 
-    if (scrollUpdate.GetOrigin() == ScrollOrigin::Apz) {
-      APZC_LOG("%p dropping scroll update with origin Apz\n", this);
-      continue;
-    }
+    MOZ_ASSERT(scrollUpdate.GetOrigin() != ScrollOrigin::Apz);
     if (scrollUpdate.GetOrigin() == ScrollOrigin::Restore && userScrolled) {
       APZC_LOG("%p dropping scroll update with origin Restore because of user scroll\n", this);
       continue;

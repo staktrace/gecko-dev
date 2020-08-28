@@ -3041,7 +3041,7 @@ void ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange,
     mScrollUpdates.AppendElement(ScrollPositionUpdate::NewRelativeScroll(
         mScrollGeneration, mApzScrollPos, pt));
     mApzScrollPos = pt;
-  } else {
+  } else if (aOrigin != ScrollOrigin::Apz) {
     mScrollUpdates.AppendElement(
         ScrollPositionUpdate::NewScroll(mScrollGeneration, aOrigin, pt));
   }
