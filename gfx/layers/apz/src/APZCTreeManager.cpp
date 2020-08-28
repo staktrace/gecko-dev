@@ -1002,7 +1002,8 @@ template <class ScrollNode>
 void APZCTreeManager::PrintAPZCInfo(const ScrollNode& aLayer,
                                     const AsyncPanZoomController* apzc) {
   const FrameMetrics& metrics = aLayer.Metrics();
-  mApzcTreeLog << "APZC " << apzc->GetGuid()
+  mApzcTreeLog << "APZC " << nsPrintfCString("%p", apzc).get()
+               << " " << apzc->GetGuid()
                << "\tcb=" << metrics.GetCompositionBounds()
                << "\tsr=" << metrics.GetScrollableRect()
                << (metrics.IsScrollInfoLayer() ? "\tscrollinfo" : "")
