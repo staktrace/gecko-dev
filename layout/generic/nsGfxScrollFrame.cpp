@@ -2468,6 +2468,8 @@ void ScrollFrameHelper::ScrollToWithOrigin(
   // None is never a valid scroll origin to be passed in.
   MOZ_ASSERT(aOrigin != ScrollOrigin::None);
 
+printf_stderr("ScrollToWithOrigin %s, %d, %d\n", Stringify(aScrollPosition).c_str(), (int)aMode, (int)aOrigin);
+
   if (aOrigin != ScrollOrigin::Restore) {
     // If we're doing a non-restore scroll, we don't want to later
     // override it by restoring our saved scroll position.
@@ -2532,6 +2534,7 @@ void ScrollFrameHelper::ScrollToWithOrigin(
         }
 
         if (nsLayoutUtils::AsyncPanZoomEnabled(mOuter) && WantAsyncScroll()) {
+          printf_stderr("Asking APZ to do it\n");
           ApzSmoothScrollTo(mDestination, aOrigin);
           return;
         }
@@ -2539,6 +2542,7 @@ void ScrollFrameHelper::ScrollToWithOrigin(
         mAsyncSmoothMSDScroll = new AsyncSmoothMSDScroll(
             GetScrollPosition(), mDestination, currentVelocity,
             GetLayoutScrollRange(), now, presContext);
+        printf_stderr("Doing it on the MT\n");
 
         mAsyncSmoothMSDScroll->SetRefreshObserver(this);
       } else {
@@ -7610,6 +7614,7 @@ void ScrollFrameHelper::ApzSmoothScrollTo(const nsPoint& aDestination,
     // scrolled at the same time, sScrollGenerationCounter can get
     // incremented and this early-exit won't get taken. Bug 1231177 is
     // on file for this.
+    printf_stderr("Discarding APZ request\n");
     return;
   }
 
@@ -7621,6 +7626,7 @@ void ScrollFrameHelper::ApzSmoothScrollTo(const nsPoint& aDestination,
   mApzSmoothScrollDestination = Some(aDestination);
   mScrollGeneration = ++sScrollGenerationCounter;
 
+  printf_stderr("Added scrollUpdate\n");
   mScrollUpdates.AppendElement(ScrollPositionUpdate::NewSmoothScroll(
       mScrollGeneration, aOrigin, aDestination));
 
@@ -7639,6 +7645,7 @@ void ScrollFrameHelper::ApzSmoothScrollTo(const nsPoint& aDestination,
            viewID));
     }
 
+    printf_stderr("Installing displayport\n");
     nsLayoutUtils::CalculateAndSetDisplayPortMargins(
         mOuter->GetScrollTargetFrame(), nsLayoutUtils::RepaintMode::Repaint);
     nsIFrame* frame = do_QueryFrame(mOuter->GetScrollTargetFrame());

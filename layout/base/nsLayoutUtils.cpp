@@ -1507,7 +1507,9 @@ void nsLayoutUtils::RemoveDisplayPort(nsIContent* aContent) {
 void nsLayoutUtils::NotifyPaintSkipTransaction(ViewID aScrollId) {
   if (nsIScrollableFrame* scrollFrame =
           nsLayoutUtils::FindScrollableFrameFor(aScrollId)) {
+    printf_stderr("notify paint skip\n");
     scrollFrame->NotifyApzTransaction();
+    printf_stderr("/notify paint skip\n");
   }
 }
 
@@ -9392,6 +9394,8 @@ ScrollMetadata nsLayoutUtils::ComputeScrollMetadata(
     metadata.SetSnapInfo(scrollableFrame->GetScrollSnapInfo());
     metadata.SetOverscrollBehavior(
         scrollableFrame->GetOverscrollBehaviorInfo());
+    auto updates = scrollableFrame->GetScrollUpdates();
+    printf_stderr("scrollId=%" PRIu64 " has %zu uupdates\n", scrollId, updates.Length());
     metadata.SetScrollUpdates(scrollableFrame->GetScrollUpdates());
   }
 

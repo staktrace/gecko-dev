@@ -7105,7 +7105,9 @@ UniquePtr<ScrollMetadata> nsDisplayScrollInfoLayer::ComputeScrollMetadata(
   metadata.GetMetrics().SetIsScrollInfoLayer(true);
   nsIScrollableFrame* scrollableFrame = mScrollFrame->GetScrollTargetFrame();
   if (scrollableFrame) {
+    printf_stderr("notify from scrollinfo\n");
     scrollableFrame->NotifyApzTransaction();
+    printf_stderr("/notify from scrollinfo\n");
   }
 
   return UniquePtr<ScrollMetadata>(new ScrollMetadata(metadata));
