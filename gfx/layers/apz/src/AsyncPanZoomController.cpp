@@ -4686,19 +4686,25 @@ void AsyncPanZoomController::NotifyLayersUpdated(
 
   bool scrollOffsetUpdated = false;
   for (const auto& scrollUpdate : aScrollMetadata.GetScrollUpdates()) {
+    APZC_LOG("%p processing scroll update %s\n", this, Stringify(scrollUpdate).c_str());
     if (scrollUpdate.GetGeneration() <= Metrics().GetScrollGeneration()) {
       // This is stale, let's ignore it
       // XXX maybe use a 64-bit value for the scroll generation, or add some
       // overflow detection heuristic here
+      APZC_LOG("%p scrollupdate generation stale, dropping\n", this);
       continue;
     }
     Metrics().SetScrollGeneration(scrollUpdate.GetGeneration());
 
     MOZ_ASSERT(scrollUpdate.GetOrigin() != ScrollOrigin::Apz);
-    if (scrollUpdate.GetOrigin() == ScrollOrigin::Restore && userScrolled) {
-      APZC_LOG("%p dropping scroll update with origin Restore because of user scroll\n", this);
+    if (userScrolled && !nsLayoutUtils::CanScrollOriginClobberApz(scrollUpdate.GetOrigin())) {
+      APZC_LOG("%p scrollupdate cannot clobber APZ userScrolled\n", this);
       continue;
     }
+    // XXX: if we get here, |scrollUpdate| is clobbering APZ, so we may want
+    // to reset |userScrolled| back to false so that subsequent scrollUpdates
+    // in this loop don't get dropped by the check above. Need to add a test
+    // that exercises this scenario, as we don't currently have one.
 
     scrollOffsetUpdated = true;
 
@@ -4764,7 +4770,7 @@ void AsyncPanZoomController::NotifyLayersUpdated(
     } else {
       APZC_LOG("%p updating scroll offset from %s to %s\n", this,
                ToString(Metrics().GetVisualScrollOffset()).c_str(),
-               ToString(aLayerMetrics.GetLayoutScrollOffset()).c_str());
+               ToString(scrollUpdate.GetDestination()).c_str());
       Metrics().ApplyScrollUpdateFrom(scrollUpdate);
     }
 
