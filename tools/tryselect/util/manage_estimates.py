@@ -81,7 +81,11 @@ def download_task_history_data(cache_dir):
     # list of json entries, which Python's json module can't parse.
     duration_data = list()
     for line in r.text.splitlines():
-        duration_data.append(json.loads(line))
+        try:
+            duration_data.append(json.loads(line))
+        except exc:
+            print("Error json-parsing {}: {}".format(line, exc))
+            return
 
     # Reformat duration data to avoid list of dicts, as this is slow in the preview window
     duration_data = {d["name"]: d["mean_duration_seconds"] for d in duration_data}
