@@ -2494,17 +2494,17 @@ void ScrollFrameHelper::ScrollToWithOrigin(
   nsRect range =
       aRange && !willSnap ? *aRange : nsRect(aScrollPosition, nsSize(0, 0));
 
-  if (aMode != ScrollMode::SmoothMsd) {
-    // If we get a non-smooth-scroll, reset the cached APZ scroll destination,
-    // so that we know to process the next smooth-scroll destined for APZ.
-    mApzSmoothScrollDestination = Nothing();
-  }
-
   if (aMode == ScrollMode::Instant) {
     // Asynchronous scrolling is not allowed, so we'll kill any existing
     // async-scrolling process and do an instant scroll.
     CompleteAsyncScroll(range, aOrigin);
     return;
+  }
+
+  if (aMode != ScrollMode::SmoothMsd) {
+    // If we get a non-smooth-scroll, reset the cached APZ scroll destination,
+    // so that we know to process the next smooth-scroll destined for APZ.
+    mApzSmoothScrollDestination = Nothing();
   }
 
   nsPresContext* presContext = mOuter->PresContext();
@@ -2952,7 +2952,13 @@ void ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange,
       ClampAndAlignWithLayerPixels(aPt, GetLayoutScrollRange(), aRange,
                                    alignWithPos, appUnitsPerDevPixel, scale);
   if (pt == curPos) {
-    return;
+    // Even if we are bailing out due to no-op main-thread scroll position
+    // change, we might need to cancel an APZ smooth scroll that we already
+    // kicked off.
+    if (!mApzSmoothScrollDestination || aOrigin == ScrollOrigin::Clamp) {
+      return;
+    }
+    mApzSmoothScrollDestination = Nothing();
   }
 
   // If we are scrolling the RCD-RSF, and a visual scroll update is pending,
@@ -6265,7 +6271,8 @@ bool ScrollFrameHelper::ReflowFinished() {
     // Clamp current scroll position to new bounds. Normally this won't
     // do anything.
     nsPoint currentScrollPos = GetScrollPosition();
-    ScrollToImpl(currentScrollPos, nsRect(currentScrollPos, nsSize(0, 0)));
+    ScrollToImpl(currentScrollPos, nsRect(currentScrollPos, nsSize(0, 0)),
+                 ScrollOrigin::Clamp);
     if (!IsScrollAnimating()) {
       // We need to have mDestination track the current scroll position,
       // in case it falls outside the new reflow area. mDestination is used
