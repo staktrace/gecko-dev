@@ -453,9 +453,6 @@ class ScrollFrameHelper : public nsIReflowCallback {
   void HandleScrollbarStyleSwitching();
 
   ScrollOrigin LastScrollOrigin() const { return mLastScrollOrigin; }
-  ScrollOrigin LastSmoothScrollOrigin() const {
-    return mLastSmoothScrollOrigin;
-  }
   bool IsApzAnimationInProgress() const { return mApzAnimationInProgress; }
   uint32_t CurrentScrollGeneration() const { return mScrollGeneration; }
   nsPoint LastScrollDestination() const { return mDestination; }
@@ -468,7 +465,6 @@ class ScrollFrameHelper : public nsIReflowCallback {
                                bool aApzAnimationInProgress) {
     if (aGeneration == mScrollGeneration) {
       mLastScrollOrigin = ScrollOrigin::None;
-      mLastSmoothScrollOrigin = ScrollOrigin::None;
     }
     // We can reset this regardless of scroll generation, as this is only set
     // here, as a response to APZ requesting a repaint.
@@ -561,7 +557,6 @@ class ScrollFrameHelper : public nsIReflowCallback {
   RefPtr<ScrollbarActivity> mScrollbarActivity;
   nsTArray<nsIScrollPositionListener*> mListeners;
   ScrollOrigin mLastScrollOrigin;
-  ScrollOrigin mLastSmoothScrollOrigin;
   Maybe<nsPoint> mApzSmoothScrollDestination;
   uint32_t mScrollGeneration;
 
@@ -581,10 +576,6 @@ class ScrollFrameHelper : public nsIReflowCallback {
   // just the current scroll position. ScrollBy will choose its
   // destination based on this value.
   nsPoint mDestination;
-
-  // Tracks a relative scroll offset to pass to apz to do a smooth scroll by.
-  // It is used by ScrollBy when this scroll frame can be scrolled by APZ.
-  Maybe<nsPoint> mRelativeOffset;
 
   // A goal position to try to scroll to as content loads. As long as mLastPos
   // matches the current logical scroll position, we try to scroll to
@@ -721,7 +712,7 @@ class ScrollFrameHelper : public nsIReflowCallback {
   // when repainted via APZ, which means that there may be a request for an APZ
   // animation in flight for example, while this is still false. In order to
   // answer "is an APZ animation in the process of starting or in progress" you
-  // need to check both mLastSmoothScrollOrigin and this bit.
+  // need to check both mScrollUpdates and this bit.
   bool mApzAnimationInProgress : 1;
 
   mozilla::layout::ScrollVelocityQueue mVelocityQueue;

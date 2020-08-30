@@ -2231,7 +2231,6 @@ ScrollFrameHelper::ScrollFrameHelper(nsContainerFrame* aOuter, bool aIsRoot)
       mAsyncScroll(nullptr),
       mAsyncSmoothMSDScroll(nullptr),
       mLastScrollOrigin(ScrollOrigin::None),
-      mLastSmoothScrollOrigin(ScrollOrigin::None),
       mScrollGeneration(++sScrollGenerationCounter),
       mDestination(0, 0),
       mRestorePos(-1, -1),
@@ -3029,12 +3028,6 @@ void ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange,
   if (allowScrollOriginChange) {
     mLastScrollOrigin = aOrigin;
     mAllowScrollOriginDowngrade = false;
-  }
-  mLastSmoothScrollOrigin = ScrollOrigin::None;
-  // Check if this scroll clobbers a pure relative scroll.
-  if (aOrigin == ScrollOrigin::Restore || aOrigin == ScrollOrigin::Other ||
-      aOrigin == ScrollOrigin::Scrollbars) {
-    mRelativeOffset.reset();
   }
   mScrollGeneration = ++sScrollGenerationCounter;
 
@@ -4315,7 +4308,6 @@ bool ScrollFrameHelper::DecideScrollableLayer(
 void ScrollFrameHelper::NotifyApzTransaction() {
   mAllowScrollOriginDowngrade = true;
   mApzScrollPos = GetScrollPosition();
-  mRelativeOffset.reset();
   mScrollUpdates.Clear();
 }
 
@@ -4593,14 +4585,9 @@ void ScrollFrameHelper::ScrollBy(nsIntPoint aDelta, ScrollUnit aUnit,
       nsLayoutUtils::AsyncPanZoomEnabled(mOuter) &&
       !nsLayoutUtils::ShouldDisableApzForElement(mOuter->GetContent()) &&
       (WantAsyncScroll() || mZoomableByAPZ)) {
-    if (mRelativeOffset.isNothing()) {
-      mRelativeOffset = Some(nsPoint(0, 0));
-    }
     nsPoint delta(
         NSCoordSaturatingNonnegativeMultiply(aDelta.x, deltaMultiplier.width),
         NSCoordSaturatingNonnegativeMultiply(aDelta.y, deltaMultiplier.height));
-    mRelativeOffset->x = NSCoordSaturatingAdd(mRelativeOffset->x, delta.x);
-    mRelativeOffset->y = NSCoordSaturatingAdd(mRelativeOffset->y, delta.y);
 
     mScrollGeneration = ++sScrollGenerationCounter;
 
@@ -7006,9 +6993,17 @@ bool ScrollFrameHelper::IsScrollAnimating(
   if (aIncludeApz == IncludeApzAnimation::Yes && IsApzAnimationInProgress()) {
     return true;
   }
-  return mAsyncScroll || mAsyncSmoothMSDScroll ||
-         LastSmoothScrollOrigin() != ScrollOrigin::None ||
-         mRelativeOffset.isSome();
+  if (!mScrollUpdates.IsEmpty()) {
+    switch (mScrollUpdates.LastElement().GetMode()) {
+      case ScrollMode::Smooth:
+      case ScrollMode::SmoothMsd:
+        return true;
+      case ScrollMode::Instant:
+      case ScrollMode::Normal:
+        break;
+    }
+  }
+  return mAsyncScroll || mAsyncSmoothMSDScroll;
 }
 
 UniquePtr<PresState> ScrollFrameHelper::SaveState() const {
@@ -7618,7 +7613,6 @@ void ScrollFrameHelper::ApzSmoothScrollTo(const nsPoint& aDestination,
   // information needed to start the animation and skip the main-thread
   // animation for this scroll.
   MOZ_ASSERT(aOrigin != ScrollOrigin::None);
-  mLastSmoothScrollOrigin = aOrigin;
   mApzSmoothScrollDestination = Some(aDestination);
   mScrollGeneration = ++sScrollGenerationCounter;
 
