@@ -2024,6 +2024,8 @@ void nsDisplayListBuilder::BuildCompositorHitTestInfoIfNeeded(
   auto* item = MakeDisplayItem<nsDisplayCompositorHitTestInfo>(
       this, aFrame, info, GetHitTestTouchActionRoot(), Some(area));
   MOZ_ASSERT(item);
+  if (XRE_IsContentProcess()) printf_stderr("Created %p with taRoot %p\n", item,
+GetHitTestTouchActionRoot());
 
   SetCompositorHitTestInfo(area, info);
   aList->AppendToTop(item);

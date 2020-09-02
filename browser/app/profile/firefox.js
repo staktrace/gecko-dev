@@ -2458,3 +2458,8 @@ pref("first-startup.timeout", 30000);
 #ifdef XP_WIN
   pref("default-browser-agent.enabled", true);
 #endif
+
+pref("layout.display-list.dump-content", true);
+pref("dom.w3c_touch_events.enabled", 1);
+pref("browser.newtab.preload", false);
+pref("gfx.webrender.force-disabled", true);

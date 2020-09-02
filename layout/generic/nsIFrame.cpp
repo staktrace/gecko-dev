@@ -4025,6 +4025,7 @@ void nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder* aBuilder,
 
   Maybe<nsDisplayListBuilder::AutoSaveRestoreTouchActionRoot> savedTouchActionRoot;
   if (aChild->IsTouchActionRoot()) {
+    if (XRE_IsContentProcess()) printf_stderr("Child %p is a touch-action root\n", aChild);
     savedTouchActionRoot.emplace(aBuilder, aChild);
   }
 

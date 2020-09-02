@@ -4061,6 +4061,8 @@ void PaintedLayerData::AccumulateHitTestItem(ContainerState* aState,
     }
   }
 
+  if (XRE_IsContentProcess()) printf_stderr("PLD %p (c:%d) with mTouchActionRoot %p accumulating item %p with root %p\n",
+    this, mCollapsedTouchActions, mTouchActionRoot, aItem, info.mTouchActionRoot);
   const auto touchFlags = flags & CompositorHitTestTouchActionMask;
   if (mTouchActionRoot != nullptr &&
       mTouchActionRoot != info.mTouchActionRoot) {

@@ -119,8 +119,9 @@ static void PrintDisplayItemTo(nsDisplayListBuilder* aBuilder,
   if (aItem->HasHitTestInfo()) {
     auto* hitTestInfoItem = static_cast<nsDisplayHitTestInfoBase*>(aItem);
 
-    aStream << nsPrintfCString(" hitTestInfo(0x%x)",
-                               hitTestInfoItem->HitTestFlags().serialize());
+    aStream << nsPrintfCString(" hitTestInfo(0x%x) taRoot(%p)",
+                               hitTestInfoItem->HitTestFlags().serialize(),
+                               hitTestInfoItem->GetHitTestInfo().mTouchActionRoot);
 
     nsRect area = hitTestInfoItem->HitTestArea();
     aStream << nsPrintfCString(" hitTestArea(%d,%d,%d,%d)", area.x, area.y,
