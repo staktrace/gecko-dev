@@ -760,11 +760,11 @@ class nsDisplayListBuilder {
                                           nsDisplayList* aList,
                                           const bool aBuildNew);
 
-  bool IsInsidePointerEventsNoneDoc() {
+  bool IsInsidePointerEventsNoneDoc() const {
     return CurrentPresShellState()->mInsidePointerEventsNoneDoc;
   }
 
-  bool IsTouchEventPrefEnabledDoc() {
+  bool IsTouchEventPrefEnabledDoc() const {
     return CurrentPresShellState()->mTouchEventPrefEnabledDoc;
   }
 
@@ -816,7 +816,7 @@ class nsDisplayListBuilder {
    * Returns the root scroll frame for the current PresShell, if the PresShell
    * is ignoring viewport scrolling.
    */
-  nsIFrame* GetPresShellIgnoreScrollFrame() {
+  const nsIFrame* GetPresShellIgnoreScrollFrame() {
     return CurrentPresShellState()->mPresShellIgnoreScrollFrame;
   }
 
@@ -1572,7 +1572,7 @@ class nsDisplayListBuilder {
     return aFrame->GetParent()->GetProperty(OutOfFlowDisplayDataProperty());
   }
 
-  nsPresContext* CurrentPresContext() {
+  const nsPresContext* CurrentPresContext() {
     return CurrentPresShellState()->mPresShell->GetPresContext();
   }
 
@@ -1889,6 +1889,12 @@ class nsDisplayListBuilder {
   };
 
   PresShellState* CurrentPresShellState() {
+    NS_ASSERTION(mPresShellStates.Length() > 0,
+                 "Someone forgot to enter a presshell");
+    return &mPresShellStates[mPresShellStates.Length() - 1];
+  }
+
+  const PresShellState* CurrentPresShellState() const {
     NS_ASSERTION(mPresShellStates.Length() > 0,
                  "Someone forgot to enter a presshell");
     return &mPresShellStates[mPresShellStates.Length() - 1];

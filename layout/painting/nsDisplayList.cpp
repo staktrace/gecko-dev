@@ -1116,7 +1116,7 @@ void nsDisplayListBuilder::LeavePresShell(const nsIFrame* aReferenceFrame,
   mPresShellStates.RemoveLastElement();
 
   if (!mPresShellStates.IsEmpty()) {
-    nsPresContext* pc = CurrentPresContext();
+    const nsPresContext* pc = CurrentPresContext();
     nsIDocShell* docShell = pc->GetDocShell();
     if (docShell) {
       docShell->GetWindowDraggingAllowed(&mWindowDraggingAllowed);

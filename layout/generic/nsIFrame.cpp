@@ -10938,7 +10938,8 @@ void nsIFrame::AddSizeOfExcludingThisForTree(nsWindowSizes& aSizes) const {
   }
 }
 
-nsRect nsIFrame::GetCompositorHitTestArea(nsDisplayListBuilder* aBuilder) {
+nsRect nsIFrame::GetCompositorHitTestArea(
+    const nsDisplayListBuilder* aBuilder) {
   nsRect area;
 
   nsIScrollableFrame* scrollFrame = nsLayoutUtils::GetScrollableFrameFor(this);
@@ -10961,7 +10962,7 @@ nsRect nsIFrame::GetCompositorHitTestArea(nsDisplayListBuilder* aBuilder) {
 }
 
 CompositorHitTestInfo nsIFrame::GetCompositorHitTestInfo(
-    nsDisplayListBuilder* aBuilder) {
+    const nsDisplayListBuilder* aBuilder) {
   CompositorHitTestInfo result = CompositorHitTestInvisibleToHit;
 
   if (aBuilder->IsInsidePointerEventsNoneDoc()) {

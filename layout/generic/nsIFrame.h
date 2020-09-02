@@ -4893,7 +4893,7 @@ class nsIFrame : public nsQueryFrame {
   /**
    * Returns the hit test area of the frame.
    */
-  nsRect GetCompositorHitTestArea(nsDisplayListBuilder* aBuilder);
+  nsRect GetCompositorHitTestArea(const nsDisplayListBuilder* aBuilder);
 
   /**
    * Returns the set of flags indicating the properties of the frame that the
@@ -4903,7 +4903,7 @@ class nsIFrame : public nsQueryFrame {
    * list builder has the necessary state set up correctly.
    */
   mozilla::gfx::CompositorHitTestInfo GetCompositorHitTestInfo(
-      nsDisplayListBuilder* aBuilder);
+      const nsDisplayListBuilder* aBuilder);
 
   /**
    * Copies aWM to mWritingMode on 'this' and all its ancestors.
