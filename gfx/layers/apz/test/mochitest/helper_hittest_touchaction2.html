@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Testing more complex APZ hit-test scenarios</title>
+  <script type="application/javascript" src="apz_test_utils.js"></script>
+  <script type="application/javascript" src="apz_test_native_event_utils.js"></script>
+  <script src="/tests/SimpleTest/paint_listener.js"></script>
+  <meta name="viewport" content="width=device-width"/>
+</head>
+<body>
+
+<!-- There is a box with pan-x pan-y, and a descendant DOM element which inherits
+     that touch-action property. The descendant element is positioned so that
+     it is not entirely contained within the box, and so it gets its own
+     nsDisplayCompositorHitTestInfo item.
+
+     This test verifies that the non-WR codepath is capable of precisely
+     representing this scenario in the layer tree and not falling back to a
+     dispatch-to-content region. -->
+<div id="box" style="touch-action: pan-x pan-y;
+                     width: 300px;
+                     height: 300px;
+                     border: solid 1px black">
+ <div id="gradient" style="position: relative;
+                           top: 250px;
+                           width: 200px;
+                           height: 200px;
+                           background-image: linear-gradient(red,blue)">
+ </div>
+</div>
+
+</body>
+<script type="application/javascript">
+
+var config = getHitTestConfig();
+
+function test(testDriver) {
+  var scrollId = config.utils.getViewId(document.scrollingElement);
+  var layersId = config.utils.getLayersId();
+
+  checkHitResult(
+      hitTest(centerOf("box")),
+      APZHitResultFlags.VISIBLE |
+      APZHitResultFlags.PINCH_ZOOM_DISABLED |
+      APZHitResultFlags.DOUBLE_TAP_ZOOM_DISABLED,
+      scrollId,
+      layersId,
+      "center of box");
+  checkHitResult(
+      hitTest(centerOf("gradient")),
+      APZHitResultFlags.VISIBLE |
+      APZHitResultFlags.PINCH_ZOOM_DISABLED |
+      APZHitResultFlags.DOUBLE_TAP_ZOOM_DISABLED,
+      scrollId,
+      layersId,
+      "center of gradient");
+}
+
+waitUntilApzStable()
+  .then(test)
+  .then(subtestDone);
+
+</script>
+</html>
