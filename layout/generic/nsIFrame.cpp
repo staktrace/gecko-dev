@@ -4023,6 +4023,11 @@ void nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder* aBuilder,
     aBuilder->ClearWillChangeBudgetStatus(child);
   }
 
+  Maybe<nsDisplayListBuilder::AutoSaveRestoreTouchActionRoot> savedTouchActionRoot;
+  if (aChild->IsTouchActionRoot()) {
+    savedTouchActionRoot.emplace(aBuilder, aChild);
+  }
+
   if (StaticPrefs::layout_css_scroll_anchoring_highlight()) {
     if (child->FirstContinuation()->IsScrollAnchor()) {
       nsRect bounds = child->GetContentRectRelativeToSelf() +
@@ -10960,6 +10965,20 @@ nsRect nsIFrame::GetCompositorHitTestArea(
   }
 
   return area;
+}
+
+bool nsIFrame::IsTouchActionRoot() const {
+  if (nsIScrollableFrame* scrollFrame =
+          nsLayoutUtils::GetScrollableFrameFor(this)) {
+    ScrollStyles ss = scrollFrame->GetScrollStyles();
+    if (ss.mVertical != StyleOverflow::Hidden ||
+        ss.mHorizontal != StyleOverflow::Hidden) {
+      return true;
+    }
+  }
+  const StyleTouchAction touchAction =
+      nsLayoutUtils::GetTouchActionFromFrame(this);
+  return (touchAction != StyleTouchAction::AUTO);
 }
 
 CompositorHitTestInfo nsIFrame::GetCompositorHitTestInfo(

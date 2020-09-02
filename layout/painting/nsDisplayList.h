@@ -18,6 +18,7 @@
 #include "mozilla/ArenaAllocator.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Array.h"
+#include "mozilla/AutoRestore.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/EnumSet.h"
 #include "mozilla/Maybe.h"
@@ -1498,6 +1499,15 @@ class nsDisplayListBuilder {
    private:
     nsDisplayListBuilder* mBuilder;
     nsRect mSavedRect;
+  };
+
+  class AutoSaveRestoreTouchActionRoot : public mozilla::AutoRestore<const nsIFrame*> {
+   public:
+    explicit AutoSaveRestoreTouchActionRoot(nsDisplayListBuilder* aBuilder,
+        const nsIFrame* aNewTouchActionRoot)
+        : AutoRestore(aBuilder->mHitTestTouchActionRoot) {
+      aBuilder->mHitTestTouchActionRoot = aNewTouchActionRoot;
+    }
   };
 
   void AccumulateRect(const nsRect& aRect) {

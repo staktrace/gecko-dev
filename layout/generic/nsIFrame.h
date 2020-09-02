@@ -4891,6 +4891,11 @@ class nsIFrame : public nsQueryFrame {
   }
 
   /**
+   * Returns true if this frame modifies the touch-action inherited down
+   * from the parent frame.
+   */
+  bool IsTouchActionRoot() const;
+  /**
    * Returns the hit test area of the frame.
    */
   nsRect GetCompositorHitTestArea(const nsDisplayListBuilder* aBuilder);

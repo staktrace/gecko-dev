@@ -9679,7 +9679,8 @@ bool nsLayoutUtils::ContainsMetricsWithId(const Layer* aLayer,
 }
 
 /* static */
-StyleTouchAction nsLayoutUtils::GetTouchActionFromFrame(nsIFrame* aFrame) {
+StyleTouchAction nsLayoutUtils::GetTouchActionFromFrame(
+    const nsIFrame* aFrame) {
   if (!aFrame) {
     return StyleTouchAction::AUTO;
   }
