@@ -573,7 +573,8 @@ nsDisplayListBuilder::nsDisplayListBuilder(nsIFrame* aReferenceFrame,
       mIsRelativeToLayoutViewport(false),
       mUseOverlayScrollbars(false),
       mHitTestArea(),
-      mHitTestInfo(CompositorHitTestInvisibleToHit) {
+      mHitTestInfo(CompositorHitTestInvisibleToHit),
+      mHitTestTouchActionRoot(aReferenceFrame) {
   MOZ_COUNT_CTOR(nsDisplayListBuilder);
 
   mBuildCompositorHitTestInfo = mAsyncPanZoomEnabled && IsForPainting();
@@ -2021,7 +2022,7 @@ void nsDisplayListBuilder::BuildCompositorHitTestInfoIfNeeded(
   }
 
   auto* item = MakeDisplayItem<nsDisplayCompositorHitTestInfo>(
-      this, aFrame, info, Some(area));
+      this, aFrame, info, GetHitTestTouchActionRoot(), Some(area));
   MOZ_ASSERT(item);
 
   SetCompositorHitTestInfo(area, info);
@@ -4770,7 +4771,7 @@ void nsDisplayEventReceiver::HitTest(nsDisplayListBuilder* aBuilder,
 nsDisplayCompositorHitTestInfo::nsDisplayCompositorHitTestInfo(
     nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
     const mozilla::gfx::CompositorHitTestInfo& aHitTestFlags,
-    const mozilla::Maybe<nsRect>& aArea)
+    const nsIFrame* aTouchActionRoot, const mozilla::Maybe<nsRect>& aArea)
     : nsDisplayHitTestInfoBase(aBuilder, aFrame),
       mAppUnitsPerDevPixel(mFrame->PresContext()->AppUnitsPerDevPixel()) {
   MOZ_COUNT_CTOR(nsDisplayCompositorHitTestInfo);
@@ -4783,7 +4784,7 @@ nsDisplayCompositorHitTestInfo::nsDisplayCompositorHitTestInfo(
   const nsRect& area =
       aArea.isSome() ? *aArea : aFrame->GetCompositorHitTestArea(aBuilder);
 
-  SetHitTestInfo(area, aHitTestFlags);
+  SetHitTestInfo(area, aHitTestFlags, aTouchActionRoot);
   InitializeScrollTarget(aBuilder);
 }
 

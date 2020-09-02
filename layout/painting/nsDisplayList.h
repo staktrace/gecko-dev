@@ -750,6 +750,9 @@ class nsDisplayListBuilder {
 
   const nsRect& GetHitTestArea() const { return mHitTestArea; }
   const CompositorHitTestInfo& GetHitTestInfo() const { return mHitTestInfo; }
+  const nsIFrame* GetHitTestTouchActionRoot() const {
+    return mHitTestTouchActionRoot;
+  }
 
   /**
    * Builds a new nsDisplayCompositorHitTestInfo for the frame |aFrame| if
@@ -2057,6 +2060,14 @@ class nsDisplayListBuilder {
 
   nsRect mHitTestArea;
   CompositorHitTestInfo mHitTestInfo;
+  // The touch-action root is the nearest ancestor frame which has changed the
+  // touch-action flags in the hit-test info. Tracking this helps us better
+  // combine the touch-action areas during layer building, so that we don't
+  // fall back to a dispatch-to-content region as often. In particular if we
+  // have frames that inherit their touch-action properties from an ancestor
+  // element, FrameLayerBuilder will be able to detect that and avoid collapsing
+  // the regions into the dispatch-to-content region.
+  const nsIFrame* mHitTestTouchActionRoot;
 };
 
 class nsDisplayItem;
@@ -3906,18 +3917,22 @@ class RetainedDisplayList : public nsDisplayList {
 
 struct HitTestInfo {
   HitTestInfo(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
-              const mozilla::gfx::CompositorHitTestInfo& aHitTestFlags)
+              const mozilla::gfx::CompositorHitTestInfo& aHitTestFlags,
+              const nsIFrame* aTouchActionRoot)
       : mArea(aFrame->GetCompositorHitTestArea(aBuilder)),
         mFlags(aHitTestFlags),
+        mTouchActionRoot(aTouchActionRoot),
         mAGR(aBuilder->FindAnimatedGeometryRootFor(aFrame)),
         mASR(aBuilder->CurrentActiveScrolledRoot()),
         mClipChain(aBuilder->ClipState().GetCurrentCombinedClipChain(aBuilder)),
         mClip(mozilla::DisplayItemClipChain::ClipForASR(mClipChain, mASR)) {}
 
   HitTestInfo(const nsRect& aArea,
-              const mozilla::gfx::CompositorHitTestInfo& aHitTestFlags)
+              const mozilla::gfx::CompositorHitTestInfo& aHitTestFlags,
+              const nsIFrame* aTouchActionRoot)
       : mArea(aArea),
         mFlags(aHitTestFlags),
+        mTouchActionRoot(aTouchActionRoot),
         mAGR(nullptr),
         mASR(nullptr),
         mClipChain(nullptr),
@@ -3925,6 +3940,7 @@ struct HitTestInfo {
 
   nsRect mArea;
   mozilla::gfx::CompositorHitTestInfo mFlags;
+  const nsIFrame* mTouchActionRoot;
 
   RefPtr<AnimatedGeometryRoot> mAGR;
   RefPtr<const mozilla::ActiveScrolledRoot> mASR;
@@ -3976,12 +3992,13 @@ class nsDisplayHitTestInfoBase : public nsPaintedDisplayItem {
     mHitTestInfo = std::move(aHitTestInfo);
   }
 
-  void SetHitTestInfo(
-      const nsRect& aArea,
-      const mozilla::gfx::CompositorHitTestInfo& aHitTestFlags) {
+  void SetHitTestInfo(const nsRect& aArea,
+                      const mozilla::gfx::CompositorHitTestInfo& aHitTestFlags,
+                      const nsIFrame* aTouchActionRoot) {
     MOZ_ASSERT(aHitTestFlags != mozilla::gfx::CompositorHitTestInvisibleToHit);
 
-    mHitTestInfo = mozilla::MakeUnique<HitTestInfo>(aArea, aHitTestFlags);
+    mHitTestInfo = mozilla::MakeUnique<HitTestInfo>(aArea, aHitTestFlags,
+                                                    aTouchActionRoot);
     mHitTestInfo->mAGR = mAnimatedGeometryRoot;
     mHitTestInfo->mASR = mActiveScrolledRoot;
     mHitTestInfo->mClipChain = mClipChain;
@@ -5237,6 +5254,7 @@ class nsDisplayCompositorHitTestInfo : public nsDisplayHitTestInfoBase {
   nsDisplayCompositorHitTestInfo(
       nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
       const mozilla::gfx::CompositorHitTestInfo& aHitTestFlags,
+      const nsIFrame* aTouchActionRoot,
       const mozilla::Maybe<nsRect>& aArea = mozilla::Nothing());
 
   nsDisplayCompositorHitTestInfo(

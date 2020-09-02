@@ -3397,7 +3397,8 @@ void nsIFrame::BuildDisplayListForStackingContext(
 
       if (info != CompositorHitTestInvisibleToHit) {
         // Frame has hit test flags set, initialize the hit test info structure.
-        hitTestInfo = mozilla::MakeUnique<HitTestInfo>(aBuilder, this, info);
+        hitTestInfo = mozilla::MakeUnique<HitTestInfo>(
+            aBuilder, this, info, aBuilder->GetHitTestTouchActionRoot());
 
         // Let child frames know the current hit test area and hit test flags.
         aBuilder->SetCompositorHitTestInfo(hitTestInfo->mArea,

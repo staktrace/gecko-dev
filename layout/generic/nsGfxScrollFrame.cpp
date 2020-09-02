@@ -3835,7 +3835,8 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
       if (info != CompositorHitTestInvisibleToHit) {
         auto* hitInfo =
             MakeDisplayItemWithIndex<nsDisplayCompositorHitTestInfo>(
-                aBuilder, mScrolledFrame, 1, info);
+                aBuilder, mScrolledFrame, 1, info,
+                aBuilder->GetHitTestTouchActionRoot());
         if (hitInfo) {
           aBuilder->SetCompositorHitTestInfo(hitInfo->HitTestArea(),
                                              hitInfo->HitTestFlags());
@@ -4041,7 +4042,8 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
       if (aBuilder->BuildCompositorHitTestInfo()) {
         nsDisplayCompositorHitTestInfo* hitInfo =
             MakeDisplayItemWithIndex<nsDisplayCompositorHitTestInfo>(
-                aBuilder, mScrolledFrame, 1, info, Some(area));
+                aBuilder, mScrolledFrame, 1, info,
+                aBuilder->GetHitTestTouchActionRoot(), Some(area));
         if (hitInfo) {
           AppendInternalItemToTop(scrolledContent, hitInfo, Some(INT32_MAX));
         }
