@@ -2900,9 +2900,9 @@ class nsLayoutUtils {
   static bool CanScrollOriginClobberApz(ScrollOrigin aScrollOrigin);
 
   static ScrollMetadata ComputeScrollMetadata(
-      nsIFrame* aForFrame, nsIFrame* aScrollFrame, nsIContent* aContent,
-      const nsIFrame* aReferenceFrame,
-      mozilla::layers::LayerManager* aLayerManager, ViewID aScrollParentId,
+      const nsIFrame* aForFrame, const nsIFrame* aScrollFrame,
+      const nsIContent* aContent, const nsIFrame* aReferenceFrame,
+      const mozilla::layers::LayerManager* aLayerManager, ViewID aScrollParentId,
       const nsSize& aScrollPortSize, const mozilla::Maybe<nsRect>& aClipRect,
       bool aIsRoot,
       const mozilla::Maybe<ContainerLayerParameters>& aContainerParameters);
