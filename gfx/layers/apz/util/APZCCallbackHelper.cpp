@@ -88,6 +88,7 @@ static CSSPoint ScrollFrameTo(nsIScrollableFrame* aFrame,
   // offset update sent to the APZ, then we don't need to do another scroll here
   // and we can just return.
   if (!aRequest.GetScrollOffsetUpdated()) {
+    APZCCH_LOG("APZ scroll offset %s for scroll id %" PRIu64 " wasn't a update, keeping gecko position %s\n", Stringify(targetScrollPosition).c_str(), aRequest.GetScrollId(), Stringify(geckoScrollPosition).c_str());
     return geckoScrollPosition;
   }
 
@@ -135,6 +136,7 @@ static CSSPoint ScrollFrameTo(nsIScrollableFrame* aFrame,
   // origin since the last layers update, then we don't want to push our scroll
   // request because we'll clobber that one, which is bad.
   bool scrollInProgress = APZCCallbackHelper::IsScrollInProgress(aFrame);
+  APZCCH_LOG("APZ requested scroll offset %s for scroll id %" PRIu64 ", MT scrollInProgress: %d\n", Stringify(targetScrollPosition).c_str(), aRequest.GetScrollId(), scrollInProgress);
   if (!scrollInProgress) {
     aFrame->ScrollToCSSPixelsApproximate(targetScrollPosition,
                                          ScrollOrigin::Apz);
@@ -158,6 +160,11 @@ static CSSPoint ScrollFrameTo(nsIScrollableFrame* aFrame,
  */
 static ScreenMargin ScrollFrame(nsIContent* aContent,
                                 const RepaintRequest& aRequest) {
+  APZCCH_LOG("ScrollFrame(%" PRIu64 ") RR(gen=%u, v=%s, s=%s, t=%d)\n",
+    aRequest.GetScrollId(), aRequest.GetScrollGeneration(),
+Stringify(aRequest.GetLayoutViewport()).c_str(),
+Stringify(aRequest.GetVisualScrollOffset()).c_str(),
+(int)aRequest.GetScrollUpdateType());
   // Scroll the window to the desired spot
   nsIScrollableFrame* sf =
       nsLayoutUtils::FindScrollableFrameFor(aRequest.GetScrollId());

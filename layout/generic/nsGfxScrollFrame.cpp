@@ -104,6 +104,8 @@ static mozilla::LazyLogModule sRootScrollbarsLog("rootscrollbars");
     MOZ_LOG(sRootScrollbarsLog, LogLevel::Debug, (__VA_ARGS__)); \
   }
 static mozilla::LazyLogModule sDisplayportLog("apz.displayport");
+static mozilla::LazyLogModule sApzHlpLog("apz.helper");
+#define APZCCH_LOG(...) MOZ_LOG(sApzHlpLog, LogLevel::Debug, (__VA_ARGS__))
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -6953,16 +6955,21 @@ bool ScrollFrameHelper::IsLastScrollUpdateAnimating() const {
 bool ScrollFrameHelper::IsScrollAnimating(
     IncludeApzAnimation aIncludeApz) const {
   if (aIncludeApz == IncludeApzAnimation::Yes && IsApzAnimationInProgress()) {
+    APZCCH_LOG("IsScrollAnimating: apzAnim=%d\n", IsApzAnimationInProgress());
     return true;
   }
   if (IsLastScrollUpdateAnimating()) {
+    APZCCH_LOG("IsScrollAnimating: lastUpdate=%d\n", mScrollUpdates.LastElement().GetMode());
     return true;
   }
+  APZCCH_LOG("IsScrollAnimating: req=%d, mAsync=%d, mMSD=%d\n", mApzAnimationRequested, !!mAsyncScroll, !!mAsyncSmoothMSDScroll);
   return mApzAnimationRequested || mAsyncScroll || mAsyncSmoothMSDScroll;
 }
 
 void ScrollFrameHelper::ResetScrollInfoIfNeeded(uint32_t aGeneration,
                                                 bool aApzAnimationInProgress) {
+  APZCCH_LOG("ResetScrollInfoIfNeeded: gen %u==%u, apzAnim=%d\n",
+    aGeneration, mScrollGeneration, aApzAnimationInProgress);
   if (aGeneration == mScrollGeneration) {
     mLastScrollOrigin = ScrollOrigin::None;
     mApzAnimationRequested = false;
