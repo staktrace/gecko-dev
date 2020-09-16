@@ -1147,7 +1147,9 @@ function assertNotCheckerboarded(utils, scrollerId, msgPrefix) {
   var found = false;
   for (apzcData of data.additionalData) {
     if (apzcData.key == scrollerId) {
-      var checkerboarding = apzcData.value.split(',').includes("checkerboarding");
+      var checkerboarding = apzcData.value
+        .split(",")
+        .includes("checkerboarding");
       ok(!checkerboarding, `${msgPrefix}: scroller is not checkerboarding`);
       found = true;
     }
