@@ -26,6 +26,11 @@ namespace apz {
                                                              aVelocity);
 }
 
+/*static*/ const gfx::IntSize GetDisplayportAlignmentMultiplier(
+    const ScreenSize& aBaseSize) {
+  return AsyncPanZoomController::GetDisplayportAlignmentMultiplier(aBaseSize);
+}
+
 static int32_t GetNormalizedAppVersion() {
   static int32_t sAppVersion = 0;
   if (sAppVersion == 0) {
