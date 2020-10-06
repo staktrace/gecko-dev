@@ -18,11 +18,13 @@
 #include "GLContextCGL.h"
 #include "GLContextProvider.h"
 #include "MozFramebuffer.h"
+#include "mozilla/ToString.h"
 #include "mozilla/gfx/Swizzle.h"
 #include "mozilla/layers/ScreenshotGrabber.h"
 #include "mozilla/layers/SurfacePoolCA.h"
 #include "mozilla/webrender/RenderMacIOSurfaceTextureHostOGL.h"
 #include "ScopedGLHelpers.h"
+#include "gfxUtils.h"
 
 @interface CALayer (PrivateSetContentsOpaque)
 - (void)setContentsOpaque:(BOOL)opaque;
@@ -222,16 +224,19 @@ bool NativeLayerRootCA::AreOffMainThreadCommitsSuspended() {
 }
 
 bool NativeLayerRootCA::CommitToScreen() {
-  MutexAutoLock lock(mMutex);
+  {
+    MutexAutoLock lock(mMutex);
 
-  if (!NS_IsMainThread() && mOffMainThreadCommitsSuspended) {
-    mCommitPending = true;
-    return false;
+    if (!NS_IsMainThread() && mOffMainThreadCommitsSuspended) {
+      mCommitPending = true;
+      return false;
+    }
+
+    mOnscreenRepresentation.Commit(WhichRepresentation::ONSCREEN, mSublayers);
+
+    mCommitPending = false;
   }
-
-  mOnscreenRepresentation.Commit(WhichRepresentation::ONSCREEN, mSublayers);
-
-  mCommitPending = false;
+  PrintLayerContents();
 
   return true;
 }
@@ -324,6 +329,16 @@ void NativeLayerRootCA::Representation::Commit(WhichRepresentation aRepresentati
 
   return UniquePtr<NativeLayerRootSnapshotterCA>(
       new NativeLayerRootSnapshotterCA(aLayerRoot, std::move(gl), aRootCALayer));
+}
+
+void NativeLayerRootCA::PrintLayerContents() {
+  MutexAutoLock lock(mMutex);
+  printf("NativeLayer contents\n");
+  printf("<html>\n");
+  for (auto layer : mSublayers) {
+    layer->PrintLayerContents();
+  }
+  printf("</html>\n");
 }
 
 NativeLayerRootSnapshotterCA::NativeLayerRootSnapshotterCA(NativeLayerRootCA* aLayerRoot,
@@ -591,6 +606,72 @@ void NativeLayerCA::SetClipRect(const Maybe<gfx::IntRect>& aClipRect) {
 Maybe<gfx::IntRect> NativeLayerCA::ClipRect() {
   MutexAutoLock lock(mMutex);
   return mClipRect;
+}
+
+void NativeLayerCA::PrintLayerContents() {
+  MutexAutoLock lock(mMutex);
+
+  auto size = gfx::Size(mSize) / mBackingScale;
+
+  Maybe<IntRect> clipFromDisplayRect;
+  if (!mDisplayRect.IsEqualInterior(IntRect({}, mSize))) {
+    // When the display rect is a subset of the layer, then we want to guarantee that no
+    // pixels outside that rect are sampled, since they might be uninitialized.
+    // Transforming the display rect into a post-transform clip only maintains this if
+    // it's an integer translation, which is all we support for this case currently.
+    MOZ_ASSERT(mTransform.Is2DIntegerTranslation());
+    clipFromDisplayRect =
+        Some(RoundedToInt(mTransform.TransformBounds(IntRectToRect(mDisplayRect + mPosition))));
+  }
+
+  auto effectiveClip = IntersectMaybeRects(mClipRect, clipFromDisplayRect);
+  auto globalClipOrigin = effectiveClip ? effectiveClip->TopLeft() : IntPoint();
+  auto clipToLayerOffset = -globalClipOrigin;
+
+  auto wrappingDivPosition = gfx::Point(globalClipOrigin) / mBackingScale;
+
+  printf("<div style=\"position: absolute; left: %fpx; top: %fpx;", wrappingDivPosition.x,
+         wrappingDivPosition.y);
+
+  if (effectiveClip) {
+    auto wrappingDivSize = gfx::Size(effectiveClip->Size()) / mBackingScale;
+    printf(" overflow: hidden; width: %fpx; height: %fpx;", wrappingDivSize.width,
+           wrappingDivSize.height);
+  }
+
+  Matrix4x4 transform = mTransform;
+  transform.PreTranslate(mPosition.x, mPosition.y, 0);
+  transform.PostTranslate(clipToLayerOffset.x, clipToLayerOffset.y, 0);
+
+  if (mSurfaceIsFlipped) {
+    transform.PreTranslate(0, mSize.height, 0).PreScale(1, -1, 1);
+  }
+
+  printf("\"><img style=\"width: %fpx; height: %fpx; ", size.width, size.height);
+
+  if (mSamplingFilter == gfx::SamplingFilter::POINT) {
+    printf("image-rendering: crisp-edges; ");
+  }
+
+  if (!transform.IsIdentity()) {
+    printf("transform-origin: top left; transform: matrix3d(%f, %f, %f, %f,  %f, %f, %f, %f,  %f, "
+           "%f, %f, %f,  %f, %f, %f, %f); ",
+           transform._11, transform._12, transform._13, transform._14, transform._21, transform._22,
+           transform._23, transform._24, transform._31, transform._32, transform._33, transform._34,
+           transform._41 / mBackingScale, transform._42 / mBackingScale, transform._43,
+           transform._44);
+  }
+  printf("\" alt=\"surface 0x%x\" src=\"", int(IOSurfaceGetID(mFrontSurface->mSurface.get())));
+
+  RefPtr<MacIOSurface> surf = new MacIOSurface(mFrontSurface->mSurface);
+  surf->Lock(true);
+  {
+    RefPtr<gfx::DrawTarget> dt = surf->GetAsDrawTargetLocked(gfx::BackendType::SKIA);
+    gfxUtils::DumpAsDataURI(dt);
+  }
+  surf->Unlock(true);
+
+  printf("\"/></div>\n");
 }
 
 gfx::IntRect NativeLayerCA::CurrentSurfaceDisplayRect() {

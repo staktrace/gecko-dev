@@ -96,6 +96,8 @@ class NativeLayerRootCA : public NativeLayerRoot {
 
   bool AreOffMainThreadCommitsSuspended();
 
+  void PrintLayerContents();
+
   enum class WhichRepresentation : uint8_t { ONSCREEN, OFFSCREEN };
 
   // Overridden methods
@@ -219,6 +221,8 @@ class NativeLayerCA : public NativeLayer {
   gfx::IntRect CurrentSurfaceDisplayRect() override;
   void SetSurfaceIsFlipped(bool aIsFlipped) override;
   bool SurfaceIsFlipped() override;
+
+  void PrintLayerContents();
 
   void AttachExternalImage(wr::RenderTextureHost* aExternalImage) override;
 
