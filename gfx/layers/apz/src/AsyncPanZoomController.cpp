@@ -1642,6 +1642,7 @@ nsEventStatus AsyncPanZoomController::OnScale(const PinchGestureInput& aEvent) {
         if (delay >= 0) {
           if (RefPtr<GeckoContentController> controller =
                   GetGeckoContentController()) {
+            printf_stderr("Starting pinch timer\n");
             mPinchPaintTimerSet = true;
             controller->PostDelayedTask(
                 NewRunnableMethod(
@@ -1653,6 +1654,7 @@ nsEventStatus AsyncPanZoomController::OnScale(const PinchGestureInput& aEvent) {
           }
         }
       } else if (AboutToCheckerboard(mLastContentPaintMetrics, Metrics())) {
+        printf_stderr("Forcing repaint request because of checkerboard\n");
         DoDelayedRequestContentRepaint();
       }
 
@@ -3750,6 +3752,7 @@ gfx::IntSize AsyncPanZoomController::GetDisplayportAlignmentMultiplier(
  */
 static CSSSize CalculateDisplayPortSize(const CSSSize& aCompositionSize,
                                         const CSSPoint& aVelocity,
+                                        bool aZoomInProgress,
                                         const CSSToScreenScale2D& aDpPerCSS) {
   bool xIsStationarySpeed =
       fabsf(aVelocity.x) < StaticPrefs::apz_min_skate_speed();
@@ -3768,6 +3771,19 @@ static CSSSize CalculateDisplayPortSize(const CSSSize& aCompositionSize,
 
   if (IsHighMemSystem() && !yIsStationarySpeed) {
     yMultiplier += StaticPrefs::apz_y_skate_highmem_adjust();
+  }
+
+  if (aZoomInProgress) {
+    // If a zoom is in progress, we will be making content visible on the
+    // x and y axes in equal proportion, because the zoom operation preserves
+    // the aspect ratio of the composition size. The default multipliers are
+    // biased towards the y-axis since that's where most scrolling occurs, but
+    // in the case of zooming, we should really use equal multipliers on both
+    // axes. This does that while preserving the total displayport area
+    // quantity (aCompositionSize.Area() * xMultiplier * yMultiplier).
+    //float areaMultiplier = xMultiplier * yMultiplier;
+    //xMultiplier = sqrt(areaMultiplier);
+    //yMultiplier = xMultiplier;
   }
 
   if (gfx::gfxVars::UseWebRender()) {
@@ -3845,7 +3861,8 @@ static void RedistributeDisplayPortExcess(CSSSize& aDisplayPortSize,
 
 /* static */
 const ScreenMargin AsyncPanZoomController::CalculatePendingDisplayPort(
-    const FrameMetrics& aFrameMetrics, const ParentLayerPoint& aVelocity) {
+    const FrameMetrics& aFrameMetrics, const ParentLayerPoint& aVelocity,
+    bool aZoomInProgress) {
   if (aFrameMetrics.IsScrollInfoLayer()) {
     // Don't compute margins. Since we can't asynchronously scroll this frame,
     // we don't want to paint anything more than the composition bounds.
@@ -3863,7 +3880,8 @@ const ScreenMargin AsyncPanZoomController::CalculatePendingDisplayPort(
   // Calculate the displayport size based on how fast we're moving along each
   // axis.
   CSSSize displayPortSize = CalculateDisplayPortSize(
-      compositionSize, velocity, aFrameMetrics.DisplayportPixelsPerCSSPixel());
+      compositionSize, velocity, aZoomInProgress,
+      aFrameMetrics.DisplayportPixelsPerCSSPixel());
 
   displayPortSize =
       ExpandDisplayPortToDangerZone(displayPortSize, aFrameMetrics);
@@ -3891,8 +3909,8 @@ const ScreenMargin AsyncPanZoomController::CalculatePendingDisplayPort(
 
   APZC_LOGV_FM(
       aFrameMetrics,
-      "Calculated displayport as %s from velocity %s paint time %f metrics",
-      ToString(displayPort).c_str(), ToString(aVelocity).c_str(), paintFactor);
+      "Calculated displayport as %s from velocity %s zooming %d paint time %f metrics",
+      ToString(displayPort).c_str(), ToString(aVelocity).c_str(), aZoomInProgress, paintFactor);
 
   CSSMargin cssMargins;
   cssMargins.left = -displayPort.X();
@@ -4010,7 +4028,7 @@ void AsyncPanZoomController::RequestContentRepaint(
   RecursiveMutexAutoLock lock(mRecursiveMutex);
   ParentLayerPoint velocity = GetVelocityVector();
   ScreenMargin displayportMargins =
-      CalculatePendingDisplayPort(Metrics(), velocity);
+      CalculatePendingDisplayPort(Metrics(), velocity, mState == PINCHING);
   Metrics().SetPaintRequestTime(TimeStamp::Now());
   RequestContentRepaint(Metrics(), velocity, displayportMargins, aUpdateType);
 }
@@ -4667,6 +4685,13 @@ void AsyncPanZoomController::NotifyLayersUpdated(
 
     // TODO: Rely entirely on |aScrollMetadata.IsResolutionUpdated()| to
     //       determine which branch to take, and drop the other conditions.
+    APZC_LOG("In NLU: %d %d %d %d\n",
+        FuzzyEqualsAdditive(Metrics().GetCompositionBounds().Width(),
+                            aLayerMetrics.GetCompositionBounds().Width()),
+        Metrics().GetDevPixelsPerCSSPixel() ==
+            aLayerMetrics.GetDevPixelsPerCSSPixel(),
+        !viewportSizeUpdated,
+        !aScrollMetadata.IsResolutionUpdated());
     if (FuzzyEqualsAdditive(Metrics().GetCompositionBounds().Width(),
                             aLayerMetrics.GetCompositionBounds().Width()) &&
         Metrics().GetDevPixelsPerCSSPixel() ==
@@ -4683,6 +4708,7 @@ void AsyncPanZoomController::NotifyLayersUpdated(
                                       Metrics().GetCumulativeResolution();
       float presShellResolutionChange = aLayerMetrics.GetPresShellResolution() /
                                         Metrics().GetPresShellResolution();
+      APZC_LOG("In NLU: PSRC=%f\n", presShellResolutionChange);
       if (presShellResolutionChange != 1.0f) {
         needContentRepaint = true;
       }
@@ -4694,6 +4720,13 @@ void AsyncPanZoomController::NotifyLayersUpdated(
       // Take the new zoom as either device scale or composition width or
       // viewport size got changed (e.g. due to orientation change, or content
       // changing the meta-viewport tag).
+      float presShellResolutionChange = aLayerMetrics.GetPresShellResolution() /
+                                        Metrics().GetPresShellResolution();
+      APZC_LOG("In NLU2: PSRC=%f\n", presShellResolutionChange);
+      if (presShellResolutionChange != 1.0f) {
+        MOZ_ASSERT(false);
+      }
+
       Metrics().SetZoom(aLayerMetrics.GetZoom());
       for (auto& sampledState : mSampledState) {
         sampledState.UpdateZoomProperties(aLayerMetrics);
@@ -5185,7 +5218,7 @@ void AsyncPanZoomController::ZoomToRect(CSSRect aRect, const uint32_t aFlags) {
     // animation finishes.
     ParentLayerPoint velocity(0, 0);
     ScreenMargin displayportMargins =
-        CalculatePendingDisplayPort(endZoomToMetrics, velocity);
+        CalculatePendingDisplayPort(endZoomToMetrics, velocity, true);
     endZoomToMetrics.SetPaintRequestTime(TimeStamp::Now());
 
     RefPtr<GeckoContentController> controller = GetGeckoContentController();

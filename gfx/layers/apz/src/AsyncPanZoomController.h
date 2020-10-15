@@ -343,10 +343,12 @@ class AsyncPanZoomController {
    * Recalculates the displayport. Ideally, this should paint an area bigger
    * than the composite-to dimensions so that when you scroll down, you don't
    * checkerboard immediately. This includes a bunch of logic, including
-   * algorithms to bias painting in the direction of the velocity.
+   * algorithms to bias painting in the direction of the velocity and other
+   * such things.
    */
   static const ScreenMargin CalculatePendingDisplayPort(
-      const FrameMetrics& aFrameMetrics, const ParentLayerPoint& aVelocity);
+      const FrameMetrics& aFrameMetrics, const ParentLayerPoint& aVelocity,
+      bool aZoomInProgress);
 
   nsEventStatus HandleDragEvent(const MouseInput& aEvent,
                                 const AsyncDragMetrics& aDragMetrics,

@@ -63,6 +63,8 @@ void CheckerboardEvent::UpdateRendertraceProperty(
     return;
   }
   MonitorAutoLock lock(mRendertraceLock);
+  printf_stderr("%s %s // %s\n",
+    ToString(aRect).c_str(), sDescriptions[aProperty], aExtraInfo.c_str());
   if (!mCheckerboardingActive) {
     mBufferedProperties[aProperty].Update(aProperty, aRect, aExtraInfo, lock);
   } else {

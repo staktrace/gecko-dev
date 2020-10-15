@@ -337,11 +337,16 @@ void APZCCallbackHelper::UpdateRootFrame(const RepaintRequest& aRequest) {
     // have the effect of getting us stuck with the stale resolution.
     if (!FuzzyEqualsMultiplicative(presShellResolution,
                                    aRequest.GetPresShellResolution())) {
+      APZCCH_LOG("Bouncing on resolution mismatch %f != %f\n",
+        presShellResolution, aRequest.GetPresShellResolution());
       return;
     }
 
     // The pres shell resolution is updated by the the async zoom since the
     // last paint.
+    APZCCH_LOG("Updating resolution from %f by %f to %f\n",
+        presShellResolution, aRequest.GetAsyncZoom().scale,
+        (aRequest.GetPresShellResolution() * aRequest.GetAsyncZoom().scale));
     presShellResolution =
         aRequest.GetPresShellResolution() * aRequest.GetAsyncZoom().scale;
     presShell->SetResolutionAndScaleTo(presShellResolution,
