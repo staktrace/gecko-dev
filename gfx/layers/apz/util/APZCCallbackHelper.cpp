@@ -312,8 +312,11 @@ void APZCCallbackHelper::UpdateRootFrame(const RepaintRequest& aRequest) {
     return;
   }
 
+  APZCCH_LOG("Handling request %s\n", ToString(aRequest).c_str());
+  bool updateResolution = aRequest.GetScrollOffsetUpdated() ||
+      aRequest.GetAsyncZoom().scale != 1.0;
   if (nsLayoutUtils::AllowZoomingForDocument(presShell->GetDocument()) &&
-      aRequest.GetScrollOffsetUpdated()) {
+      updateResolution) {
     // If zooming is disabled then we don't really want to let APZ fiddle
     // with these things. In theory setting the resolution here should be a
     // no-op, but setting the visual viewport size is bad because it can cause a
