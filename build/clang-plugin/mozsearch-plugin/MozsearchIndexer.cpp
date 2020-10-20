@@ -10,6 +10,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/Mangle.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Version.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -55,6 +56,7 @@ using std::make_unique;
 using namespace clang;
 
 const std::string GENERATED("__GENERATED__" PATHSEP_STRING);
+const std::string INCLUDEINFO("__INCLUDEINFO__" PATHSEP_STRING);
 
 // Absolute path to directory containing source code.
 std::string Srcdir;
@@ -148,6 +150,7 @@ struct FileInfo {
   }
   std::string Realname;
   std::vector<std::string> Output;
+  std::vector<std::string> Includes;
   bool Interesting;
   bool Generated;
 };
@@ -159,6 +162,14 @@ class PreprocessorHook : public PPCallbacks {
 
 public:
   PreprocessorHook(IndexConsumer *C) : Indexer(C) {}
+
+  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                           SrcMgr::CharacteristicKind FileType,
+                           FileID PrevFID) override;
+
+  virtual void FileSkipped(const FileEntryRef &SkippedFile,
+                           const Token &FilenameTok,
+                           SrcMgr::CharacteristicKind FileType) override;
 
   virtual void MacroDefined(const Token &Tok,
                             const MacroDirective *Md) override;
@@ -183,6 +194,7 @@ private:
   SourceManager &SM;
   LangOptions &LO;
   std::map<FileID, std::unique_ptr<FileInfo>> FileMap;
+  std::stack<SourceLocation> SourceFileStack;
   MangleContext *CurMangleContext;
   ASTContext *AstContext;
 
@@ -636,6 +648,8 @@ public:
       std::string Filename = Outdir + Info.Realname;
       MergeNewLinesToFile(SrcFilename, Filename, Info.Output);
 
+      Filename = Outdir + INCLUDEINFO + Info.Realname;
+      MergeNewLinesToFile(SrcFilename, Filename, Info.Includes);
     }
   }
 
@@ -1638,6 +1652,36 @@ public:
     return true;
   }
 
+  void pushSourceFile(SourceLocation Loc) {
+    normalizeLocation(&Loc);
+    if (!SourceFileStack.empty()) {
+      FileInfo* curFile = getFileInfo(SourceFileStack.top());
+      FileInfo* includedFile = getFileInfo(Loc);
+      if (curFile->Interesting) {
+        curFile->Includes.push_back(includedFile->Realname + "\n");
+      }
+    }
+    SourceFileStack.push(Loc);
+  }
+
+  void popSourceFile() {
+    FileInfo* curFile = getFileInfo(SourceFileStack.top());
+    SourceFileStack.pop();
+  }
+
+  void includeSourceFile(const FileEntryRef& SkippedFile) {
+    if (SourceFileStack.empty()) {
+      return;
+    }
+    FileInfo* curFile = getFileInfo(SourceFileStack.top());
+    if (!curFile->Interesting) {
+      return;
+    }
+    std::string includedFile(SkippedFile.getFileEntry().tryGetRealPathName());
+    relativizePath(includedFile);
+    curFile->Includes.push_back(includedFile + "\n");
+  }
+
   void macroDefined(const Token &Tok, const MacroDirective *Macro) {
     if (Macro->getMacroInfo()->isBuiltinMacro()) {
       return;
@@ -1678,6 +1722,29 @@ public:
     }
   }
 };
+
+void PreprocessorHook::FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                                   SrcMgr::CharacteristicKind FileType,
+                                   FileID PrevFID = FileID()) {
+  switch (Reason) {
+    case PPCallbacks::RenameFile:
+    case PPCallbacks::SystemHeaderPragma:
+      // Don't care about these, since we want the actual on-disk filenames
+      break;
+    case PPCallbacks::EnterFile:
+      Indexer->pushSourceFile(Loc);
+      break;
+    case PPCallbacks::ExitFile:
+      Indexer->popSourceFile();
+      break;
+  }
+}
+
+void PreprocessorHook::FileSkipped(const FileEntryRef &SkippedFile,
+                                   const Token &FilenameTok,
+                                   SrcMgr::CharacteristicKind FileType) {
+  Indexer->includeSourceFile(SkippedFile);
+}
 
 void PreprocessorHook::MacroDefined(const Token &Tok,
                                     const MacroDirective *Md) {
