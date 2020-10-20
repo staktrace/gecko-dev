@@ -65,6 +65,28 @@ std::string Objdir;
 // Absolute path where analysis JSON output will be stored.
 std::string Outdir;
 
+enum class FileType {
+  Unknown,
+  Source,
+  Generated,
+};
+
+FileType relativizePath(std::string& path) {
+  if (path.compare(0, Objdir.length(), Objdir) == 0) {
+    path.replace(0, Objdir.length(), GENERATED);
+    return FileType::Generated;
+  }
+  // Empty filenames can get turned into Srcdir when they are resolved as
+  // absolute paths, so we should exclude files that are exactly equal to
+  // Srcdir or anything outside Srcdir.
+  if (path.length() > Srcdir.length() && path.compare(0, Srcdir.length(), Srcdir) == 0) {
+    // Remove the trailing `/' as well.
+    path.erase(0, Srcdir.length() + 1);
+    return FileType::Source;
+  }
+  return FileType::Unknown;
+}
+
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <sys/time.h>
 
@@ -109,25 +131,19 @@ class IndexConsumer;
 // here.
 struct FileInfo {
   FileInfo(std::string &Rname) : Realname(Rname) {
-    if (Rname.compare(0, Objdir.length(), Objdir) == 0) {
-      // We're in the objdir, so we are probably a generated header
-      // We use the escape character to indicate the objdir nature.
-      // Note that output also has the `/' already placed
-      Interesting = true;
-      Generated = true;
-      Realname.replace(0, Objdir.length(), GENERATED);
-      return;
-    }
-
-    // Empty filenames can get turned into Srcdir when they are resolved as
-    // absolute paths, so we should exclude files that are exactly equal to
-    // Srcdir or anything outside Srcdir.
-    Interesting = (Rname.length() > Srcdir.length()) &&
-                  (Rname.compare(0, Srcdir.length(), Srcdir) == 0);
-    Generated = false;
-    if (Interesting) {
-      // Remove the trailing `/' as well.
-      Realname.erase(0, Srcdir.length() + 1);
+    switch (relativizePath(Realname)) {
+      case FileType::Generated:
+        Interesting = true;
+        Generated = true;
+        break;
+      case FileType::Source:
+        Interesting = true;
+        Generated = false;
+        break;
+      case FileType::Unknown:
+        Interesting = false;
+        Generated = false;
+        break;
     }
   }
   std::string Realname;
