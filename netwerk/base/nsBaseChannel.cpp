@@ -812,6 +812,10 @@ static void CallUnknownTypeSniffer(void* aClosure, const uint8_t* aData,
 
 NS_IMETHODIMP
 nsBaseChannel::OnStartRequest(nsIRequest* request) {
+  nsAutoCString reqName;
+  request->GetName(reqName);
+  printf_stderr("nsBaseChannel::OnStartRequest with request URI %s\n", reqName.get());
+
   MOZ_ASSERT_IF(mRequest, request == mRequest);
 
   nsAutoCString scheme;

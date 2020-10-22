@@ -228,6 +228,7 @@ function openBrowserWindow(
   let chromeURL = AppConstants.BROWSER_CHROME_URL;
   const isStartup =
     cmdLine && cmdLine.state == Ci.nsICommandLine.STATE_INITIAL_LAUNCH;
+  dump("BrowserContentHandler.jsm: openBrowserWindow with isStartup=" + isStartup + "\n");
 
   let args;
   if (!urlOrUrlList) {
@@ -301,6 +302,7 @@ function openBrowserWindow(
         ).usePrivateBrowsing = true;
       }
 
+      dump("BrowserContentHandler.jsm: reusing existing startup window, loc=" + chromeURL + "\n");
       let openTime = win.openTime;
       win.location = chromeURL;
       win.arguments = args; // <-- needs to be a plain JS array here.
@@ -341,6 +343,7 @@ function openBrowserWindow(
     features += ",private";
   }
 
+  dump("BrowserContentHandler.jsm: open ww.openWindow " + chromeURL + "\n");
   return Services.ww.openWindow(null, chromeURL, "_blank", features, args);
 }
 

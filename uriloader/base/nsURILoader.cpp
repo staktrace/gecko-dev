@@ -225,6 +225,10 @@ NS_IMETHODIMP nsDocumentOpenInfo::OnStopRequest(nsIRequest* request,
 
 nsresult nsDocumentOpenInfo::DispatchContent(nsIRequest* request,
                                              nsISupports* aCtxt) {
+  nsAutoCString reqName;
+  request->GetName(reqName);
+  printf_stderr("nsDocumentOpenInfo::DispatchContent with request URI %s\n", reqName.get());
+
   LOG(("[0x%p] nsDocumentOpenInfo::DispatchContent for type '%s'", this,
        mContentType.get()));
 
@@ -235,6 +239,7 @@ nsresult nsDocumentOpenInfo::DispatchContent(nsIRequest* request,
   nsCOMPtr<nsIChannel> aChannel = do_QueryInterface(request);
   if (!aChannel) {
     LOG_ERROR(("  Request is not a channel.  Bailing."));
+    printf_stderr("nsDocumentOpenInfo::DispatchContent(%s) not a channel\n", reqName.get());
     return NS_ERROR_FAILURE;
   }
 

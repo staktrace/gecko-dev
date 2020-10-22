@@ -7972,12 +7972,27 @@ nsresult nsDocShell::NewContentViewerObj(const nsACString& aContentType,
                                          nsILoadGroup* aLoadGroup,
                                          nsIStreamListener** aContentHandler,
                                          nsIContentViewer** aViewer) {
+  nsAutoCString reqName;
+  aRequest->GetName(reqName);
+  printf_stderr("nsDocShell::NewContentViewerObj with request URI %s\n", reqName.get());
   nsCOMPtr<nsIChannel> aOpenedChannel = do_QueryInterface(aRequest);
 
   nsCOMPtr<nsIDocumentLoaderFactory> docLoaderFactory =
       nsContentUtils::FindInternalContentViewer(aContentType);
   if (!docLoaderFactory) {
     return NS_ERROR_FAILURE;
+  }
+
+  {
+    nsCOMPtr<nsIURI> aURL;
+    nsresult rv = aOpenedChannel->GetURI(getter_AddRefs(aURL));
+    if (NS_FAILED(rv)) {
+      printf_stderr("nsDocShell::NewContentViewerObj failed to get channel for %s\n", reqName.get());
+      return rv;
+    }
+    if (aURL) {
+      printf_stderr("nsDocShell::NewContentViewerObj opened channel for %s (req %s)\n", aURL->GetSpecOrDefault().get(), reqName.get());
+    }
   }
 
   // Now create an instance of the content viewer nsLayoutDLF makes the
