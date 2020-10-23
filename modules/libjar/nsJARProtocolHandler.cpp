@@ -86,6 +86,8 @@ nsJARProtocolHandler::GetProtocolFlags(uint32_t* result) {
 NS_IMETHODIMP
 nsJARProtocolHandler::NewChannel(nsIURI* uri, nsILoadInfo* aLoadInfo,
                                  nsIChannel** result) {
+  printf_stderr("nsJARProtocolHandler::NewChannel for %s\n", uri->GetSpecOrDefault().get());
+
   nsJARChannel* chan = new nsJARChannel();
   if (!chan) return NS_ERROR_OUT_OF_MEMORY;
   NS_ADDREF(chan);
