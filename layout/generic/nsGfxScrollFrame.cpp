@@ -3824,7 +3824,9 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
     nsDisplayListBuilder::AutoCurrentActiveScrolledRootSetter asrSetter(
         aBuilder);
-    if (mWillBuildScrollableLayer && aBuilder->IsPaintingToWindow()) {
+    bool wantASR = mWillBuildScrollableLayer ||
+        (gfxVars::UseWebRender() && nsLayoutUtils::UsesAsyncScrolling(mOuter));
+    if (wantASR && aBuilder->IsPaintingToWindow()) {
       asrSetter.EnterScrollFrame(sf);
     }
 
@@ -3956,7 +3958,7 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         Unused << DecideScrollableLayer(aBuilder, &copyOfVisibleRect,
                                         &copyOfDirtyRect,
                                         /* aSetBase = */ false, nullptr);
-        if (mWillBuildScrollableLayer) {
+        if (mWillBuildScrollableLayer && !wantASR) {
           asrSetter.InsertScrollFrame(sf);
           aBuilder->SetDisablePartialUpdates(true);
         }
