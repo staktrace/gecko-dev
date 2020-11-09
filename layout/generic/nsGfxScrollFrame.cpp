@@ -4370,6 +4370,7 @@ Maybe<ScrollMetadata> ScrollFrameHelper::ComputeScrollMetadata(
     const Maybe<ContainerLayerParameters>& aParameters,
     const DisplayItemClip* aClip) const {
   if (!mWillBuildScrollableLayer) {
+    MOZ_ASSERT(false);
     return Nothing();
   }
 
