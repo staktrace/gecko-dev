@@ -4041,42 +4041,42 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     aBuilder->ForceLayerForScrollParent();
   }
 
-  if (couldBuildLayer) {
-    CompositorHitTestInfo info(CompositorHitTestFlags::eVisibleToHitTest,
-                               CompositorHitTestFlags::eInactiveScrollframe);
-    // If the scroll frame has non-default overscroll-behavior, instruct
-    // APZ to require a target confirmation before processing events that
-    // hit this scroll frame (that is, to drop the events if a
-    // confirmation does not arrive within the timeout period). Otherwise,
-    // APZ's fallback behaviour of scrolling the enclosing scroll frame
-    // would violate the specified overscroll-behavior.
-    auto overscroll = GetOverscrollBehaviorInfo();
-    if (overscroll.mBehaviorX != OverscrollBehavior::Auto ||
-        overscroll.mBehaviorY != OverscrollBehavior::Auto) {
-      info += CompositorHitTestFlags::eRequiresTargetConfirmation;
-    }
+  //if (couldBuildLayer) {
+  //  CompositorHitTestInfo info(CompositorHitTestFlags::eVisibleToHitTest,
+  //                             CompositorHitTestFlags::eInactiveScrollframe);
+  //  // If the scroll frame has non-default overscroll-behavior, instruct
+  //  // APZ to require a target confirmation before processing events that
+  //  // hit this scroll frame (that is, to drop the events if a
+  //  // confirmation does not arrive within the timeout period). Otherwise,
+  //  // APZ's fallback behaviour of scrolling the enclosing scroll frame
+  //  // would violate the specified overscroll-behavior.
+  //  auto overscroll = GetOverscrollBehaviorInfo();
+  //  if (overscroll.mBehaviorX != OverscrollBehavior::Auto ||
+  //      overscroll.mBehaviorY != OverscrollBehavior::Auto) {
+  //    info += CompositorHitTestFlags::eRequiresTargetConfirmation;
+  //  }
 
-    nsRect area = effectiveScrollPort + aBuilder->ToReferenceFrame(mOuter);
+  //  nsRect area = effectiveScrollPort + aBuilder->ToReferenceFrame(mOuter);
 
-    // Make sure that APZ will dispatch events back to content so we can
-    // create a displayport for this frame. We'll add the item later on.
-    if (!mWillBuildScrollableLayer) {
-      if (aBuilder->BuildCompositorHitTestInfo()) {
-        nsDisplayCompositorHitTestInfo* hitInfo =
-            MakeDisplayItemWithIndex<nsDisplayCompositorHitTestInfo>(
-                aBuilder, mScrolledFrame, 1, info, Some(area));
-        if (hitInfo) {
-          AppendInternalItemToTop(scrolledContent, hitInfo, Some(INT32_MAX));
-        }
-      }
-    }
+  //  // Make sure that APZ will dispatch events back to content so we can
+  //  // create a displayport for this frame. We'll add the item later on.
+  //  if (!mWillBuildScrollableLayer) {
+  //    if (aBuilder->BuildCompositorHitTestInfo()) {
+  //      nsDisplayCompositorHitTestInfo* hitInfo =
+  //          MakeDisplayItemWithIndex<nsDisplayCompositorHitTestInfo>(
+  //              aBuilder, mScrolledFrame, 1, info, Some(area));
+  //      if (hitInfo) {
+  //        AppendInternalItemToTop(scrolledContent, hitInfo, Some(INT32_MAX));
+  //      }
+  //    }
+  //  }
 
-    if (aBuilder->ShouldBuildScrollInfoItemsForHoisting()) {
-      aBuilder->AppendNewScrollInfoItemForHoisting(
-          MakeDisplayItem<nsDisplayScrollInfoLayer>(aBuilder, mScrolledFrame,
-                                                    mOuter, info, area));
-    }
-  }
+  //  if (aBuilder->ShouldBuildScrollInfoItemsForHoisting()) {
+  //    aBuilder->AppendNewScrollInfoItemForHoisting(
+  //        MakeDisplayItem<nsDisplayScrollInfoLayer>(aBuilder, mScrolledFrame,
+  //                                                  mOuter, info, area));
+  //  }
+  //}
 
   // Now display overlay scrollbars and the resizer, if we have one.
   AppendScrollPartsTo(aBuilder, scrolledContent, createLayersForScrollbars,
