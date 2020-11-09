@@ -4369,11 +4369,6 @@ Maybe<ScrollMetadata> ScrollFrameHelper::ComputeScrollMetadata(
     LayerManager* aLayerManager, const nsIFrame* aContainerReferenceFrame,
     const Maybe<ContainerLayerParameters>& aParameters,
     const DisplayItemClip* aClip) const {
-  if (!mWillBuildScrollableLayer) {
-    MOZ_ASSERT(false);
-    return Nothing();
-  }
-
   if (!nsLayoutUtils::UsesAsyncScrolling(mOuter)) {
     // Return early, since if we don't use APZ we don't need FrameMetrics.
     return Nothing();
