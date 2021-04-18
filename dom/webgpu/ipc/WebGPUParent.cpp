@@ -445,17 +445,17 @@ ipc::IPCResult WebGPUParent::RecvDeviceCreateBindGroup(
     switch (entry.mType) {
       case SerialBindGroupEntryType::Buffer:
         bgb.resource.tag = ffi::WGPUBindingResource_Buffer;
-        bgb.resource.buffer._0.buffer = entry.mValue;
-        bgb.resource.buffer._0.offset = entry.mBufferOffset;
-        bgb.resource.buffer._0.size = ffi::make_buffer_size(entry.mBufferSize);
+        //bgb.resource.buffer._0.buffer = entry.mValue;
+        //bgb.resource.buffer._0.offset = entry.mBufferOffset;
+        //bgb.resource.buffer._0.size = ffi::make_buffer_size(entry.mBufferSize);
         break;
       case SerialBindGroupEntryType::Texture:
         bgb.resource.tag = ffi::WGPUBindingResource_TextureView;
-        bgb.resource.texture_view._0 = entry.mValue;
+        //bgb.resource.texture_view._0 = entry.mValue;
         break;
       case SerialBindGroupEntryType::Sampler:
         bgb.resource.tag = ffi::WGPUBindingResource_Sampler;
-        bgb.resource.sampler._0 = entry.mValue;
+        //bgb.resource.sampler._0 = entry.mValue;
         break;
       default:
         MOZ_CRASH("unreachable");
